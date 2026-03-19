@@ -1,0 +1,10 @@
+import { create } from "zustand";
+import type {
+import { createHistorySlice, type HistorySlice } from "./slices/historySlice";
+import { createMapSlice, type MapSlice } from "./slices/mapSlice";
+import { createProjectSlice, type ProjectSlice } from "./slices/projectSlice";
+import { createSelectionSlice, type SelectionSlice } from "./slices/selectionSlice";
+import { createSpriteSlice, type SpriteSlice } from "./slices/spriteSlice";
+import { createSoundSlice, type SoundSlice } from "./slices/soundSlice";
+import { createTileSlice, type TileSlice } from "./slices/tileSlice";
+import { createUISlice, type UISlice } from "./slices/uiSlice";
