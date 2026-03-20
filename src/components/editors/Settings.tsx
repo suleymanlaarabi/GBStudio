@@ -38,3 +38,39 @@ export const Settings: React.FC = () => {
     border: "1px solid var(--border)",
     borderRadius: "12px",
     padding: "1.5rem",
+    marginBottom: "1.5rem",
+  };
+
+  const headerStyle: React.CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    gap: "0.8rem",
+    fontSize: "1.1rem",
+    fontWeight: "600",
+    marginBottom: "1.2rem",
+    color: "var(--accent)",
+  };
+
+  const itemStyle: React.CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "0.8rem 0",
+    borderBottom: "1px solid rgba(255,255,255,0.05)",
+  };
+
+  return (
+    <div
+      style={{
+        maxWidth: "800px",
+        margin: "0 auto",
+        width: "100%",
+        paddingBottom: "4rem",
+      }}
+    >
+      <h1
+        style={{
+          fontSize: "1.5rem",
+          marginTop: 0,
+          marginBottom: "1.5rem",
+          display: "flex",
