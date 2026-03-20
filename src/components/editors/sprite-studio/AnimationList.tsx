@@ -48,3 +48,18 @@ export const AnimationList: React.FC<AnimationListProps> = ({
       >
         {animations?.map((a) => (
           <div
+            key={a.id}
+            className={`card ${selectedAnimId === a.id ? "active" : ""}`}
+            style={{
+              minWidth: "184px",
+              cursor: "pointer",
+              padding: "0.5rem",
+              border:
+                selectedAnimId === a.id
+                  ? "2px solid var(--accent)"
+                  : "1px solid #333",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+            onClick={() => onSelectAnim(a.id)}
