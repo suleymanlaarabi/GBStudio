@@ -33,3 +33,18 @@ export const AnimationList: React.FC<AnimationListProps> = ({
             style={{ padding: "4px" }}
             onClick={onAddAnim}
           >
+            <Plus size={16} />
+          </button>
+        )}
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          gap: "0.75rem",
+          overflowX: "auto",
+          paddingBottom: "0.5rem",
+        }}
+      >
+        {animations?.map((a) => (
+          <div
