@@ -15,3 +15,19 @@ const packFlat = (
   [...items].sort((a, b) => getSize(b) - getSize(a)).forEach((m) => {
     const size = getSize(m);
     if (size === 0) return;
+    if (size > ROM_BANK_DATA_BUDGET) {
+      throw new Error(`"${m.map.name}" ${label(m)}: ${size} bytes > one ROM bank (${ROM_BANK_DATA_BUDGET} bytes).`);
+    }
+    let bank = banks.find((b) => b.usedBytes + size <= ROM_BANK_DATA_BUDGET);
+    if (!bank) { bank = { id: startId + banks.length, usedBytes: 0, assetNames: [] }; banks.push(bank); }
+    bank.usedBytes += size;
+    bank.assetNames.push(label(m));
+    setBank(m, bank.id);
+  });
+  return banks;
+};
+
+export const allocateRomBanks = (mapExports: MapExport[]): RomAllocationPlan => {
+  let nextId = 1;
+  const allBanks: RomBank[] = [];
+
