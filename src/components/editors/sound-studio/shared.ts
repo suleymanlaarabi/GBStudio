@@ -18,3 +18,21 @@ export const getSoundIcon = (type: SoundChannelType): LucideIcon => {
   }
 
   return type === "WAVE" ? Waves : Wind;
+};
+
+export const getSoundButtonContent = (type: SoundChannelType) => {
+  if (type === "PULSE1") {
+    return { kind: "label" as const, value: "P1" };
+  }
+
+  if (type === "PULSE2") {
+    return { kind: "label" as const, value: "P2" };
+  }
+
+  return { kind: "icon" as const, value: getSoundIcon(type) };
+};
+
+export const getSelectedSound = (
+  sounds: SoundAsset[],
+  selectedSoundId: string | null,
+) => sounds.find((sound) => sound.id === selectedSoundId);
