@@ -15,3 +15,18 @@ export default defineConfig(async () => ({
     minify: "terser",
     terserOptions: {
       compress: {
+        drop_console: true,
+        drop_debugger: true,
+        passes: 3,
+      },
+      mangle: true,
+      format: { comments: false },
+    },
+    rollupOptions: {
+      output: {
+        manualChunks: undefined,
+      },
+    },
+  },
+
+  server: {
