@@ -19,3 +19,22 @@ const TONE_ICON = {
 export const StatusBar = ({ message, tone, onOpenShortcuts }: StatusBarProps) => {
   const {
     view,
+    tool,
+    mapTool,
+    selection,
+    mapSelection,
+    history,
+    historyIndex,
+  } = useStore();
+
+  const Icon = TONE_ICON[tone];
+  const selectionLabel =
+    view === "map_editor"
+      ? mapSelection.hasSelection
+        ? `Map selection ${mapSelection.width}x${mapSelection.height}`
+        : "No map selection"
+      : selection.hasSelection
+        ? `Tile selection ${selection.width}x${selection.height}`
+        : "No tile selection";
+
+  return (
