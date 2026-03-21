@@ -30,3 +30,31 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onExportToProject,
   onDownload,
   onChooseProjectFolder,
+  onOpenProject,
+  onSaveProject,
+  onSaveProjectAs,
+  projectPath,
+  projectFilePath,
+  onOpenTemplates,
+}) => {
+  const { history, historyIndex, redo, undo, view, setView } = useStore();
+
+  return (
+    <aside
+      className="sidebar"
+      style={{
+        padding: 12,
+      }}
+    >
+      <nav style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
+        <button
+          className={`btn ${view === "tiles" ? "" : "btn-secondary"}`}
+          onClick={() => setView("tiles")}
+          title="Open the tileset editor"
+          style={{
+            textAlign: "left",
+            display: "flex",
+            alignItems: "center",
+            gap: "0.8rem",
+          }}
+        >
