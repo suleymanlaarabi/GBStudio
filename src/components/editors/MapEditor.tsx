@@ -7,3 +7,27 @@ import { MapAssetPanel } from "./map-editor/MapAssetPanel";
 import { LayersPanel } from "./map-editor/LayersPanel";
 import { useMapEditorShortcuts } from "./map-editor/useMapEditorShortcuts";
 import { useMapEditorInteraction } from "./map-editor/useMapEditorInteraction";
+
+export const MapEditor = () => {
+  const {
+    maps,
+    activeMapIndex,
+    tilesets,
+    sprites,
+    activeTileIndex,
+    activeSpriteIndex,
+    setActiveTile,
+    zoom,
+    setZoom,
+    setView,
+    activeTilesetIndex,
+    setActiveTileset,
+    mapTool,
+    setMapTool,
+    mapShapeFilled,
+    setMapShapeFilled,
+    mapSelection,
+    mapClipboard,
+    clearMapSelection,
+    copyMapSelection,
+    cutMapSelection,
