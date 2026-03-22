@@ -13,3 +13,18 @@ export interface ChunkBankData {
 }
 
 export interface WorldRef {
+  bankId: number;
+  chunkVarName: string;
+  byteOffset: number;
+}
+
+export interface MapExport {
+  map: import("../../types").TileMap;
+  safeName: string;
+  tilesSafeName: string;
+  worldSafeName: string;
+  collisionSafeName: string;
+
+  tileBytes: number[][];
+  tileCount: number;
+  tilesBank: number;
