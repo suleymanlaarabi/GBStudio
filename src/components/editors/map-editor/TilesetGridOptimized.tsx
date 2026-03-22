@@ -45,3 +45,47 @@ export const TilesetGridOptimized: React.FC<TilesetGridProps> = ({
   }, [tileset.tiles.length, tileSize, TILES_PER_ROW]);
 
   // Draw static tiles once (separated from dynamic overlay)
+  const drawStaticTiles = useCallback((ctx: CanvasRenderingContext2D) => {
+    if (tilesDrawnRef.current) return;
+    
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    // Clear canvas
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Draw grid (scaled)
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
+    ctx.lineWidth = 1 * SCALE_FACTOR;
+
+    // Horizontal grid lines (scaled)
+    const totalRows = Math.ceil(tileset.tiles.length / TILES_PER_ROW);
+    for (let y = 0; y <= totalRows; y++) {
+      ctx.beginPath();
+      ctx.moveTo(0, y * tileSize * SCALE_FACTOR);
+      ctx.lineTo(canvasWidth, y * tileSize * SCALE_FACTOR);
+      ctx.stroke();
+    }
+
+    // Vertical grid lines (scaled)
+    for (let x = 0; x <= TILES_PER_ROW; x++) {
+      ctx.beginPath();
+      ctx.moveTo(x * tileSize * SCALE_FACTOR, 0);
+      ctx.lineTo(x * tileSize * SCALE_FACTOR, canvasHeight);
+      ctx.stroke();
+    }
+
+    // Draw tiles (scaled)
+    tileset.tiles.forEach((tile, index) => {
+      const gridX = index % TILES_PER_ROW;
+      const gridY = Math.floor(index / TILES_PER_ROW);
+      const startX = gridX * tileSize * SCALE_FACTOR;
+      const startY = gridY * tileSize * SCALE_FACTOR;
+
+      // Draw tile pixels (scaled up)
+      for (let y = 0; y < tileSize; y++) {
+        for (let x = 0; x < tileSize; x++) {
+          ctx.fillStyle = GB_COLORS[tile.data[y]![x] ?? 0];
+          ctx.fillRect(
+            startX + x * SCALE_FACTOR,
