@@ -7,3 +7,20 @@ import { SoundEditorPanel } from "./sound-studio/SoundEditorPanel";
 import { SoundSidebar } from "./sound-studio/SoundSidebar";
 import { SoundStudioStyles } from "./sound-studio/SoundStudioStyles";
 import { getSelectedSound } from "./sound-studio/shared";
+
+export const SoundStudio: React.FC = () => {
+  const {
+    sounds,
+    selectedSoundId,
+    addSound,
+    updateSound,
+    removeSound,
+    setSelectedSoundId,
+  } = useStore();
+  const selectedSound = getSelectedSound(sounds, selectedSoundId);
+
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [soundToDelete, setSoundToDelete] = useState<string | null>(null);
+
+  const handleAddSound = (type: SoundChannelType) => {
+    const name = `SFX ${sounds.length + 1}`;
