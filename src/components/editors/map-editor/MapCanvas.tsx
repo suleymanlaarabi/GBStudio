@@ -255,3 +255,128 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
     }
 
     // 1 pixel per cell — drawImage scales it to screen size
+    const canvas = entry?.canvas ?? document.createElement("canvas");
+    canvas.width = CHUNK_SIZE;
+    canvas.height = CHUNK_SIZE;
+    const ctx2 = canvas.getContext("2d");
+    if (!ctx2) return canvas;
+
+    ctx2.clearRect(0, 0, CHUNK_SIZE, CHUNK_SIZE);
+    ctx2.fillStyle = "rgba(255,60,60,0.38)";
+    for (let ry = 0; ry < CHUNK_SIZE; ry++) {
+      const row = grid[ry];
+      if (!row) continue;
+      for (let rx = 0; rx < CHUNK_SIZE; rx++) {
+        if (row[rx]) ctx2.fillRect(rx, ry, 1, 1);
+      }
+    }
+
+    collisionChunkCache.current.delete(key);
+    collisionChunkCache.current.set(key, { canvas, gridRef: grid });
+
+    if (collisionChunkCache.current.size > MAX_COLL_CHUNK_CACHE) {
+      const oldest = collisionChunkCache.current.keys().next().value;
+      if (oldest !== undefined) collisionChunkCache.current.delete(oldest);
+    }
+
+    return canvas;
+  }, []);
+
+  // --- Dirty frame detection: skip render when nothing changed ---
+  const lastFrameState = useRef({
+    mapRef: null as TileMap | null,
+    cameraX: NaN,
+    cameraY: NaN,
+    zoom: NaN,
+    isDrawing: false,
+    hoverX: NaN,
+    hoverY: NaN,
+    dragX: NaN,
+    dragY: NaN,
+    hasSelection: false,
+    selX: 0, selY: 0, selW: 0, selH: 0,
+    mapShapeFilled: false,
+    mapTool: "" as MapTool | "",
+    width: 0,
+    height: 0,
+  });
+
+  useEffect(() => {
+    const updateDimensions = () => {
+      if (containerRef.current && canvasRef.current) {
+        const w = containerRef.current.clientWidth;
+        const h = containerRef.current.clientHeight;
+        dimensionsRef.current = { width: w, height: h };
+        if (canvasRef.current.width !== w) canvasRef.current.width = w;
+        if (canvasRef.current.height !== h) canvasRef.current.height = h;
+      }
+    };
+    updateDimensions();
+    const resizeObserver = new ResizeObserver(updateDimensions);
+    if (containerRef.current) resizeObserver.observe(containerRef.current);
+    return () => resizeObserver.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === "Space") {
+        isSpacePressed.current = true;
+        if (e.target === document.body) e.preventDefault();
+      }
+    };
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.code === "Space") isSpacePressed.current = false;
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, []);
+
+  const getMapCoords = useCallback(
+    (clientX: number, clientY: number): CellCoords => {
+      if (!containerRef.current) return { x: 0, y: 0 };
+      const rect = containerRef.current.getBoundingClientRect();
+      const worldX = (clientX - rect.left) / unitSizeRef.current + cameraRef.current.x;
+      const worldY = (clientY - rect.top) / unitSizeRef.current + cameraRef.current.y;
+      return { x: Math.floor(worldX), y: Math.floor(worldY) };
+    },
+    [],
+  );
+
+  const handleMouseDownInternal = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (e.button === 1 || (e.button === 0 && isSpacePressed.current)) {
+      isPanningRef.current = true;
+      setIsPanningState(true);
+      lastMousePos.current = { x: e.clientX, y: e.clientY };
+      return;
+    }
+    const coords = getMapCoords(e.clientX, e.clientY);
+    onMouseDown(e, coords);
+  };
+
+  const handleMouseMoveInternal = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (isPanningRef.current) {
+      const dx = e.clientX - lastMousePos.current.x;
+      const dy = e.clientY - lastMousePos.current.y;
+      cameraRef.current = {
+        x: cameraRef.current.x - dx / unitSizeRef.current,
+        y: cameraRef.current.y - dy / unitSizeRef.current,
+      };
+      lastMousePos.current = { x: e.clientX, y: e.clientY };
+      return;
+    }
+    const coords = getMapCoords(e.clientX, e.clientY);
+    onMouseMove(e, coords);
+  };
+
+  const handleMouseUpInternal = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (isPanningRef.current) {
+      isPanningRef.current = false;
+      setIsPanningState(false);
+      return;
+    }
+    onMouseUp(e);
+  };
