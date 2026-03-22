@@ -74,3 +74,39 @@ export const Settings: React.FC = () => {
           marginTop: 0,
           marginBottom: "1.5rem",
           display: "flex",
+          alignItems: "center",
+          gap: "1rem",
+        }}
+      >
+        <Monitor size={24} />
+        Settings
+      </h1>
+
+      {/* Interface Section */}
+      <div style={sectionStyle}>
+        <div style={headerStyle}>
+          <Palette size={20} />
+          Interface
+        </div>
+        <div style={itemStyle}>
+          <div>
+            <div style={{ fontWeight: "500" }}>Color Theme</div>
+            <div style={{ fontSize: "0.85rem", opacity: 0.7 }}>
+              Customize the editor appearance
+            </div>
+          </div>
+          <div style={{ width: "200px" }}>
+            <CustomSelect
+              value="dark"
+              onChange={() => {}}
+              options={[
+                { label: "Dark (Default)", value: "dark" },
+                { label: "Retro Green", value: "retro" },
+                { label: "Light", value: "light", disabled: true },
+              ]}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Shortcuts Section */}
