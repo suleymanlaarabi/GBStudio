@@ -46,3 +46,46 @@ type SelectionStoreState = SelectionSlice & {
   activeTilesetIndex: number;
   commit: () => void;
   tilesets: Tileset[];
+};
+
+const emptySelection: SelectionState = {
+  hasSelection: false,
+  x: 0,
+  y: 0,
+  width: 0,
+  height: 0,
+};
+
+const updateActiveTileData = (
+  tilesets: Tileset[],
+  activeTilesetIndex: number,
+  activeTileIndex: number,
+  data: (GBColor | null)[][],
+): Tileset[] =>
+  tilesets.map((tileset, tilesetIndex) =>
+    tilesetIndex === activeTilesetIndex
+      ? {
+          ...tileset,
+          tiles: tileset.tiles.map((tile, tileIndex) =>
+            tileIndex === activeTileIndex ? { ...tile, data } : tile,
+          ),
+        }
+      : tileset,
+  );
+
+export const createSelectionSlice: StateCreator<
+  SelectionStoreState,
+  [],
+  [],
+  SelectionSlice
+> = (set, get) => ({
+  selection: emptySelection,
+  clipboard: null,
+
+  beginSelection: (x, y) =>
+    set({
+      selection: { hasSelection: true, startX: x, startY: y, x, y, width: 0, height: 0 },
+    }),
+
+  updateSelection: (x, y) => {
+    const { selection } = get();
