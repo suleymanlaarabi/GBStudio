@@ -89,3 +89,47 @@ export const TilesetGridOptimized: React.FC<TilesetGridProps> = ({
           ctx.fillStyle = GB_COLORS[tile.data[y]![x] ?? 0];
           ctx.fillRect(
             startX + x * SCALE_FACTOR,
+            startY + y * SCALE_FACTOR,
+            SCALE_FACTOR,
+            SCALE_FACTOR
+          );
+        }
+      }
+    });
+    
+    tilesDrawnRef.current = true;
+  }, [tileset.tiles, tileSize, TILES_PER_ROW, canvasWidth, canvasHeight]);
+
+  // Draw selection overlay (dynamic)
+  const drawSelectionOverlay = useCallback((ctx: CanvasRenderingContext2D) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    // Clear the overlay area (draw static content first to refresh)
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Redraw static tiles if not drawn yet
+    if (!tilesDrawnRef.current) {
+      drawStaticTiles(ctx);
+    }
+
+    // Draw selection preview (if active)
+    if (isSelecting && selectionPreview && selectionPreview.width > 0 && selectionPreview.height > 0) {
+      const scaledX = selectionPreview.x * SCALE_FACTOR;
+      const scaledY = selectionPreview.y * SCALE_FACTOR;
+      const scaledWidth = selectionPreview.width * SCALE_FACTOR;
+      const scaledHeight = selectionPreview.height * SCALE_FACTOR;
+
+      // Selection border
+      ctx.strokeStyle = "rgba(80, 200, 255, 1)";
+      ctx.lineWidth = 2 * SCALE_FACTOR;
+      ctx.strokeRect(scaledX, scaledY, scaledWidth, scaledHeight);
+
+      // Selection fill
+      ctx.fillStyle = "rgba(80, 200, 255, 0.18)";
+      ctx.fillRect(scaledX, scaledY, scaledWidth, scaledHeight);
+    }
+  }, [isSelecting, selectionPreview, drawStaticTiles]);
+
+  // Main render loop using requestAnimationFrame
+  const render = useCallback(() => {
