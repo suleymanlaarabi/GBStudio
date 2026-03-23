@@ -79,3 +79,42 @@ const TILES = {
   ]) },
   player_walk: { id: "bp-c1", size: 8 as const, data: d([
     [null, null, 3, 3, 3, null, null, null],
+    [null, 3, 2, 2, 2, 3, null, null],
+    [null, 3, 2, 3, 2, 3, null, null],
+    [null, 3, 2, 2, 2, 3, null, null],
+    [null, null, 3, 1, 3, null, null, null],
+    [null, 3, 1, 1, 1, 3, null, null],
+    [null, null, 3, 1, 3, null, null, null],
+    [null, 3, 3, null, 3, 3, null, null],
+  ]) },
+  bird1: { id: "bp-c2", size: 8 as const, data: d([
+    [null, null, null, null, null, null, null, null],
+    [null, 3, null, null, null, 3, null, null],
+    [3, 2, 3, null, 3, 2, 3, null],
+    [3, 2, 2, 3, 2, 2, 3, null],
+    [null, 3, 3, 2, 3, 3, null, null],
+    [null, null, 3, 3, 3, null, null, null],
+    [null, null, null, null, null, null, null, null],
+    [null, null, null, null, null, null, null, null],
+  ]) },
+  bird2: { id: "bp-c3", size: 8 as const, data: d([
+    [null, null, null, null, null, null, null, null],
+    [null, null, null, null, null, null, null, null],
+    [null, null, 3, 3, 3, null, null, null],
+    [3, 3, 2, 2, 2, 3, 3, null],
+    [3, 2, 2, 2, 2, 2, 3, null],
+    [null, 3, 3, 3, 3, 3, null, null],
+    [null, null, null, null, null, null, null, null],
+    [null, null, null, null, null, null, null, null],
+  ]) },
+};
+
+const n = null;
+const G = { tilesetId: TS, tileIndex: 0 };
+const B = { tilesetId: TS, tileIndex: 1 };
+const C = { tilesetId: TS, tileIndex: 2 };
+const Sp = { tilesetId: TS, tileIndex: 3 };
+const Cl = { tilesetId: TS, tileIndex: 4 };
+const F = { tilesetId: TS, tileIndex: 5 };
+
+const CTS = "builtin-platformer-chars";
