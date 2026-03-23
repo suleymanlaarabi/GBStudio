@@ -1,0 +1,11 @@
+import React, { useEffect, useRef, useState } from "react";
+import { Download, Upload, X, Layers, Sparkles } from "lucide-react";
+import { Modal } from "./Modal";
+import { GB_COLORS } from "../../constants/colors";
+import { getAllTemplates, deleteUserTemplate, parseTemplateFile } from "../../services/templateService";
+import { CHUNK_SIZE } from "../../types/map";
+import { useStore } from "../../store";
+import type { Template, TemplateCategory } from "../../types/template";
+import type { Tileset } from "../../types";
+    importTemplate(template);
+        importTemplate(template);
