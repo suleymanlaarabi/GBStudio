@@ -41,3 +41,24 @@ export function applySelectionContent(
   content: PixelData,
   targetX: number,
   targetY: number,
+): PixelData {
+  const newData = data.map((row) => [...row]);
+  const tileSize = data.length;
+
+  for (let y = 0; y < content.length; y++) {
+    for (let x = 0; x < content[y]!.length; x++) {
+      const destX = targetX + x;
+      const destY = targetY + y;
+
+      if (destX >= 0 && destX < tileSize && destY >= 0 && destY < tileSize) {
+        newData[destY]![destX] = content[y]![x] ?? null;
+      }
+    }
+  }
+
+  return newData;
+}
+
+export function clearArea(
+  data: PixelData,
+  selection: SelectionBounds,
