@@ -177,3 +177,47 @@ export const TilesetGridOptimized: React.FC<TilesetGridProps> = ({
     const y = Math.floor((event.clientY - rect.top) / SCALE_FACTOR / tileSize);
     
     return { x, y };
+  }, [tileSize]);
+
+  // Mouse handlers
+  const handleMouseDown = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
+    const coords = getTileCoords(event);
+    if (!coords) return;
+    
+    const { x, y } = coords;
+    
+    setIsSelecting(true);
+    setStartSelectionPos({ x, y });
+    setSelectionPreview({ x, y, width: 1, height: 1 });
+    
+    // Call the callback but don't update store yet
+    onTileSelectionStart(x, y);
+  }, [getTileCoords, onTileSelectionStart]);
+
+  const handleMouseMove = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!isSelecting || !startSelectionPos) return;
+    
+    const coords = getTileCoords(event);
+    if (!coords) return;
+    
+    const { x: currentX, y: currentY } = coords;
+    const { x: startX, y: startY } = startSelectionPos;
+    
+    // Calculate selection bounds
+    const minX = Math.min(startX, currentX);
+    const maxX = Math.max(startX, currentX);
+    const minY = Math.min(startY, currentY);
+    const maxY = Math.max(startY, currentY);
+    
+    const width = maxX - minX + 1;
+    const height = maxY - minY + 1;
+    
+    // Update local preview state (fast, no store updates)
+    setSelectionPreview({ x: minX, y: minY, width, height });
+    
+    // Only update store periodically (throttled) for smoother performance
+    if (Math.abs(currentX - maxX) % 2 === 0 && Math.abs(currentY - maxY) % 2 === 0) {
+      onTileSelectionUpdate(currentX, currentY);
+    }
+  }, [isSelecting, startSelectionPos, getTileCoords, onTileSelectionUpdate]);
+
