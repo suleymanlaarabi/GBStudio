@@ -380,3 +380,128 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
     }
     onMouseUp(e);
   };
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleNativeWheel = (e: WheelEvent) => {
+      e.preventDefault();
+
+      if (e.ctrlKey || e.metaKey) {
+        const zoomSpeed = 0.0015;
+        const delta = -e.deltaY;
+        const oldZoom = zoomRef.current;
+        const newZoom = Math.max(0.1, Math.min(30, oldZoom + delta * zoomSpeed * oldZoom));
+
+        if (newZoom !== oldZoom) {
+          const rect = container.getBoundingClientRect();
+          const mouseX = e.clientX - rect.left;
+          const mouseY = e.clientY - rect.top;
+
+          const worldMouseX = mouseX / (latestProps.current.tileSize * oldZoom) + cameraRef.current.x;
+          const worldMouseY = mouseY / (latestProps.current.tileSize * oldZoom) + cameraRef.current.y;
+
+          setZoom(newZoom);
+          zoomRef.current = newZoom;
+          const newUnitSize = latestProps.current.tileSize * newZoom;
+          unitSizeRef.current = newUnitSize;
+
+          cameraRef.current = {
+            x: worldMouseX - mouseX / newUnitSize,
+            y: worldMouseY - mouseY / newUnitSize,
+          };
+        }
+      } else {
+        cameraRef.current = {
+          x: cameraRef.current.x + e.deltaX / unitSizeRef.current,
+          y: cameraRef.current.y + e.deltaY / unitSizeRef.current,
+        };
+      }
+    };
+
+    container.addEventListener("wheel", handleNativeWheel, { passive: false });
+    return () => container.removeEventListener("wheel", handleNativeWheel);
+  }, [setZoom]);
+
+  const render = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const {
+      map: curMap,
+      tilesets: curTilesets,
+      sprites: curSprites,
+      activeSpriteIndex: curActiveSpriteIndex,
+      activeLayerIsWindow: curActiveLayerIsWindow,
+      isDrawing: curIsDrawing,
+      mapTool: curMapTool,
+      mapSelection: curMapSelection,
+      mapShapeFilled: curMapShapeFilled,
+      tileSize: curTileSize,
+    } = latestProps.current;
+    if (!curMap) return;
+
+    const curUnitSize = unitSizeRef.current;
+    const { width: curW, height: curH } = dimensionsRef.current;
+    const curCamera = cameraRef.current;
+    const curZoom = zoomRef.current;
+    const hc = hoverCellRef.current;
+    const ds = dragStartRef.current;
+
+    // --- Dirty check: skip frame if nothing changed ---
+    const lf = lastFrameState.current;
+    if (
+      lf.mapRef === curMap &&
+      lf.cameraX === curCamera.x &&
+      lf.cameraY === curCamera.y &&
+      lf.zoom === curZoom &&
+      lf.isDrawing === curIsDrawing &&
+      lf.hoverX === (hc?.x ?? NaN) &&
+      lf.hoverY === (hc?.y ?? NaN) &&
+      lf.dragX === (ds?.x ?? NaN) &&
+      lf.dragY === (ds?.y ?? NaN) &&
+      lf.hasSelection === curMapSelection.hasSelection &&
+      lf.selX === curMapSelection.x &&
+      lf.selY === curMapSelection.y &&
+      lf.selW === curMapSelection.width &&
+      lf.selH === curMapSelection.height &&
+      lf.mapShapeFilled === curMapShapeFilled &&
+      lf.mapTool === curMapTool &&
+      lf.width === curW &&
+      lf.height === curH
+    ) {
+      return;
+    }
+
+    lastFrameState.current = {
+      mapRef: curMap,
+      cameraX: curCamera.x,
+      cameraY: curCamera.y,
+      zoom: curZoom,
+      isDrawing: curIsDrawing,
+      hoverX: hc?.x ?? NaN,
+      hoverY: hc?.y ?? NaN,
+      dragX: ds?.x ?? NaN,
+      dragY: ds?.y ?? NaN,
+      hasSelection: curMapSelection.hasSelection,
+      selX: curMapSelection.x,
+      selY: curMapSelection.y,
+      selW: curMapSelection.width,
+      selH: curMapSelection.height,
+      mapShapeFilled: curMapShapeFilled,
+      mapTool: curMapTool,
+      width: curW,
+      height: curH,
+    };
+
+    // Clear caches when map switches
+    if (curMap.id !== lastMapIdRef.current) {
+      chunkCanvasCache.current.clear();
+      collisionChunkCache.current.clear();
+      tilesetCache.current.clear();
+      lastMapIdRef.current = curMap.id;
+    }
+
