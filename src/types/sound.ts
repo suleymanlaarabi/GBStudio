@@ -14,3 +14,19 @@ export interface Pulse1Channel {
 
 export interface Pulse2Channel {
   duty: 0 | 1 | 2 | 3;
+  length: number;
+  initialVolume: number;
+  envelopeDirection: "UP" | "DOWN";
+  envelopeSweep: number;
+  frequency: number;
+}
+
+export interface WaveChannel {
+  dacEnabled: boolean;
+  length: number; // 0-255
+  volumeCode: 0 | 1 | 2 | 3; // 0%, 100%, 50%, 25%
+  frequency: number; // 0-2047
+  waveData: number[]; // 32 nibbles (0-15)
+}
+
+export interface NoiseChannel {
