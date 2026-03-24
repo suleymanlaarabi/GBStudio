@@ -41,3 +41,38 @@ const MapPreview: React.FC<{ map: TileMap; tilesets: Tileset[] }> = ({
         chunk.data.forEach((row, localY) => {
           row.forEach((cell, localX) => {
             if (!cell) return;
+            const globalX = chunk.x * CHUNK_SIZE + localX;
+            const globalY = chunk.y * CHUNK_SIZE + localY;
+
+            // Only render if within initial viewport bounds for preview
+            if (globalX >= map.width || globalY >= map.height || globalX < 0 || globalY < 0) return;
+
+            const ts = tilesets.find((t) => t.id === cell.tilesetId);
+            const tile = ts?.tiles[cell.tileIndex];
+            if (!tile) return;
+            tile.data.forEach((tRow, ty) =>
+              tRow.forEach((color, tx) => {
+                if (color === null || color === undefined) return;
+                ctx.fillStyle = GB_COLORS[color];
+                ctx.fillRect(
+                  globalX * cellW + tx * pW,
+                  globalY * cellH + ty * pH,
+                  pW,
+                  pH
+                );
+              })
+            );
+          });
+        });
+      });
+    }
+  }, [map, tilesets]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      width={200}
+      height={180}
+      style={{ width: "100%", height: "100%", background: "#000" }}
+    />
+  );
