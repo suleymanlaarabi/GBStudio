@@ -31,3 +31,27 @@ export const MapEditor = () => {
     clearMapSelection,
     copyMapSelection,
     cutMapSelection,
+    pasteMapSelection,
+    deleteMapSelection,
+    activeLayerIsWindow,
+  } = useStore();
+
+  const map = maps[activeMapIndex];
+  const activeTileset = tilesets[activeTilesetIndex];
+  const tileSize = map?.tileSize || 8;
+  const unitSize = tileSize * zoom;
+
+  const {
+    isDrawing,
+    dragStart,
+    hoverCell,
+    handleMouseDown,
+    handleMouseMove,
+    handleMouseUp,
+    handleMouseLeave,
+  } = useMapEditorInteraction({
+    map,
+    activeMapIndex,
+    activeTileset,
+    activeTileIndex,
+  });
