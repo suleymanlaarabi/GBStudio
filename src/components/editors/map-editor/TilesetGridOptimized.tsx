@@ -133,3 +133,47 @@ export const TilesetGridOptimized: React.FC<TilesetGridProps> = ({
 
   // Main render loop using requestAnimationFrame
   const render = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    drawSelectionOverlay(ctx);
+    
+    rafRef.current = requestAnimationFrame(render);
+  }, [drawSelectionOverlay]);
+
+  // Start/stop render loop
+  useEffect(() => {
+    rafRef.current = requestAnimationFrame(render);
+    
+    return () => {
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
+    };
+  }, [render]);
+
+  // Redraw static tiles when dependencies change
+  useEffect(() => {
+    tilesDrawnRef.current = false;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    
+    drawStaticTiles(ctx);
+  }, [drawStaticTiles]);
+
+  // Get tile coordinates from mouse event
+  const getTileCoords = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return null;
+    
+    const rect = canvas.getBoundingClientRect();
+    const x = Math.floor((event.clientX - rect.left) / SCALE_FACTOR / tileSize);
+    const y = Math.floor((event.clientY - rect.top) / SCALE_FACTOR / tileSize);
+    
+    return { x, y };
