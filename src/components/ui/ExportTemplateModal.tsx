@@ -49,3 +49,49 @@ export const ExportTemplateModal: React.FC<ExportTemplateModalProps> = ({
       else next.add(id);
       return next;
     });
+  };
+
+  const getIncludedTilesets = (): Tileset[] => {
+    const ids = new Set<string>();
+    maps
+      .filter((m) => selectedMapIds.has(m.id))
+      .forEach((map) =>
+        map.layers.forEach((layer) =>
+          Object.values(layer.chunks).forEach((chunk) =>
+            chunk.data.forEach((row) =>
+              row.forEach((cell) => { if (cell) ids.add(cell.tilesetId); })
+            )
+          )
+        )
+      );
+    sprites
+      .filter((s) => selectedSpriteIds.has(s.id))
+      .forEach((sprite) =>
+        sprite.animations.forEach((anim) =>
+          anim.frames.forEach((f) => ids.add(f.tilesetId))
+        )
+      );
+    return tilesets.filter((ts) => ids.has(ts.id));
+  };
+
+  const canExport = name.trim() && selectedMapIds.size > 0;
+  const includedTilesets = getIncludedTilesets();
+
+  const handleExport = () => {
+    if (!canExport) return;
+    const template = buildTemplateFromSelection(
+      name.trim(),
+      description.trim(),
+      category,
+      [...selectedMapIds],
+      [...selectedSpriteIds],
+      maps,
+      tilesets,
+      sprites,
+      sounds,
+    );
+    saveUserTemplate(template);
+    exportTemplateAsFile(template);
+    onClose();
+    setName("");
+    setDescription("");
