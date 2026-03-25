@@ -55,3 +55,27 @@ export const MapEditor = () => {
     activeTileset,
     activeTileIndex,
   });
+
+  useMapEditorShortcuts({ hoverCell });
+
+  useEffect(() => {
+    if (!map) return;
+
+    const activeTileset = tilesets[activeTilesetIndex];
+    if (!activeTileset || activeTileset.tileSize !== map.tileSize) {
+      const compatibleIndex = tilesets.findIndex(
+        (ts) => ts.tileSize === map.tileSize,
+      );
+      if (compatibleIndex !== -1) {
+        setActiveTileset(compatibleIndex);
+      }
+    }
+  }, [map, tilesets, activeTilesetIndex, setActiveTileset]);
+
+  if (!map) return <div>Map not found</div>;
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        gap: "1.5rem",
