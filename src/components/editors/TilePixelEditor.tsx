@@ -61,3 +61,59 @@ export const TilePixelEditor: React.FC = () => {
           event.preventDefault();
           deleteSelection();
         },
+      },
+      {
+        matcher: (event) => event.key === "Escape" && selection.hasSelection,
+        handler: () => {
+          setIsMovingSelection(false);
+          setIsSelecting(false);
+          clearSelection();
+          setPreviewData(null);
+        },
+      },
+    ],
+  });
+
+  const getTileCoords = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return null;
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: Math.floor((e.clientX - rect.left) / pixelSize),
+      y: Math.floor((e.clientY - rect.top) / pixelSize),
+    };
+  }, [pixelSize]);
+
+  const getPreciseTileCoords = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return null;
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: (e.clientX - rect.left) / pixelSize,
+      y: (e.clientY - rect.top) / pixelSize,
+    };
+  }, [pixelSize]);
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const coords = getTileCoords(e);
+    if (!coords || !tile) return;
+    const { x, y } = coords;
+
+    setIsDrawing(true);
+
+    if (tool === "select") {
+      if (selection.hasSelection && isPointInSelection(x, y, selection)) {
+        setIsMovingSelection(true);
+        setMoveOffset({ x: x - selection.x, y: y - selection.y });
+        setOriginalSelectionPos({ x: selection.x, y: selection.y });
+      } else {
+        setIsSelecting(true);
+        beginSelection(x, y);
+        setStartPos({ x, y });
+      }
+      return;
+    }
+
+    if (tool === "square" || tool === "circle") {
+      const preciseCoords = getPreciseTileCoords(e);
+      if (preciseCoords) setStartPos(preciseCoords);
