@@ -38,3 +38,23 @@ export const StatusBar = ({ message, tone, onOpenShortcuts }: StatusBarProps) =>
         : "No tile selection";
 
   return (
+    <footer className="status-bar">
+      <div className={`status-pill status-pill-${tone}`}>
+        <Icon size={14} className={tone === "busy" ? "status-spin" : undefined} />
+        <span>{message}</span>
+      </div>
+
+      <div className="status-meta">
+        <span>View: {view}</span>
+        <span>Tool: {view === "map_editor" ? mapTool : tool}</span>
+        <span>{selectionLabel}</span>
+        <span>History: {historyIndex + 1}/{Math.max(history.length, 1)}</span>
+      </div>
+
+      <button className="btn btn-secondary status-shortcuts" onClick={onOpenShortcuts} title="Show keyboard shortcuts">
+        <Keyboard size={14} />
+        Shortcuts
+      </button>
+    </footer>
+  );
+};
