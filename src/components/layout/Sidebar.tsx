@@ -58,3 +58,31 @@ export const Sidebar: React.FC<SidebarProps> = ({
             gap: "0.8rem",
           }}
         >
+          <Grid3X3 size={20} />
+          Tileset Editor
+        </button>
+        <button
+          className={`btn ${view === "gallery" || view === "map_editor" ? "" : "btn-secondary"}`}
+          onClick={() => setView("gallery")}
+          title="Open the map gallery"
+          style={{
+            textAlign: "left",
+            display: "flex",
+            alignItems: "center",
+            gap: "0.8rem",
+          }}
+        >
+          <MapIcon size={20} />
+          World Maps
+        </button>
+        <button
+          className={`btn ${view === "studio" ? "" : "btn-secondary"}`}
+          onClick={() => setView("studio")}
+          title="Open the sprite studio"
+          style={{
+            textAlign: "left",
+            display: "flex",
+            alignItems: "center",
+            gap: "0.8rem",
+          }}
+        >
