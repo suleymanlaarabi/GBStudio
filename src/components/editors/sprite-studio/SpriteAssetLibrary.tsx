@@ -39,3 +39,21 @@ const TileThumbnail: React.FC<{
         if (c === null || c === undefined) return;
         ctx.fillStyle = GB_COLORS[c];
         ctx.fillRect(
+          Math.floor(offset + x * scale),
+          Math.floor(offset + y * scale),
+          scale,
+          scale,
+        );
+      }),
+    );
+  }, [tile]);
+
+  return (
+    <div
+      className={`tileset-item ${isActive ? "active" : ""}`}
+      onClick={onClick}
+    >
+      <canvas
+        ref={canvasRef}
+        width={64}
+        height={64}
