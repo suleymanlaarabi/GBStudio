@@ -221,3 +221,51 @@ export const TilesetGridOptimized: React.FC<TilesetGridProps> = ({
     }
   }, [isSelecting, startSelectionPos, getTileCoords, onTileSelectionUpdate]);
 
+  const handleMouseUp = useCallback(() => {
+    if (!isSelecting) return;
+    
+    // Update store with final selection when selection ends
+    if (selectionPreview && selectionPreview.width > 0 && selectionPreview.height > 0) {
+      onTileSelectionEnd();
+    }
+    
+    // Reset local state
+    setIsSelecting(false);
+    setStartSelectionPos(null);
+    setSelectionPreview(null);
+  }, [isSelecting, selectionPreview, onTileSelectionEnd]);
+
+  // Handle mouse leave (same as mouse up)
+  const handleMouseLeave = useCallback(() => {
+    handleMouseUp();
+  }, [handleMouseUp]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
+    };
+  }, []);
+
+  return (
+    <div ref={containerRef} style={{ overflow: "auto", maxHeight: "400px" }}>
+      <canvas
+        ref={canvasRef}
+        width={canvasWidth}
+        height={canvasHeight}
+        style={{
+          imageRendering: "pixelated",
+          display: "block",
+          background: "#000",
+          cursor: "crosshair",
+        }}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseLeave}
+      />
+    </div>
+  );
+};
