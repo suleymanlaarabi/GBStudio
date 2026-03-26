@@ -630,3 +630,133 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
           ctx.scale(inst.flipH ? -1 : 1, inst.flipV ? -1 : 1);
           const drawX = inst.flipH ? -inst.x * curUnitSize - curUnitSize : inst.x * curUnitSize;
           const drawY = inst.flipV ? -inst.y * curUnitSize - curUnitSize : inst.y * curUnitSize;
+          ctx.drawImage(tsCanvas, sx, sy, curTileSize, curTileSize, drawX, drawY, curUnitSize, curUnitSize);
+        } else {
+          ctx.drawImage(tsCanvas, sx, sy, curTileSize, curTileSize, inst.x * curUnitSize, inst.y * curUnitSize, curUnitSize, curUnitSize);
+        }
+        // Highlight selected instance
+        if (inst.id === null) {
+          ctx.strokeStyle = "rgba(255,220,0,0.9)";
+          ctx.lineWidth = 2;
+          ctx.strokeRect(inst.x * curUnitSize + 1, inst.y * curUnitSize + 1, curUnitSize - 2, curUnitSize - 2);
+        }
+        ctx.restore();
+      }
+    }
+
+    // Ghost preview for sprite_place tool
+    if (curMapTool === "sprite_place" && hc) {
+      const spriteAsset = curSprites[curActiveSpriteIndex];
+      if (spriteAsset) {
+        const anim = spriteAsset.animations[0];
+        if (anim && anim.frames.length > 0) {
+          const frame = anim.frames[0]!;
+          const ts = tilesetMap.get(frame.tilesetId);
+          if (ts) {
+            const tsCanvas = getTilesetCanvas(ts, curTileSize);
+            const sx = (frame.tileIndex % 16) * curTileSize;
+            const sy = Math.floor(frame.tileIndex / 16) * curTileSize;
+            ctx.globalAlpha = 0.55;
+            ctx.drawImage(tsCanvas, sx, sy, curTileSize, curTileSize, hc.x * curUnitSize, hc.y * curUnitSize, curUnitSize, curUnitSize);
+            ctx.globalAlpha = 1;
+          }
+        }
+      }
+    }
+
+    // Tools and selection overlays
+    if (curIsDrawing && ds && hc) {
+      const bounds = normalizeBounds(ds, hc);
+      if (curMapTool === "rectangle")
+        drawSelectionOverlay(ctx, bounds, curUnitSize, "rgba(255,255,255,0.9)", curMapShapeFilled ? "rgba(255,255,255,0.18)" : undefined);
+      else if (curMapTool === "line")
+        drawLineOverlay(ctx, ds, hc, curUnitSize);
+      else if (curMapTool === "select")
+        drawSelectionOverlay(ctx, bounds, curUnitSize, "rgba(80,200,255,1)", "rgba(80,200,255,0.18)");
+    } else if (curMapSelection.hasSelection) {
+      drawSelectionOverlay(ctx, curMapSelection, curUnitSize, "rgba(80,200,255,1)", "rgba(80,200,255,0.18)");
+    }
+
+    ctx.restore();
+
+    // --- Window layer (screen-space, rendered after world transform is removed) ---
+    if (curMap.windowLayer?.enabled && curActiveLayerIsWindow) {
+      const wl = curMap.windowLayer;
+      const wOffX = wl.wx * curUnitSize;
+      const wOffY = wl.wy * curUnitSize;
+      ctx.save();
+      ctx.translate(wOffX, wOffY);
+      ctx.imageSmoothingEnabled = false;
+
+      // Tinted background for window area
+      ctx.fillStyle = "rgba(0,0,60,0.35)";
+      ctx.fillRect(0, 0, curW - wOffX, curH - wOffY);
+
+      // Draw window layer chunks in screen-space (not world-space)
+      const wStartCX = 0;
+      const wStartCY = 0;
+      const wEndCX = Math.ceil((curW - wOffX) / chunkDestSize);
+      const wEndCY = Math.ceil((curH - wOffY) / chunkDestSize);
+
+      for (let cy = wStartCY; cy <= wEndCY; cy++) {
+        for (let cx = wStartCX; cx <= wEndCX; cx++) {
+          const chunk = wl.layer.chunks[`${cx},${cy}`];
+          if (!chunk) continue;
+          const chunkCanvas = getChunkCanvas(wl.layer.id, chunk, cx, cy, curTileSize, tilesetMap);
+          ctx.drawImage(chunkCanvas, cx * chunkDestSize, cy * chunkDestSize, chunkDestSize, chunkDestSize);
+        }
+      }
+
+      // Window layer border
+      ctx.strokeStyle = "rgba(100,180,255,0.6)";
+      ctx.lineWidth = 2;
+      ctx.setLineDash([4, 4]);
+      ctx.strokeRect(0, 0, curW - wOffX, curH - wOffY);
+      ctx.setLineDash([]);
+
+      ctx.restore();
+    }
+  }, [getTilesetCanvas, getChunkCanvas, getCollisionChunkCanvas]);
+
+  // Main RAF loop
+  useEffect(() => {
+    let frameId: number;
+    const loop = () => {
+      render();
+      frameId = requestAnimationFrame(loop);
+    };
+    frameId = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(frameId);
+  }, [render]);
+
+  return (
+    <div
+      ref={containerRef}
+      className="map-editor-container"
+      style={{
+        flex: 1,
+        maxHeight: "400px",
+        minHeight: "480px",
+        overflow: "hidden",
+        background: "#111",
+        position: "relative",
+        border: "1px solid #333",
+        borderRadius: "4px",
+      }}
+    >
+      <canvas
+        ref={canvasRef}
+        style={{
+          cursor: isPanningState ? "grabbing" : getMapCursor(mapTool, isDrawing),
+          imageRendering: "pixelated",
+          display: "block",
+        }}
+        onMouseDown={handleMouseDownInternal}
+        onMouseMove={handleMouseMoveInternal}
+        onMouseUp={handleMouseUpInternal}
+        onMouseLeave={onMouseLeave}
+        onContextMenu={(e) => e.preventDefault()}
+      />
+    </div>
+  );
+};
