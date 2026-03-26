@@ -62,3 +62,24 @@ export function applySelectionContent(
 export function clearArea(
   data: PixelData,
   selection: SelectionBounds,
+): PixelData {
+  const newData = data.map((row) => [...row]);
+  const tileSize = data.length;
+  const startX = Math.max(0, Math.min(selection.x, tileSize));
+  const startY = Math.max(0, Math.min(selection.y, tileSize));
+  const endX = Math.max(0, Math.min(selection.x + selection.width, tileSize));
+  const endY = Math.max(0, Math.min(selection.y + selection.height, tileSize));
+
+  for (let y = startY; y < endY; y++) {
+    for (let x = startX; x < endX; x++) {
+      newData[y]![x] = null;
+    }
+  }
+
+  return newData;
+}
+
+export function moveArea(
+  data: PixelData,
+  selection: SelectionBounds,
+  deltaX: number,
