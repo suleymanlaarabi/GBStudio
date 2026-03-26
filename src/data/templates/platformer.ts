@@ -118,3 +118,42 @@ const Cl = { tilesetId: TS, tileIndex: 4 };
 const F = { tilesetId: TS, tileIndex: 5 };
 
 const CTS = "builtin-platformer-chars";
+
+export const PLATFORMER_TEMPLATE: Template = {
+  id: "builtin-platformer",
+  name: "Platformer",
+  description: "Dynamic platformer level with a player character, animated enemies, and collectibles.",
+  category: "platformer",
+  isBuiltin: true,
+  createdAt: "2024-01-01T00:00:00.000Z",
+  tilesets: [
+    {
+      id: TS,
+      name: "Platformer Terrain",
+      tileSize: 8,
+      tiles: [TILES.ground, TILES.brick, TILES.coin, TILES.spike, TILES.cloud, TILES.flag],
+      layout: {
+        columns: 3,
+        positions: {
+          "bp-t0": { x: 0, y: 0 },
+          "bp-t1": { x: 1, y: 0 },
+          "bp-t2": { x: 2, y: 0 },
+          "bp-t3": { x: 0, y: 1 },
+          "bp-t4": { x: 1, y: 1 },
+          "bp-t5": { x: 2, y: 1 },
+        },
+      },
+    },
+    {
+      id: CTS,
+      name: "Characters & Enemies",
+      tileSize: 8,
+      tiles: [TILES.player_idle, TILES.player_walk, TILES.bird1, TILES.bird2],
+      layout: {
+        columns: 2,
+        positions: {
+          "bp-c0": { x: 0, y: 0 },
+          "bp-c1": { x: 1, y: 0 },
+          "bp-c2": { x: 0, y: 1 },
+          "bp-c3": { x: 1, y: 1 },
+        },
