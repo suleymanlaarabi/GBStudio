@@ -89,3 +89,46 @@ export const createSelectionSlice: StateCreator<
 
   updateSelection: (x, y) => {
     const { selection } = get();
+    if (!selection.hasSelection || selection.startX === undefined || selection.startY === undefined) return;
+    
+    set({
+      selection: { 
+        ...selection,
+        ...normalizeSelection(selection.startX, selection.startY, x, y) 
+      },
+    });
+  },
+
+  endSelection: () => {
+    const { selection } = get();
+    if (!(selection.hasSelection && selection.width > 0 && selection.height > 0)) {
+      set({ selection: emptySelection });
+    }
+    get().commit();
+  },
+
+  clearSelection: () => set({ selection: emptySelection }),
+
+  selectAll: () => {
+    const { tilesets, activeTilesetIndex, activeTileIndex } = get();
+    const tile = tilesets[activeTilesetIndex]?.tiles[activeTileIndex];
+    if (!tile) return;
+    set({ selection: { hasSelection: true, ...selectAll(tile.size) } });
+  },
+
+  copySelection: () => {
+    const { tilesets, activeTilesetIndex, activeTileIndex, selection } = get();
+    if (!selection.hasSelection) return;
+    const tile = tilesets[activeTilesetIndex]?.tiles[activeTileIndex];
+    if (!tile) return;
+    set({ clipboard: copySelectionContent(tile.data, selection) });
+  },
+
+  cutSelection: () => {
+    const { tilesets, activeTilesetIndex, activeTileIndex, selection } = get();
+    if (!selection.hasSelection) return;
+    const tile = tilesets[activeTilesetIndex]?.tiles[activeTileIndex];
+    if (!tile) return;
+
+    const result = cutSelectionContent(tile.data, selection);
+    set({
