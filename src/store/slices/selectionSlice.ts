@@ -132,3 +132,46 @@ export const createSelectionSlice: StateCreator<
 
     const result = cutSelectionContent(tile.data, selection);
     set({
+      clipboard: result.clipboard,
+      tilesets: updateActiveTileData(tilesets, activeTilesetIndex, activeTileIndex, result.data),
+    });
+    get().commit();
+  },
+
+  pasteSelection: (x, y) => {
+    const { tilesets, activeTilesetIndex, activeTileIndex, clipboard } = get();
+    if (!clipboard) return;
+    const tile = tilesets[activeTilesetIndex]?.tiles[activeTileIndex];
+    if (!tile) return;
+
+    const data = pasteSelectionContent(tile.data, clipboard, x, y);
+    set({
+      tilesets: updateActiveTileData(tilesets, activeTilesetIndex, activeTileIndex, data),
+    });
+    get().commit();
+  },
+
+  deleteSelection: () => {
+    const { tilesets, activeTilesetIndex, activeTileIndex, selection } = get();
+    if (!selection.hasSelection) return;
+    const tile = tilesets[activeTilesetIndex]?.tiles[activeTileIndex];
+    if (!tile) return;
+
+    const data = deleteSelectionContent(tile.data, selection);
+    set({
+      tilesets: updateActiveTileData(tilesets, activeTilesetIndex, activeTileIndex, data),
+      selection: emptySelection,
+    });
+    get().commit();
+  },
+
+  moveSelection: (deltaX, deltaY) => {
+    const { tilesets, activeTilesetIndex, activeTileIndex, selection } = get();
+    if (!selection.hasSelection) return;
+    const tile = tilesets[activeTilesetIndex]?.tiles[activeTileIndex];
+    if (!tile) return;
+
+    const moved = moveSelectionContent(tile.data, selection, deltaX, deltaY);
+    if (!moved) return;
+
+    set({
