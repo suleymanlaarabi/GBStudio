@@ -505,3 +505,128 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
       lastMapIdRef.current = curMap.id;
     }
 
+    // Clear
+    ctx.fillStyle = "#1a1a1a";
+    ctx.fillRect(0, 0, curW, curH);
+
+    ctx.save();
+    ctx.translate(
+      -Math.round(curCamera.x * curUnitSize),
+      -Math.round(curCamera.y * curUnitSize),
+    );
+    ctx.imageSmoothingEnabled = false;
+
+    const startX = Math.floor(curCamera.x);
+    const startY = Math.floor(curCamera.y);
+    const endX = Math.ceil(curCamera.x + curW / curUnitSize);
+    const endY = Math.ceil(curCamera.y + curH / curUnitSize);
+
+    const startChunkX = Math.floor(startX / CHUNK_SIZE);
+    const startChunkY = Math.floor(startY / CHUNK_SIZE);
+    const endChunkX = Math.floor(endX / CHUNK_SIZE);
+    const endChunkY = Math.floor(endY / CHUNK_SIZE);
+
+    // Build tileset lookup
+    const tilesetMap = new Map<string, Tileset>();
+    curTilesets.forEach((ts) => tilesetMap.set(ts.id, ts));
+
+    const chunkDestSize = CHUNK_SIZE * curUnitSize;
+
+    // --- Tile layers: one drawImage per chunk instead of per tile ---
+    for (const layer of curMap.layers) {
+      if (!layer.visible) continue;
+      for (let cy = startChunkY - 1; cy <= endChunkY + 1; cy++) {
+        for (let cx = startChunkX - 1; cx <= endChunkX + 1; cx++) {
+          const chunk = layer.chunks[`${cx},${cy}`];
+          if (!chunk) continue;
+
+          const chunkCanvas = getChunkCanvas(layer.id, chunk, cx, cy, curTileSize, tilesetMap);
+          ctx.drawImage(
+            chunkCanvas,
+            cx * CHUNK_SIZE * curUnitSize,
+            cy * CHUNK_SIZE * curUnitSize,
+            chunkDestSize,
+            chunkDestSize,
+          );
+        }
+      }
+    }
+
+    // Grid — single batched path
+    if (curZoom > 3) {
+      ctx.strokeStyle = "rgba(255,255,255,0.06)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let x = startX; x <= endX + 1; x++) {
+        ctx.moveTo(x * curUnitSize, startY * curUnitSize);
+        ctx.lineTo(x * curUnitSize, (endY + 1) * curUnitSize);
+      }
+      for (let y = startY; y <= endY + 1; y++) {
+        ctx.moveTo(startX * curUnitSize, y * curUnitSize);
+        ctx.lineTo((endX + 1) * curUnitSize, y * curUnitSize);
+      }
+      ctx.stroke();
+    }
+
+    // --- Collision overlay: one drawImage per chunk (16×16→screen) ---
+    if (curMap.collisionData) {
+      for (let cy = startChunkY - 1; cy <= endChunkY + 1; cy++) {
+        for (let cx = startChunkX - 1; cx <= endChunkX + 1; cx++) {
+          const grid = curMap.collisionData[`${cx},${cy}`];
+          if (!grid) continue;
+
+          const collCanvas = getCollisionChunkCanvas(grid, cx, cy);
+          ctx.drawImage(
+            collCanvas,
+            cx * CHUNK_SIZE * curUnitSize,
+            cy * CHUNK_SIZE * curUnitSize,
+            chunkDestSize,
+            chunkDestSize,
+          );
+        }
+      }
+    }
+
+    // Camera spawn marker
+    if (curMap.cameraSpawn) {
+      const sx = curMap.cameraSpawn.x;
+      const sy = curMap.cameraSpawn.y;
+      ctx.fillStyle = "rgba(255,220,0,0.5)";
+      ctx.fillRect(sx * curUnitSize, sy * curUnitSize, curUnitSize, curUnitSize);
+      ctx.strokeStyle = "#ffe000";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(sx * curUnitSize + 1, sy * curUnitSize + 1, curUnitSize - 2, curUnitSize - 2);
+      const cx2 = sx * curUnitSize + curUnitSize / 2;
+      const cy2 = sy * curUnitSize + curUnitSize / 2;
+      const arm = curUnitSize * 0.35;
+      ctx.beginPath();
+      ctx.moveTo(cx2 - arm, cy2);
+      ctx.lineTo(cx2 + arm, cy2);
+      ctx.moveTo(cx2, cy2 - arm);
+      ctx.lineTo(cx2, cy2 + arm);
+      ctx.stroke();
+    }
+
+    // --- Sprite instances ---
+    if (curMap.spriteInstances && curMap.spriteInstances.length > 0) {
+      for (const inst of curMap.spriteInstances) {
+        const spriteAsset = curSprites.find((s) => s.id === inst.spriteAssetId);
+        if (!spriteAsset) continue;
+        const anim = spriteAsset.animations.find((a) => a.id === inst.animationId) ?? spriteAsset.animations[0];
+        if (!anim || anim.frames.length === 0) continue;
+        const frame = anim.frames[0]!;
+        const ts = tilesetMap.get(frame.tilesetId);
+        if (!ts) continue;
+        const tsCanvas = getTilesetCanvas(ts, curTileSize);
+        const sx = (frame.tileIndex % 16) * curTileSize;
+        const sy = Math.floor(frame.tileIndex / 16) * curTileSize;
+
+        ctx.save();
+        if (inst.flipH || inst.flipV) {
+          ctx.translate(
+            inst.flipH ? (inst.x + 1) * curUnitSize : 0,
+            inst.flipV ? (inst.y + 1) * curUnitSize : 0,
+          );
+          ctx.scale(inst.flipH ? -1 : 1, inst.flipV ? -1 : 1);
+          const drawX = inst.flipH ? -inst.x * curUnitSize - curUnitSize : inst.x * curUnitSize;
+          const drawY = inst.flipV ? -inst.y * curUnitSize - curUnitSize : inst.y * curUnitSize;
