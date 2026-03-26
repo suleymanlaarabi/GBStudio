@@ -83,3 +83,67 @@ function App() {
           redo();
         },
       },
+      {
+        matcher: (event) => event.key === "?",
+        handler: (event) => {
+          event.preventDefault();
+          setIsShortcutsOpen(true);
+        },
+      },
+    ],
+  });
+
+  useEffect(() => {
+    const savedFilePath = localStorage.getItem(PROJECT_PATH_KEY);
+    if (savedFilePath) setProjectFilePath(savedFilePath);
+
+    const savedFolderPath = localStorage.getItem(PROJECT_FOLDER_KEY);
+    if (savedFolderPath) setProjectPath(savedFolderPath);
+
+    const autosave = localStorage.getItem(AUTOSAVE_KEY);
+    if (!autosave) return;
+
+    try {
+      const project = parseProjectDocument(autosave);
+      loadProjectData(project.data);
+      updateStatus("Session autosave restored", "success", 3000);
+    } catch (error) {
+      console.error("Failed to restore autosave", error);
+      updateStatus("Autosave restore failed", "error", 4000);
+    }
+  }, [loadProjectData, updateStatus]);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      try {
+        const snapshot = serializeProject("Autosave", {
+          tilesets,
+          maps,
+          sprites,
+          sounds,
+        });
+        localStorage.setItem(AUTOSAVE_KEY, snapshot);
+      } catch (error) {
+        console.error("Autosave failed", error);
+        updateStatus("Autosave failed", "error", 4000);
+      }
+    }, 1500);
+
+    return () => window.clearTimeout(timeout);
+  }, [maps, sprites, sounds, tilesets, updateStatus]);
+
+  useEffect(
+    () => () => {
+      if (statusTimeoutRef.current) {
+        window.clearTimeout(statusTimeoutRef.current);
+      }
+    },
+    [],
+  );
+
+  const exportLocal = () => {
+    setConfirmExportAction("download");
+    setIsPreviewOpen(true);
+  };
+
+  const chooseProjectFolder = async () => {
