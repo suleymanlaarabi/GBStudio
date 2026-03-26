@@ -35,3 +35,20 @@ export const MapEditorHeader: React.FC<MapEditorHeaderProps> = ({
           {map.name}{" "}
           <span style={{ opacity: 0.5, fontSize: "0.8rem", marginLeft: 8 }}>
             ({map.width}x{map.height} tiles • {map.tileSize}x{map.tileSize})
+          </span>
+        </h2>
+      </div>
+      <div
+        className="card"
+        style={{ display: "flex", gap: "0.5rem", padding: "0.4rem" }}
+      >
+        <button
+          className="btn btn-secondary"
+          style={{ padding: "4px" }}
+          onClick={() => setZoom(zoom - 1)}
+          title="Zoom out"
+        >
+          <ZoomOut size={14} />
+        </button>
+        <span
+          style={{
