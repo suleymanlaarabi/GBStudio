@@ -93,3 +93,93 @@ const buildEngineImpl = (): string => `\
 // Engine — chunk-based streaming, 256-byte WRAM chunk cache
 static const unsigned char *gbt_loaded_tiles = 0;
 static uint8_t gbt_loaded_tiles_bank = 0xffu;
+static unsigned char gbt_tile_buf[32];
+static unsigned char gbt_chunk_cache[256];
+static uint8_t gbt_cached_chunk_bank = 0xffu;
+static const unsigned char *gbt_cached_chunk_ptr = 0;
+static const GBT_MAP *gbt_cam_map = 0;
+static uint16_t gbt_cam_x = 0;
+static uint16_t gbt_cam_y = 0;
+static uint16_t gbt_cam_tx = 0;
+static uint16_t gbt_cam_ty = 0;
+static uint8_t gbt_pending_scx = 0;
+static uint8_t gbt_pending_scy = 0;
+static uint8_t gbt_vbl_registered = 0;
+
+static uint8_t gbt_enter_bank(uint8_t bank) {
+    uint8_t previous = CURRENT_BANK;
+    if (bank != previous) SWITCH_ROM(bank);
+    return previous;
+}
+
+static void gbt_leave_bank(uint8_t previous) {
+    if (previous != CURRENT_BANK) SWITCH_ROM(previous);
+}
+
+static void gbt_vblank_isr(void) {
+    SCX_REG = gbt_pending_scx;
+    SCY_REG = gbt_pending_scy;
+}
+
+static uint8_t gbt_min_u8(uint8_t a, uint8_t b) {
+    return a < b ? a : b;
+}
+
+// Load 256-byte chunk into WRAM cache if not already cached.
+// Must be called with map->world_bank active.
+static uint8_t gbt_get_tile_from(const GBT_MAP *map, uint16_t tx, uint16_t ty) {
+    const GBT_CHUNK_REF *ref;
+    uint8_t cx = (uint8_t)(tx >> 4);
+    uint8_t cy = (uint8_t)(ty >> 4);
+    if (cx >= map->world_w || cy >= map->world_h) return 0u;
+    ref = &map->world[(uint16_t)cy * map->world_w + cx];
+    if (ref->data != gbt_cached_chunk_ptr || ref->bank != gbt_cached_chunk_bank) {
+        const unsigned char *src;
+        uint8_t i;
+        uint8_t prev = gbt_enter_bank(ref->bank);
+        src = ref->data;
+        i = 0u;
+        do { gbt_chunk_cache[i] = src[i]; i++; } while (i != 0u);
+        gbt_leave_bank(prev);
+        gbt_cached_chunk_bank = ref->bank;
+        gbt_cached_chunk_ptr = ref->data;
+    }
+    return gbt_chunk_cache[((uint8_t)(ty & 15u) << 4) | (uint8_t)(tx & 15u)];
+}
+
+static void gbt_clear_bkg_map(void) {
+    uint8_t i = 0u, row = 0u;
+    do { gbt_tile_buf[i] = 0u; i++; } while (i != 32u);
+    do { set_bkg_tiles(0, row, 32u, 1u, gbt_tile_buf); row++; } while (row != 32u);
+}
+
+static void gbt_stream_column_active(uint16_t map_col, uint16_t start_row) {
+    uint8_t i = 0u;
+    uint8_t vram_x = (uint8_t)(map_col & 31u);
+    uint8_t vram_y0 = (uint8_t)(start_row & 31u);
+    uint8_t first;
+    uint8_t prev = gbt_enter_bank(gbt_cam_map->world_bank);
+    do { gbt_tile_buf[i] = gbt_get_tile_from(gbt_cam_map, map_col, start_row + i); i++; } while (i != 32u);
+    gbt_leave_bank(prev);
+    first = 32u - vram_y0;
+    set_bkg_tiles(vram_x, vram_y0, 1u, first, gbt_tile_buf);
+    if (vram_y0 > 0u) set_bkg_tiles(vram_x, 0u, 1u, vram_y0, gbt_tile_buf + first);
+}
+
+static void gbt_stream_row_active(uint16_t map_row, uint16_t start_col) {
+    uint8_t i = 0u;
+    uint8_t vram_y = (uint8_t)(map_row & 31u);
+    uint8_t vram_x0 = (uint8_t)(start_col & 31u);
+    uint8_t first;
+    uint8_t prev = gbt_enter_bank(gbt_cam_map->world_bank);
+    do { gbt_tile_buf[i] = gbt_get_tile_from(gbt_cam_map, start_col + i, map_row); i++; } while (i != 32u);
+    gbt_leave_bank(prev);
+    first = 32u - vram_x0;
+    set_bkg_tiles(vram_x0, vram_y, first, 1u, gbt_tile_buf);
+    if (vram_x0 > 0u) set_bkg_tiles(0u, vram_y, vram_x0, 1u, gbt_tile_buf + first);
+}
+
+static void gbt_load_map_active(const GBT_MAP *map) {
+    if (gbt_loaded_tiles != map->tiles || gbt_loaded_tiles_bank != map->tiles_bank) {
+        uint8_t prev = gbt_enter_bank(map->tiles_bank);
+        set_bkg_data(0, map->tile_count, map->tiles);
