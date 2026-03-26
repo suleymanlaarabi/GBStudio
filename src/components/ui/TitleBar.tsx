@@ -17,3 +17,19 @@ export const TitleBar: React.FC = () => {
         alignItems: 'center',
         userSelect: 'none',
         borderBottom: '1px solid var(--border)',
+        zIndex: 1000,
+      }}
+    >
+      <div 
+        data-tauri-drag-region
+        style={{ 
+          flex: 1, 
+          height: '100%', 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '8px', 
+          paddingLeft: '12px',
+          cursor: 'default'
+        }}
+      >
+        <Gamepad2 size={18} color="var(--accent)" style={{ pointerEvents: 'none' }} />
