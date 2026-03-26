@@ -117,3 +117,59 @@ export const TilePixelEditor: React.FC = () => {
     if (tool === "square" || tool === "circle") {
       const preciseCoords = getPreciseTileCoords(e);
       if (preciseCoords) setStartPos(preciseCoords);
+      return;
+    }
+
+    if (tool === "bucket") {
+      if (x >= 0 && x < tile.size && y >= 0 && y < tile.size) {
+        floodFill(activeTilesetIndex, activeTileIndex, x, y, selectedColor);
+      }
+      return;
+    }
+
+    const colorToApply: GBColor | null = tool === "eraser" ? null : selectedColor;
+    if (x >= 0 && x < tile.size && y >= 0 && y < tile.size && tile.data[y]![x] !== colorToApply) {
+      updatePixel(activeTilesetIndex, activeTileIndex, x, y, colorToApply);
+    }
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const coords = getTileCoords(e);
+    if (!coords || !tile || !isDrawing) return;
+    const { x, y } = coords;
+
+    if (isMovingSelection && selection.hasSelection) {
+      const newX = x - moveOffset.x;
+      const newY = y - moveOffset.y;
+      updateSelectionBounds(newX, newY);
+    } else if (isSelecting && startPos) {
+      updateSelection(x, y);
+    } else if ((tool === "square" || tool === "circle") && startPos) {
+      const preciseCoords = getPreciseTileCoords(e);
+      if (!preciseCoords) return;
+
+      setLastPrecisePos(preciseCoords);
+      const minX = Math.min(Math.floor(startPos.x), Math.floor(preciseCoords.x));
+      const maxX = Math.max(Math.floor(startPos.x), Math.floor(preciseCoords.x));
+      const minY = Math.min(Math.floor(startPos.y), Math.floor(preciseCoords.y));
+      const maxY = Math.max(Math.floor(startPos.y), Math.floor(preciseCoords.y));
+      const width = maxX - minX + 1;
+      const height = maxY - minY + 1;
+      let previewDataTemp: (GBColor | null)[][] = tile.data.map((row) => [...row]);
+
+      if (tool === "square") {
+        previewDataTemp = drawRectangle(previewDataTemp, minX, minY, width, height, selectedColor, true);
+      } else {
+        const circle = getCircleFromBounds(minX, minY, maxX, maxY);
+        previewDataTemp = drawCircle(previewDataTemp, circle.centerX, circle.centerY, circle.radiusX, circle.radiusY, selectedColor, true);
+      }
+
+      setPreviewData(previewDataTemp);
+    } else if (tool === "pencil" || tool === "eraser") {
+      const colorToApply: GBColor | null = tool === "eraser" ? null : selectedColor;
+      if (x >= 0 && x < tile.size && y >= 0 && y < tile.size && tile.data[y]![x] !== colorToApply) {
+        updatePixel(activeTilesetIndex, activeTileIndex, x, y, colorToApply);
+      }
+    }
+  };
+
