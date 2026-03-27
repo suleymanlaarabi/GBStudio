@@ -33,3 +33,20 @@ export const TitleBar: React.FC = () => {
         }}
       >
         <Gamepad2 size={18} color="var(--accent)" style={{ pointerEvents: 'none' }} />
+        <span style={{ fontSize: '0.8rem', fontWeight: 600, opacity: 0.8, pointerEvents: 'none' }}>GB-CART EDITOR</span>
+      </div>
+
+      <div style={{ display: 'flex', height: '100%' }}>
+        <div className="titlebar-button" onClick={() => appWindow.minimize()}>
+          <Minus size={14} />
+        </div>
+        <div className="titlebar-button" onClick={() => appWindow.toggleMaximize()}>
+          <Square size={12} />
+        </div>
+        <div className="titlebar-button close" onClick={() => appWindow.close()}>
+          <X size={16} />
+        </div>
+      </div>
+    </div>
+  );
+};
