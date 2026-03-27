@@ -86,3 +86,31 @@ export const Sidebar: React.FC<SidebarProps> = ({
             gap: "0.8rem",
           }}
         >
+          <MonitorPlay size={20} />
+          Sprite Studio
+        </button>
+
+        <button
+          className={`btn ${view === "sound" ? "" : "btn-secondary"}`}
+          onClick={() => setView("sound")}
+          title="Open the sound studio"
+          style={{
+            textAlign: "left",
+            display: "flex",
+            alignItems: "center",
+            gap: "0.8rem",
+          }}
+        >
+          <Volume2 size={20} />
+          Sound Studio
+        </button>
+
+        <button
+          className="btn btn-secondary"
+          onClick={onOpenTemplates}
+          title="Browse and import templates"
+          style={{
+            textAlign: "left",
+            display: "flex",
+            alignItems: "center",
+            gap: "0.8rem",
