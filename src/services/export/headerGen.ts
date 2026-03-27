@@ -35,3 +35,20 @@ export const buildHeader = (
   content += "    uint8_t tiles_bank;\n";
   content += "    const unsigned char *tiles;\n";
   content += "    uint16_t tile_count;\n";
+  content += "    uint8_t world_bank;\n";
+  content += "    const GBT_CHUNK_REF *world;\n";
+  content += "    uint8_t world_w;\n";
+  content += "    uint8_t world_h;\n";
+  content += "    uint16_t spawn_x;\n";
+  content += "    uint16_t spawn_y;\n";
+  content += "    uint8_t collision_bank;\n";
+  content += "    const unsigned char *collision;\n";
+  content += "} GBT_MAP;\n\n";
+
+  content += "typedef struct GBT_CAMERA_CTRL {\n";
+  content += "    uint16_t x;\n";
+  content += "    uint16_t y;\n";
+  content += "    const GBT_MAP *map;\n";
+  content += "} GBT_CAMERA_CTRL;\n\n";
+
+  // ── Sprite types ───────────────────────────────────────────────────────────
