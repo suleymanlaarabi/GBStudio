@@ -17,3 +17,19 @@ export interface Template {
   sprites: SpriteAsset[];
   sounds?: SoundAsset[];
   isBuiltin?: boolean;
+}
+
+export interface TemplateFile {
+  format: "cartridge-template";
+  version: 1;
+  id: string;
+  name: string;
+  description: string;
+  category: TemplateCategory;
+  author?: string;
+  createdAt: string;
+  tilesets: Tileset[];
+  maps: TileMap[];
+  sprites: SpriteAsset[];
+  sounds?: SoundAsset[];
+}
