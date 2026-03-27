@@ -8,3 +8,19 @@ import { createSpriteSlice, type SpriteSlice } from "./slices/spriteSlice";
 import { createSoundSlice, type SoundSlice } from "./slices/soundSlice";
 import { createTileSlice, type TileSlice } from "./slices/tileSlice";
 import { createUISlice, type UISlice } from "./slices/uiSlice";
+  GBColor,
+  MapClipboard,
+  MapSelectionState,
+  MapTool,
+  ProjectData,
+  SelectionBounds,
+  TileMap,
+  TileSize,
+  Tileset,
+  SpriteAsset,
+} from "../types";
+
+export type EditorState = TileSlice &
+  MapSlice &
+  SpriteSlice &
+  SoundSlice &
