@@ -63,3 +63,18 @@ export const AnimationList: React.FC<AnimationListProps> = ({
               alignItems: "center",
             }}
             onClick={() => onSelectAnim(a.id)}
+          >
+            <div
+              style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}
+            >
+              <AnimationPreview anim={a} tilesets={tilesets} />
+              <div style={{ fontWeight: "bold", fontSize: "0.85rem" }}>
+                {a.name}
+              </div>
+            </div>
+            {selectedSpriteId && (
+              <button
+                className="btn btn-secondary"
+                style={{ padding: "2px", marginLeft: "auto" }}
+                onClick={(e) => {
+                  e.stopPropagation();
