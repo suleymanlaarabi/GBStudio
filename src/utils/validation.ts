@@ -29,3 +29,33 @@ const getExpandedTileCountForTile = (tileset: Tileset, tileIndex: number): numbe
 
 export const validateGameBoyHardwareLimits = (
   tilesets: Tileset[],
+  sprites: SpriteAsset[],
+): GameBoyHardwareValidation => {
+  const tilesetLookup = new Map(tilesets.map((tileset) => [tileset.id, tileset]));
+
+  // BG export currently packs one blank tile plus every tileset tile into a single atlas.
+  const bgTileCount =
+    1 + tilesets.reduce((count, tileset) => count + getExpandedTileCount(tileset), 0);
+
+  // Sprite VRAM is counted from the unique hardware tiles actually referenced by animations.
+  const spriteTileKeys = new Set<string>();
+
+  sprites.forEach((sprite) => {
+    sprite.animations.forEach((animation) => {
+      animation.frames.forEach((frame) => {
+        const tileset = tilesetLookup.get(frame.tilesetId);
+        if (!tileset) {
+          return;
+        }
+
+        const expandedTileCount = getExpandedTileCountForTile(tileset, frame.tileIndex);
+        for (let segment = 0; segment < expandedTileCount; segment += 1) {
+          spriteTileKeys.add(`${frame.tilesetId}:${frame.tileIndex}:${segment}`);
+        }
+      });
+    });
+  });
+
+  const spriteTileCount = spriteTileKeys.size;
+  const totalTileCount = bgTileCount + spriteTileCount;
+  const errors: string[] = [];
