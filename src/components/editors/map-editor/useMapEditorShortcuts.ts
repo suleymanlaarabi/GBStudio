@@ -35,3 +35,20 @@ export const useMapEditorShortcuts = ({ hoverCell }: UseMapEditorShortcutsProps)
           cutMapSelection();
         },
       },
+      {
+        matcher: (event) =>
+          (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "v",
+        handler: (event) => {
+          event.preventDefault();
+          if (hoverCell) pasteMapSelection(hoverCell.x, hoverCell.y);
+          else if (mapSelection.hasSelection)
+            pasteMapSelection(mapSelection.x, mapSelection.y);
+          else pasteMapSelection(0, 0);
+        },
+      },
+      {
+        matcher: (event) => event.key === "Delete" || event.key === "Backspace",
+        handler: (event) => {
+          event.preventDefault();
+          deleteMapSelection();
+        },
