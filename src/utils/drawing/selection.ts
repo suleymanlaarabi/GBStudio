@@ -83,3 +83,24 @@ export function moveArea(
   data: PixelData,
   selection: SelectionBounds,
   deltaX: number,
+  deltaY: number,
+): { data: PixelData; newSelection: SelectionBounds } | null {
+  const tileSize = data.length;
+  const newX = selection.x + deltaX;
+  const newY = selection.y + deltaY;
+
+  if (
+    newX < 0 ||
+    newY < 0 ||
+    newX + selection.width > tileSize ||
+    newY + selection.height > tileSize
+  ) {
+    return null;
+  }
+
+  const content = extractSelection(data, selection);
+  const cleared = clearArea(data, selection);
+  const movedData = applySelectionContent(cleared, content, newX, newY);
+
+  return {
+    data: movedData,
