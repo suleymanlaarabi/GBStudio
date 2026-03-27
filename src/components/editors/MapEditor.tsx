@@ -79,3 +79,27 @@ export const MapEditor = () => {
       style={{
         display: "flex",
         gap: "1.5rem",
+      }}
+    >
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          gap: "1rem",
+          minWidth: 0,
+          overflow: "hidden",
+        }}
+      >
+        <MapEditorHeader
+          map={map}
+          zoom={zoom}
+          setZoom={setZoom}
+          setView={setView}
+        />
+
+        <MapToolBar
+          mapTool={mapTool}
+          setMapTool={setMapTool}
+          mapShapeFilled={mapShapeFilled}
+          setMapShapeFilled={setMapShapeFilled}
