@@ -101,3 +101,101 @@ type MapState = MapSlice & {
   commit: () => void;
   tilesets: Tileset[];
   view: View;
+};
+
+const emptyMapSelection: MapSelectionState = { hasSelection: false, x: 0, y: 0, width: 0, height: 0 };
+const emptyTileSelection: TileSelection = { hasSelection: false, x: 0, y: 0, width: 0, height: 0, tileData: [] };
+
+const updateMap = (maps: TileMap[], mapIndex: number, updater: (map: TileMap) => TileMap): TileMap[] =>
+  maps.map((map, i) => (i === mapIndex ? updater(map) : map));
+
+export const createMapSlice: StateCreator<MapState, [], [], MapSlice> = (set, get) => ({
+  maps: [],
+  mapSelection: emptyMapSelection,
+  mapClipboard: null,
+  tileSelection: emptyTileSelection,
+
+  beginTileSelection: (x, y) => {
+    set({ tileSelection: { hasSelection: true, startX: x, startY: y, x, y, width: 0, height: 0, tileData: [] } });
+  },
+
+  updateTileSelection: (x, y) => {
+    const { tileSelection } = get();
+    if (!tileSelection.hasSelection || tileSelection.startX === undefined || tileSelection.startY === undefined) return;
+
+    const startX = tileSelection.startX;
+    const startY = tileSelection.startY;
+    const minX = Math.min(startX, x);
+    const minY = Math.min(startY, y);
+    const width = Math.abs(x - startX) + 1;
+    const height = Math.abs(y - startY) + 1;
+
+    const { tilesets, activeTilesetIndex } = get();
+    const activeTileset = tilesets[activeTilesetIndex]
+      ? normalizeTilesetLayout(tilesets[activeTilesetIndex]!)
+      : undefined;
+
+    const tileData: Array<Array<{ tilesetId: string; tileIndex: number } | null>> = [];
+    for (let ty = 0; ty < height; ty++) {
+      const row: Array<{ tilesetId: string; tileIndex: number } | null> = [];
+      for (let tx = 0; tx < width; tx++) {
+        if (activeTileset) {
+          const gridTile = getTileAtTilesetPosition(activeTileset, minX + tx, minY + ty);
+          row.push(gridTile ? { tilesetId: activeTileset.id, tileIndex: gridTile.tileIndex } : null);
+        } else {
+          row.push(null);
+        }
+      }
+      tileData.push(row);
+    }
+
+    set({ tileSelection: { hasSelection: true, startX, startY, x: minX, y: minY, width, height, tileData } });
+  },
+
+  endTileSelection: () => {
+    const { tileSelection } = get();
+    if (tileSelection.width > 0 && tileSelection.height > 0) return;
+    set({ tileSelection: emptyTileSelection });
+  },
+
+  clearTileSelection: () => set({ tileSelection: emptyTileSelection }),
+
+  updateMapCell: (mapIndex, x, y, tilesetId, tileIndex) => {
+    const { activeLayerIndex } = get();
+    set((state) => ({
+      maps: updateMap(state.maps, mapIndex, (map) =>
+        applyToActiveLayer(map, activeLayerIndex, (data) =>
+          setLayerCell(data, x, y, { tilesetId, tileIndex })
+        )
+      ),
+    }));
+  },
+
+  clearMapCell: (mapIndex, x, y) => {
+    const { activeLayerIndex } = get();
+    set((state) => ({
+      maps: updateMap(state.maps, mapIndex, (map) =>
+        applyToActiveLayer(map, activeLayerIndex, (data) =>
+          setLayerCell(data, x, y, null)
+        )
+      ),
+    }));
+  },
+
+  batchUpdateMapCells: (mapIndex, cells) => {
+    if (cells.length === 0) return;
+    const { activeLayerIndex } = get();
+    set((state) => ({
+      maps: updateMap(state.maps, mapIndex, (map) =>
+        applyToActiveLayer(map, activeLayerIndex, (data) =>
+          batchSetLayerCells(data, cells)
+        )
+      ),
+    }));
+  },
+
+  batchSetCollisionCells: (mapIndex, cells) => {
+    if (cells.length === 0) return;
+    set((state) => ({
+      maps: updateMap(state.maps, mapIndex, (map) => {
+        const collisionData = map.collisionData ? { ...map.collisionData } : {};
