@@ -147,3 +147,67 @@ function App() {
   };
 
   const chooseProjectFolder = async () => {
+    try {
+      updateStatus("Selecting export folder...", "busy");
+      const selected = await open({
+        directory: true,
+        multiple: false,
+        title: "Select Project Folder",
+      });
+
+      if (!selected) {
+        updateStatus("Folder selection cancelled", "info", 2500);
+        return false;
+      }
+
+      setProjectPath(selected as string);
+      localStorage.setItem(PROJECT_FOLDER_KEY, selected as string);
+      updateStatus("Export folder selected", "success", 3000);
+      return true;
+    } catch (error) {
+      console.error(error);
+      updateStatus(`Folder selection failed: ${String(error)}`, "error", 5000);
+      return false;
+    }
+  };
+
+  const saveProjectToPath = async (path: string) => {
+    const projectName =
+      path
+        .split(/[\\/]/)
+        .pop()
+        ?.replace(/\.cartridge$/i, "") || "project";
+    const content = serializeProject(projectName, { tilesets, maps, sprites });
+
+    await invoke("save_text_file", {
+      path,
+      content,
+    });
+
+    setProjectFilePath(path);
+    localStorage.setItem(PROJECT_PATH_KEY, path);
+  };
+
+  const saveProject = async () => {
+    setIsSaving(true);
+    try {
+      updateStatus("Saving project...", "busy");
+      let path = projectFilePath;
+      if (!path) {
+        const selected = await save({
+          title: "Save project",
+          defaultPath: "project.cartridge",
+          filters: [{ name: "Cartridge Project", extensions: ["cartridge"] }],
+        });
+        if (!selected) {
+          updateStatus("Project save cancelled", "info", 2500);
+          return;
+        }
+        path = selected;
+      }
+
+      await saveProjectToPath(path);
+      updateStatus(`Project saved: ${path}`, "success", 4000);
+    } catch (error) {
+      console.error(error);
+      updateStatus(`Project save failed: ${String(error)}`, "error", 5000);
