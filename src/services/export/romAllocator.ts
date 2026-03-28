@@ -47,3 +47,19 @@ export const allocateRomBanks = (mapExports: MapExport[]): RomAllocationPlan => 
     const chunkBanks: ChunkBankData[] = [];
     for (let i = 0; i < m.allChunks.length; i += CHUNKS_PER_BANK) {
       const slice = m.allChunks.slice(i, i + CHUNKS_PER_BANK);
+      const bankId = nextId++;
+      const varName = `${m.safeName}_chunks_b${bankId}`;
+      chunkBanks.push({ bankId, varName, bytes: slice.flat() });
+      allBanks.push({ id: bankId, usedBytes: slice.length * 256, assetNames: [`${m.map.name} chunks`] });
+    }
+    m.chunkBanks = chunkBanks;
+
+    // Resolve worldChunkIndices → WorldRef
+    const worldRefs: WorldRef[] = m.worldChunkIndices.map((globalIdx) => {
+      const bankSlot = Math.floor(globalIdx / CHUNKS_PER_BANK);
+      const idxInBank = globalIdx % CHUNKS_PER_BANK;
+      return {
+        bankId: chunkBanks[bankSlot].bankId,
+        chunkVarName: chunkBanks[bankSlot].varName,
+        byteOffset: idxInBank * 256,
+      };
