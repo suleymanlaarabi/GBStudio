@@ -173,3 +173,59 @@ export const TilePixelEditor: React.FC = () => {
     }
   };
 
+  const handleMouseUp = () => {
+    if (tile && startPos && (tool === "square" || tool === "circle") && lastPrecisePos) {
+      const minX = Math.min(Math.floor(startPos.x), Math.floor(lastPrecisePos.x));
+      const maxX = Math.max(Math.floor(startPos.x), Math.floor(lastPrecisePos.x));
+      const minY = Math.min(Math.floor(startPos.y), Math.floor(lastPrecisePos.y));
+      const maxY = Math.max(Math.floor(startPos.y), Math.floor(lastPrecisePos.y));
+      const width = maxX - minX + 1;
+      const height = maxY - minY + 1;
+
+      if (tool === "square") {
+        storeDrawRectangle(activeTilesetIndex, activeTileIndex, minX, minY, width, height, selectedColor, true);
+      } else {
+        const circle = getCircleFromBounds(minX, minY, maxX, maxY);
+        storeDrawCircle(activeTilesetIndex, activeTileIndex, circle.centerX, circle.centerY, circle.radiusX, circle.radiusY, selectedColor, true);
+      }
+    }
+
+    if (isMovingSelection && selection.hasSelection && originalSelectionPos) {
+      const deltaX = selection.x - originalSelectionPos.x;
+      const deltaY = selection.y - originalSelectionPos.y;
+      if (deltaX !== 0 || deltaY !== 0) {
+        // We need to move the content back to original, then apply the move
+        // BUT moveSelection already takes current selection and moves its content.
+        // Actually, moveSelection expects to move the content FROM current selection TO a new position.
+        // My updateSelectionBounds moved the BOX but not the CONTENT.
+        // So I need to:
+        // 1. Restore the box to original position
+        // 2. Call moveSelection with the delta
+        updateSelectionBounds(originalSelectionPos.x, originalSelectionPos.y);
+        moveSelection(deltaX, deltaY);
+      }
+    }
+
+    if (isSelecting) endSelection();
+
+    if (tool === "pencil" || tool === "eraser") {
+      commit();
+    }
+
+    setIsDrawing(false);
+    setIsSelecting(false);
+    setIsMovingSelection(false);
+    setPreviewData(null);
+    setStartPos(null);
+    setLastPrecisePos(null);
+    setOriginalSelectionPos(null);
+  };
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || !tile) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
