@@ -36,3 +36,36 @@ const emptyExport = (map: TileMap, safeName: string): MapExport => ({
 
 export const buildMapExport = (map: TileMap, tilesets: Tileset[]): MapExport => {
   const is16 = map.tileSize === 16;
+  const visibleLayers = map.layers.filter((layer) => layer.visible);
+  const tilesetLookup = new Map(tilesets.map((t) => [t.id, t]));
+  const tileBytes: number[][] = [new Array(16).fill(0)];
+  const tileIndexLookup = new Map<string, number>();
+  let sourceTileCount = 0;
+
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  let hasTiles = false;
+
+  visibleLayers.forEach((layer) => {
+    Object.values(layer.chunks).forEach((chunk) => {
+      for (let y = 0; y < CHUNK_SIZE; y++) {
+        for (let x = 0; x < CHUNK_SIZE; x++) {
+          if (chunk.data[y][x]) {
+            const gx = chunk.x * CHUNK_SIZE + x;
+            const gy = chunk.y * CHUNK_SIZE + y;
+            if (gx < minX) minX = gx;
+            if (gy < minY) minY = gy;
+            if (gx > maxX) maxX = gx;
+            if (gy > maxY) maxY = gy;
+            hasTiles = true;
+          }
+        }
+      }
+    });
+  });
+
+  const safeName = sanitizeName(map.name);
+  if (!hasTiles) return emptyExport(map, safeName);
+
+  const logicalW = maxX - minX + 1;
+  const logicalH = maxY - minY + 1;
+  const hwW = is16 ? logicalW * 2 : logicalW;
