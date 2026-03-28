@@ -183,3 +183,93 @@ static void gbt_load_map_active(const GBT_MAP *map) {
     if (gbt_loaded_tiles != map->tiles || gbt_loaded_tiles_bank != map->tiles_bank) {
         uint8_t prev = gbt_enter_bank(map->tiles_bank);
         set_bkg_data(0, map->tile_count, map->tiles);
+        gbt_leave_bank(prev);
+        gbt_loaded_tiles = map->tiles;
+        gbt_loaded_tiles_bank = map->tiles_bank;
+    }
+}
+
+void gbt_load_map(const GBT_MAP *map) {
+    gbt_load_map_active(map);
+}
+
+void gbt_draw_map(const GBT_MAP *map) {
+    uint8_t i, j;
+    uint16_t map_w_tiles = (uint16_t)map->world_w << 4;
+    uint16_t map_h_tiles = (uint16_t)map->world_h << 4;
+    uint8_t w = (map_w_tiles < 32u) ? (uint8_t)map_w_tiles : 32u;
+    uint8_t h = (map_h_tiles < 32u) ? (uint8_t)map_h_tiles : 32u;
+    uint8_t prev = gbt_enter_bank(map->world_bank);
+    for (i = 0u; i != h; i++) {
+        for (j = 0u; j != w; j++) gbt_tile_buf[j] = gbt_get_tile_from(map, j, i);
+        set_bkg_tiles(0, i, w, 1u, gbt_tile_buf);
+    }
+    gbt_leave_bank(prev);
+}
+
+void gbt_switch_map(const GBT_MAP *next_map, gbt_dir_t dir) {
+    uint8_t i, j;
+    uint16_t mw = (uint16_t)next_map->world_w << 4;
+    uint16_t mh = (uint16_t)next_map->world_h << 4;
+    uint8_t visible_width  = gbt_min_u8((uint8_t)(mw < 20u ? mw : 20u), 20u);
+    uint8_t visible_height = gbt_min_u8((uint8_t)(mh < 18u ? mh : 18u), 18u);
+    uint8_t prev;
+
+    gbt_load_map_active(next_map);
+    prev = gbt_enter_bank(next_map->world_bank);
+
+    if (dir == GBT_DIR_RIGHT) {
+        for (i = 0u; i < visible_width; i++) {
+            for (j = 0u; j < visible_height; j++) gbt_tile_buf[j] = gbt_get_tile_from(next_map, i, j);
+            wait_vbl_done();
+            SCX_REG += 8u;
+            { uint8_t tx = (uint8_t)(((SCX_REG >> 3) + 19u) & 31u);
+              set_bkg_tiles(tx, 0, 1, visible_height, gbt_tile_buf);
+              set_bkg_tiles(i,  0, 1, visible_height, gbt_tile_buf); }
+        }
+        wait_vbl_done(); SCX_REG = 0u;
+        for (i = 0u; i < 8u; i++) {
+            for (j = 0u; j < visible_height; j++) gbt_tile_buf[j] = gbt_get_tile_from(next_map, i, j);
+            set_bkg_tiles(i, 0, 1, visible_height, gbt_tile_buf);
+        }
+    } else if (dir == GBT_DIR_LEFT) {
+        for (i = 0u; i < visible_width; i++) {
+            uint8_t col = (uint8_t)(visible_width - 1u - i);
+            for (j = 0u; j < visible_height; j++) gbt_tile_buf[j] = gbt_get_tile_from(next_map, col, j);
+            wait_vbl_done();
+            SCX_REG -= 8u;
+            { uint8_t tx = (uint8_t)(SCX_REG >> 3);
+              set_bkg_tiles(tx,  0, 1, visible_height, gbt_tile_buf);
+              set_bkg_tiles(col, 0, 1, visible_height, gbt_tile_buf); }
+        }
+        wait_vbl_done(); SCX_REG = 0u;
+        for (i = 0u; i < 8u; i++) {
+            uint8_t col = (uint8_t)(visible_width - 8u + i);
+            for (j = 0u; j < visible_height; j++) gbt_tile_buf[j] = gbt_get_tile_from(next_map, col, j);
+            set_bkg_tiles(col, 0, 1, visible_height, gbt_tile_buf);
+        }
+    } else if (dir == GBT_DIR_DOWN) {
+        for (i = 0u; i < visible_height; i++) {
+            for (j = 0u; j < visible_width; j++) gbt_tile_buf[j] = gbt_get_tile_from(next_map, j, i);
+            wait_vbl_done();
+            SCY_REG += 8u;
+            { uint8_t ty = (uint8_t)(((SCY_REG >> 3) + 17u) & 31u);
+              set_bkg_tiles(0, ty, visible_width, 1, gbt_tile_buf);
+              set_bkg_tiles(0, i,  visible_width, 1, gbt_tile_buf); }
+        }
+        wait_vbl_done(); SCY_REG = 0u;
+        for (i = 0u; i < 4u; i++) {
+            for (j = 0u; j < visible_width; j++) gbt_tile_buf[j] = gbt_get_tile_from(next_map, j, i);
+            set_bkg_tiles(0, i, visible_width, 1, gbt_tile_buf);
+        }
+    } else if (dir == GBT_DIR_UP) {
+        for (i = 0u; i < visible_height; i++) {
+            uint8_t row = (uint8_t)(visible_height - 1u - i);
+            for (j = 0u; j < visible_width; j++) gbt_tile_buf[j] = gbt_get_tile_from(next_map, j, row);
+            wait_vbl_done();
+            SCY_REG -= 8u;
+            { uint8_t ty = (uint8_t)(SCY_REG >> 3);
+              set_bkg_tiles(0, ty,  visible_width, 1, gbt_tile_buf);
+              set_bkg_tiles(0, row, visible_width, 1, gbt_tile_buf); }
+        }
+        wait_vbl_done(); SCY_REG = 0u;
