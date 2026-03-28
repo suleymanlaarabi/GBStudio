@@ -14,3 +14,18 @@ export function getCircleFromBounds(
     radiusX: (maxX - minX) / 2,
     radiusY: (maxY - minY) / 2,
   };
+}
+
+export function drawCircle(
+  data: PixelData,
+  centerX: number,
+  centerY: number,
+  radiusX: number,
+  radiusY: number,
+  color: GBColor,
+  filled = true,
+): PixelData {
+  const newData = data.map((row) => [...row]);
+  const size = data.length;
+
+  for (let py = 0; py < size; py++) {
