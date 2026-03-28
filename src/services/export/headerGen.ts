@@ -52,3 +52,20 @@ export const buildHeader = (
   content += "} GBT_CAMERA_CTRL;\n\n";
 
   // ── Sprite types ───────────────────────────────────────────────────────────
+  content += "typedef struct GBT_FRAME { uint8_t tile; uint8_t duration; } GBT_FRAME;\n";
+  content += "typedef struct GBT_ANIMATION { const GBT_FRAME *frames; uint8_t frame_count; uint8_t loop; } GBT_ANIMATION;\n";
+  content += "typedef struct GBT_SPRITE_STATE { uint8_t x; uint8_t y; const GBT_ANIMATION *current_anim; uint8_t current_frame; uint8_t tick_counter; } GBT_SPRITE_STATE;\n\n";
+
+  // ── Sound channel constants ────────────────────────────────────────────────
+  content += "#define GBT_CH_PULSE1  1u\n";
+  content += "#define GBT_CH_PULSE2  2u\n";
+  content += "#define GBT_CH_WAVE    3u\n";
+  content += "#define GBT_CH_NOISE   4u\n\n";
+
+  // ── Engine API ─────────────────────────────────────────────────────────────
+  content += "void gbt_load_map(const GBT_MAP *map);\n";
+  content += "void gbt_draw_map(const GBT_MAP *map);\n";
+  content += "void gbt_switch_map(const GBT_MAP *next_map, gbt_dir_t dir);\n\n";
+
+  content += "void gbt_update_sprite(uint8_t hardware_sprite_id, GBT_SPRITE_STATE *state);\n\n";
+
