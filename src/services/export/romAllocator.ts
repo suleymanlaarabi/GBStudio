@@ -31,3 +31,19 @@ export const allocateRomBanks = (mapExports: MapExport[]): RomAllocationPlan => 
   let nextId = 1;
   const allBanks: RomBank[] = [];
 
+  // 1. Tile pixel data
+  const tilesBanks = packFlat(
+    mapExports,
+    (m) => m.tileRomSize,
+    (m, id) => { m.tilesBank = id; },
+    (m) => `${m.map.name}_tiles`,
+    nextId,
+  );
+  allBanks.push(...tilesBanks);
+  nextId += tilesBanks.length;
+
+  // 2. Chunk data — pack 64 chunks per bank, per map
+  for (const m of mapExports) {
+    const chunkBanks: ChunkBankData[] = [];
+    for (let i = 0; i < m.allChunks.length; i += CHUNKS_PER_BANK) {
+      const slice = m.allChunks.slice(i, i + CHUNKS_PER_BANK);
