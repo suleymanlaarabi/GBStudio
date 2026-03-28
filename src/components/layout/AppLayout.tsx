@@ -19,3 +19,20 @@ interface AppLayoutProps {
   onOpenShortcuts: () => void;
   onOpenTemplates: () => void;
 }
+
+export const AppLayout: React.FC<AppLayoutProps> = ({
+  children,
+  isSaving,
+  onExportToProject,
+  onDownload,
+  onChooseProjectFolder,
+  onOpenProject,
+  onSaveProject,
+  onSaveProjectAs,
+  projectPath,
+  projectFilePath,
+  statusMessage,
+  statusTone,
+  onOpenShortcuts,
+  onOpenTemplates,
+}) => (
