@@ -57,3 +57,21 @@ const TileThumbnail: React.FC<{
         ref={canvasRef}
         width={64}
         height={64}
+        style={{ width: "100%", height: "100%", imageRendering: "pixelated" }}
+      />
+    </div>
+  );
+};
+
+export const SpriteAssetLibrary: React.FC<SpriteAssetLibraryProps> = ({
+  tilesets,
+  activeTilesetIndex,
+  tiles,
+  activeTileIndex,
+  onSelectTileset,
+  onSelectTile,
+}) => {
+  return (
+    <div
+      className="card"
+      style={{
