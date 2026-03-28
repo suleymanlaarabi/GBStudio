@@ -30,3 +30,18 @@ export const createHistorySlice: StateCreator<
   HistorySnapshot & HistorySlice,
   [],
   [],
+  HistorySlice
+> = (set, get) => ({
+  history: [],
+  historyIndex: -1,
+
+  commit: () => {
+    const state = get();
+    const snapshotObj: HistorySnapshot = {
+      tilesets: state.tilesets,
+      maps: state.maps,
+      sprites: state.sprites,
+      sounds: state.sounds,
+      selection: state.selection,
+      mapSelection: state.mapSelection,
+    };
