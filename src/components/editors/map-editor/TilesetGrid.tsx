@@ -73,3 +73,38 @@ export const TilesetGrid: React.FC<TilesetGridProps> = ({
       ctx.lineTo(lineX, canvasHeight);
       ctx.stroke();
     }
+
+    normalizedTileset.tiles.forEach((tile) => {
+      const position = normalizedTileset.layout?.positions[tile.id];
+      if (!position) return;
+      const gridX = position.x;
+      const gridY = position.y;
+      const startX = gridX * tilePixelSize;
+      const startY = gridY * tilePixelSize;
+
+      for (let y = 0; y < tileSize; y++) {
+        for (let x = 0; x < tileSize; x++) {
+          ctx.fillStyle = GB_COLORS[tile.data[y]![x] ?? 0];
+          ctx.fillRect(startX + x * SCALE_FACTOR, startY + y * SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR);
+        }
+      }
+    });
+
+    baseCanvasRef.current = baseCanvas;
+  }, [normalizedTileset, canvasWidth, canvasHeight, rows, tileSize, tilePixelSize, tilesPerRow]);
+
+  const drawFrame = useCallback((selection: typeof tileSelection) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const baseCanvas = baseCanvasRef.current;
+    if (baseCanvas) {
+      ctx.drawImage(baseCanvas, 0, 0);
+    }
+
+    if (selection.hasSelection && selection.width > 0 && selection.height > 0) {
+      const scaledX = selection.x * tilePixelSize;
+      const scaledY = selection.y * tilePixelSize;
+      const scaledWidth = selection.width * tilePixelSize;
