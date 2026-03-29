@@ -115,3 +115,61 @@ const withBatchUpdate = (
         x: chunkX,
         y: chunkY,
         data: Array(CHUNK_SIZE).fill(null).map(() => Array(CHUNK_SIZE).fill(null)),
+      };
+      modifiedChunks.add(key);
+    } else if (!modifiedChunks.has(key)) {
+      newChunks[key] = {
+        ...newChunks[key],
+        data: newChunks[key].data.map((row) => [...row]),
+      };
+      modifiedChunks.add(key);
+    }
+    newChunks[key].data[localY][localX] = cloneCell(cell);
+  };
+
+  fn(setCell);
+  return newChunks;
+};
+
+// --- Layer data operations ---
+
+export const batchSetLayerCells = (
+  chunks: LayerData,
+  cells: Array<{ x: number; y: number; cell: TileCell | null }>
+): LayerData => {
+  if (cells.length === 0) return chunks;
+  return withBatchUpdate(chunks, (setCell) => {
+    for (const { x, y, cell } of cells) {
+      setCell(x, y, cell);
+    }
+  });
+};
+
+export const setLayerCell = (
+  chunks: LayerData,
+  x: number,
+  y: number,
+  cell: TileCell | null
+): LayerData => {
+  return setCellInChunks(chunks, x, y, cell);
+};
+
+export const floodFillLayer = (
+  chunks: LayerData,
+  startX: number,
+  startY: number,
+  replacement: TileCell | null
+): LayerData => {
+  const target = getCellFromChunks(chunks, startX, startY);
+  if (sameCell(target, replacement)) return chunks;
+
+  return withBatchUpdate(chunks, (setCell) => {
+    const stack: Array<[number, number]> = [[startX, startY]];
+    const visited = new Set<string>();
+
+    while (stack.length > 0) {
+      const [x, y] = stack.pop()!;
+      const key = `${x},${y}`;
+      if (visited.has(key)) continue;
+      visited.add(key);
+
