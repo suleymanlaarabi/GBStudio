@@ -79,3 +79,42 @@ const TILES = {
     ]),
   },
   explosion1: {
+    id: "bs-c2",
+    size: 8 as const,
+    data: d([
+      [null, null, null, 1, null, null, null, null],
+      [null, 1, null, 2, null, 1, null, null],
+      [null, null, 2, 3, 2, null, null, null],
+      [1, 2, 3, 0, 3, 2, 1, null],
+      [null, null, 2, 3, 2, null, null, null],
+      [null, 1, null, 2, null, 1, null, null],
+      [null, null, null, 1, null, null, null, null],
+      [null, null, null, null, null, null, null, null],
+    ]),
+  },
+  explosion2: {
+    id: "bs-c3",
+    size: 8 as const,
+    data: d([
+      [1, null, 1, null, 1, null, 1, null],
+      [null, 2, null, 2, null, 2, null, null],
+      [1, null, null, null, null, null, 1, null],
+      [null, 2, null, null, null, 2, null, null],
+      [1, null, null, null, null, null, 1, null],
+      [null, 2, null, 2, null, 2, null, null],
+      [1, null, 1, null, 1, null, 1, null],
+      [null, null, null, null, null, null, null, null],
+    ]),
+  },
+};
+
+const S1 = { tilesetId: TS, tileIndex: 0 };
+const S2 = { tilesetId: TS, tileIndex: 1 };
+const n = null;
+
+export const SPACE_TEMPLATE: Template = {
+  id: "builtin-space",
+  name: "Space Shooter",
+  description:
+    "Futuristic space setting with starfields, nebulae, and animated spaceships.",
+  category: "shooter",
