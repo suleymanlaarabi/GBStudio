@@ -102,3 +102,96 @@ const TemplatePreview: React.FC<{ template: Template }> = ({ template }) => {
             slotWidth - 4,
             slotHeight - 4,
           );
+
+          drawTileToCanvas(
+            ctx,
+            tile.data,
+            originX,
+            originY,
+            scale,
+            scale,
+          );
+        });
+
+        return;
+      }
+
+      if ((template.sounds?.length ?? 0) > 0) {
+        // Sound-only template: draw waveform bars
+        ctx.fillStyle = "#1a1a1a";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        const bars = 16;
+        const barW = (canvas.width - 20) / bars;
+        const amplitudes = [4,7,10,13,15,12,9,6,8,11,14,15,12,8,5,3];
+        ctx.fillStyle = "#44cc88";
+        amplitudes.forEach((amp, i) => {
+          const h = (amp / 15) * (canvas.height - 20);
+          ctx.fillRect(10 + i * barW, (canvas.height - h) / 2, barW - 2, h);
+        });
+        return;
+      }
+      ctx.fillStyle = "#333";
+      ctx.font = "10px monospace";
+      ctx.textAlign = "center";
+      ctx.fillText("No preview", canvas.width / 2, canvas.height / 2);
+      return;
+    }
+
+    const tilesets: Tileset[] = template.tilesets;
+    const tileSize = map.tileSize || 8;
+    const cellW = canvas.width / map.width;
+    const cellH = canvas.height / map.height;
+    const pW = cellW / tileSize;
+    const pH = cellH / tileSize;
+
+    for (const layer of map.layers) {
+      if (!layer.visible) continue;
+      Object.values(layer.chunks).forEach((chunk) => {
+        chunk.data.forEach((row, localY) => {
+          row.forEach((cell, localX) => {
+            if (!cell) return;
+            const globalX = chunk.x * CHUNK_SIZE + localX;
+            const globalY = chunk.y * CHUNK_SIZE + localY;
+
+            // Only render if within initial viewport bounds for preview
+            if (globalX >= map.width || globalY >= map.height || globalX < 0 || globalY < 0) return;
+
+            const ts = tilesets.find((t) => t.id === cell.tilesetId);
+            const tile = ts?.tiles[cell.tileIndex];
+            if (!tile) return;
+            drawTileToCanvas(
+              ctx,
+              tile.data,
+              globalX * cellW,
+              globalY * cellH,
+              pW,
+              pH,
+            );
+          });
+        });
+      });
+    }
+  }, [template]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      width={160}
+      height={120}
+      style={{ width: "100%", height: "100%", display: "block", imageRendering: "pixelated" }}
+    />
+  );
+};
+
+interface TemplateCardProps {
+  template: Template;
+  onUse: (t: Template) => void;
+  onDelete?: (id: string) => void;
+}
+
+const TemplateCard: React.FC<TemplateCardProps> = ({ template, onUse, onDelete }) => {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
