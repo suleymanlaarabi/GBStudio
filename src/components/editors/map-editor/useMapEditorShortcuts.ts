@@ -52,3 +52,20 @@ export const useMapEditorShortcuts = ({ hoverCell }: UseMapEditorShortcutsProps)
           event.preventDefault();
           deleteMapSelection();
         },
+      },
+      {
+        matcher: (event) => event.key.toLowerCase() === "b",
+        handler: () => setMapTool("pencil"),
+      },
+      {
+        matcher: (event) => event.key.toLowerCase() === "e",
+        handler: () => setMapTool("eraser"),
+      },
+      {
+        matcher: (event) => event.key.toLowerCase() === "i",
+        handler: () => setMapTool("eyedropper"),
+      },
+      {
+        matcher: (event) => event.key.toLowerCase() === "g",
+        handler: () => setMapTool("fill"),
+      },
