@@ -110,3 +110,39 @@ export const Settings: React.FC = () => {
       </div>
 
       {/* Shortcuts Section */}
+      <div style={sectionStyle}>
+        <div style={headerStyle}>
+          <Keyboard size={20} />
+          Shortcuts
+        </div>
+        <div style={itemStyle}>
+          <div>
+            <div style={{ fontWeight: "500" }}>Keyboard Shortcuts</div>
+            <div style={{ fontSize: "0.85rem", opacity: 0.7 }}>
+              Quick access to common actions. Press <b>?</b> anywhere to open.
+            </div>
+          </div>
+          <button
+            className="btn btn-secondary"
+            onClick={() => {
+              const event = new KeyboardEvent("keydown", { key: "?" });
+              window.dispatchEvent(event);
+            }}
+          >
+            View All
+          </button>
+        </div>
+      </div>
+
+      {/* Storage & Data Section */}
+      <div style={sectionStyle}>
+        <div style={headerStyle}>
+          <Database size={20} />
+          Data & Storage
+        </div>
+
+        <div style={{ ...itemStyle, borderBottom: "none", marginTop: "1rem" }}>
+          <div>
+            <div style={{ fontWeight: "500", color: "#ff4444" }}>
+              Dangerous Area
+            </div>
