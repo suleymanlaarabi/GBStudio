@@ -79,3 +79,42 @@ const TILES = {
   ]) },
   hero_d2: { id: "bd-c1", size: 8 as const, data: d([
     [null, null, 3, 3, 3, 3, null, null],
+    [null, 3, 2, 2, 2, 2, 3, null],
+    [3, 2, 3, 2, 2, 3, 2, 3],
+    [3, 2, 2, 2, 2, 2, 2, 3],
+    [null, 3, 1, 1, 1, 1, 3, null],
+    [null, 3, 1, 1, 1, 1, 3, null],
+    [null, 3, 3, 3, 3, 3, 3, null],
+    [null, null, 3, 3, null, 3, 3, null],
+  ]) },
+  slime1: { id: "bd-c2", size: 8 as const, data: d([
+    [null, null, null, null, null, null, null, null],
+    [null, null, null, null, null, null, null, null],
+    [null, null, 2, 2, 2, 2, null, null],
+    [null, 2, 1, 1, 1, 1, 2, null],
+    [2, 1, 3, 1, 1, 3, 1, 2],
+    [2, 1, 1, 1, 1, 1, 1, 2],
+    [2, 2, 2, 2, 2, 2, 2, 2],
+    [null, null, null, null, null, null, null, null],
+  ]) },
+  slime2: { id: "bd-c3", size: 8 as const, data: d([
+    [null, null, null, null, null, null, null, null],
+    [null, null, null, null, null, null, null, null],
+    [null, null, null, null, null, null, null, null],
+    [null, 2, 2, 2, 2, 2, 2, null],
+    [2, 1, 1, 1, 1, 1, 1, 2],
+    [2, 1, 3, 1, 1, 3, 1, 2],
+    [2, 2, 2, 2, 2, 2, 2, 2],
+    [null, null, null, null, null, null, null, null],
+  ]) },
+};
+
+const W = { tilesetId: TS, tileIndex: 1 };
+const F = { tilesetId: TS, tileIndex: 0 };
+const D = { tilesetId: TS, tileIndex: 2 };
+const C = { tilesetId: TS, tileIndex: 3 };
+const T = { tilesetId: TS, tileIndex: 4 };
+const S = { tilesetId: TS, tileIndex: 5 };
+const n = null;
+
+const CTS = "builtin-dungeon-chars";
