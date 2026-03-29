@@ -173,3 +173,61 @@ export const floodFillLayer = (
       if (visited.has(key)) continue;
       visited.add(key);
 
+      if (!sameCell(getCellFromChunks(chunks, x, y), target)) continue;
+
+      setCell(x, y, replacement);
+      stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+      
+      if (visited.size > 50000) break; // Safety limit
+    }
+  });
+};
+
+export const drawLineOnLayer = (
+  chunks: LayerData,
+  startX: number,
+  startY: number,
+  endX: number,
+  endY: number,
+  cell: TileCell | null
+): LayerData => {
+  return withBatchUpdate(chunks, (setCell) => {
+    let x = startX;
+    let y = startY;
+    const dx = Math.abs(endX - startX);
+    const sx = startX < endX ? 1 : -1;
+    const dy = -Math.abs(endY - startY);
+    const sy = startY < endY ? 1 : -1;
+    let error = dx + dy;
+
+    while (true) {
+      setCell(x, y, cell);
+      if (x === endX && y === endY) break;
+      const twiceError = 2 * error;
+      if (twiceError >= dy) { error += dy; x += sx; }
+      if (twiceError <= dx) { error += dx; y += sy; }
+    }
+  });
+};
+
+export const drawRectangleOnLayer = (
+  chunks: LayerData,
+  selection: SelectionBounds,
+  cell: TileCell | null,
+  filled: boolean
+): LayerData => {
+  return withBatchUpdate(chunks, (setCell) => {
+    const startX = selection.x;
+    const startY = selection.y;
+    const endX = selection.x + selection.width;
+    const endY = selection.y + selection.height;
+
+    for (let y = startY; y < endY; y++) {
+      for (let x = startX; x < endX; x++) {
+        const isBorder = y === startY || y === endY - 1 || x === startX || x === endX - 1;
+        if (filled || isBorder) setCell(x, y, cell);
+      }
+    }
+  });
+};
+
