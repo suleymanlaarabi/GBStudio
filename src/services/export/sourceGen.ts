@@ -273,3 +273,93 @@ void gbt_switch_map(const GBT_MAP *next_map, gbt_dir_t dir) {
               set_bkg_tiles(0, row, visible_width, 1, gbt_tile_buf); }
         }
         wait_vbl_done(); SCY_REG = 0u;
+        for (i = 0u; i < 4u; i++) {
+            uint8_t row = (uint8_t)(visible_height - 4u + i);
+            for (j = 0u; j < visible_width; j++) gbt_tile_buf[j] = gbt_get_tile_from(next_map, j, row);
+            set_bkg_tiles(0, row, visible_width, 1, gbt_tile_buf);
+        }
+    }
+
+    gbt_leave_bank(prev);
+}
+
+void gbt_init_camera(const GBT_MAP *map) {
+    uint16_t x = map->spawn_x;
+    uint16_t y = map->spawn_y;
+
+    gbt_cam_map = map;
+    gbt_cam_x = x;
+    gbt_cam_y = y;
+    gbt_cam_tx = x >> 3;
+    gbt_cam_ty = y >> 3;
+    gbt_cached_chunk_bank = 0xffu;
+    gbt_cached_chunk_ptr = 0;
+
+    gbt_load_map_active(map);
+    gbt_clear_bkg_map();
+
+    {
+        uint8_t i;
+        for (i = 0u; i != 32u; i++) gbt_stream_row_active(gbt_cam_ty + i, gbt_cam_tx);
+    }
+
+    gbt_pending_scx = (uint8_t)x;
+    gbt_pending_scy = (uint8_t)y;
+    SCX_REG = gbt_pending_scx;
+    SCY_REG = gbt_pending_scy;
+
+    if (!gbt_vbl_registered) {
+        add_VBL(gbt_vblank_isr);
+        gbt_vbl_registered = 1;
+    }
+}
+
+static uint8_t gbt_is_solid_active(const GBT_MAP *map, uint16_t tx, uint16_t ty) {
+    uint16_t map_w = (uint16_t)map->world_w << 4;
+    uint16_t map_h = (uint16_t)map->world_h << 4;
+    uint32_t bit_idx;
+    if (!map->collision) return 0u;
+    if (tx >= map_w || ty >= map_h) return 1u;
+    bit_idx = (uint32_t)ty * map_w + tx;
+    return (map->collision[bit_idx >> 3] >> ((uint8_t)(bit_idx & 7u))) & 1u;
+}
+
+void gbt_init_camera_controller(GBT_CAMERA_CTRL *ctrl, const GBT_MAP *map) {
+    ctrl->map = map;
+    ctrl->x = map->spawn_x;
+    ctrl->y = map->spawn_y;
+    gbt_init_camera(map);
+}
+
+void gbt_update_camera_controller(GBT_CAMERA_CTRL *ctrl, int8_t dx, int8_t dy) {
+    int16_t nx = (int16_t)ctrl->x + (int16_t)dx;
+    int16_t ny = (int16_t)ctrl->y + (int16_t)dy;
+    const GBT_MAP *map = ctrl->map;
+    uint16_t map_px_w = (uint16_t)map->world_w << 7;
+    uint16_t map_px_h = (uint16_t)map->world_h << 7;
+    if (map->collision) {
+        uint8_t prev = gbt_enter_bank(map->collision_bank);
+        if (nx >= 0) {
+            uint16_t tx = (uint16_t)nx >> 3;
+            if (!gbt_is_solid_active(map, tx, ctrl->y >> 3)) ctrl->x = (uint16_t)nx;
+        }
+        if (ny >= 0) {
+            uint16_t ty = (uint16_t)ny >> 3;
+            if (!gbt_is_solid_active(map, ctrl->x >> 3, ty)) ctrl->y = (uint16_t)ny;
+        }
+        gbt_leave_bank(prev);
+    } else {
+        if (nx >= 0) ctrl->x = (uint16_t)nx;
+        if (ny >= 0) ctrl->y = (uint16_t)ny;
+    }
+
+    if (ctrl->x >= map_px_w) ctrl->x = (uint16_t)(map_px_w - 1u);
+    if (ctrl->y >= map_px_h) ctrl->y = (uint16_t)(map_px_h - 1u);
+
+    {
+        uint16_t cam_x = (ctrl->x >= 80u) ? (uint16_t)(ctrl->x - 80u) : 0u;
+        uint16_t cam_y = (ctrl->y >= 72u) ? (uint16_t)(ctrl->y - 72u) : 0u;
+        uint16_t max_cam_x = (map_px_w >= 160u) ? (uint16_t)(map_px_w - 160u) : 0u;
+        uint16_t max_cam_y = (map_px_h >= 144u) ? (uint16_t)(map_px_h - 144u) : 0u;
+        if (cam_x > max_cam_x) cam_x = max_cam_x;
+        if (cam_y > max_cam_y) cam_y = max_cam_y;
