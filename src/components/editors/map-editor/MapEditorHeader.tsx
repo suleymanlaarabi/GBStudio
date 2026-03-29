@@ -52,3 +52,23 @@ export const MapEditorHeader: React.FC<MapEditorHeaderProps> = ({
         </button>
         <span
           style={{
+            fontSize: "0.7rem",
+            alignSelf: "center",
+            minWidth: "35px",
+            textAlign: "center",
+          }}
+        >
+          {Math.round(zoom * 100)}%
+        </span>
+        <button
+          className="btn btn-secondary"
+          style={{ padding: "4px" }}
+          onClick={() => setZoom(zoom + 1)}
+          title="Zoom in"
+        >
+          <ZoomIn size={14} />
+        </button>
+      </div>
+    </div>
+  );
+};
