@@ -104,3 +104,28 @@ export function moveArea(
 
   return {
     data: movedData,
+    newSelection: {
+      x: newX,
+      y: newY,
+      width: selection.width,
+      height: selection.height,
+    },
+  };
+}
+
+export const isPointInSelection = (
+  x: number,
+  y: number,
+  selection: SelectionBounds,
+) =>
+  x >= selection.x &&
+  x < selection.x + selection.width &&
+  y >= selection.y &&
+  y < selection.y + selection.height;
+
+export const selectAll = (tileSize: number): SelectionBounds => ({
+  x: 0,
+  y: 0,
+  width: tileSize,
+  height: tileSize,
+});
