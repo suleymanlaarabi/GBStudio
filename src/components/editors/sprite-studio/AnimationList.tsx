@@ -78,3 +78,18 @@ export const AnimationList: React.FC<AnimationListProps> = ({
                 style={{ padding: "2px", marginLeft: "auto" }}
                 onClick={(e) => {
                   e.stopPropagation();
+                  if (selectedSpriteId) {
+                    removeAnimation(selectedSpriteId, a.id);
+                  }
+                }}
+                aria-label={`Supprimer l'animation ${a.name}`}
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
