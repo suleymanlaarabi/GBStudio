@@ -19,3 +19,22 @@ export const useSpriteStudio = () => {
     selectedSpriteId,
     setSelectedSpriteId,
     selectedAnimId,
+    setSelectedAnimId,
+  } = useStore();
+
+  const [spriteModalOpen, setSpriteModalOpen] = useState(false);
+  const [animModalOpen, setAnimModalOpen] = useState(false);
+
+  const activeTileset = tilesets[activeTilesetIndex];
+  const tiles = activeTileset?.tiles || [];
+  const activeSprite = sprites.find((s) => s.id === selectedSpriteId);
+  const activeAnim = activeSprite?.animations.find((a) => a.id === selectedAnimId);
+
+  return {
+    sprites,
+    tilesets,
+    activeTilesetIndex,
+    setActiveTileset,
+    addSprite,
+    addAnimation,
+    addFrame,
