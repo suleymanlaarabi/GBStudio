@@ -25,3 +25,28 @@ const SOUNDS: Omit<SoundAsset, "id">[] = [
   },
   // ── EXPLOSION ─────────────────────────────────────────────────────────────
   {
+    name: "Explosion",
+    type: "NOISE",
+    noise: {
+      length: 20,
+      initialVolume: 15,
+      envelopeDirection: "DOWN",
+      envelopeSweep: 1,
+      shiftClockFrequency: 8,
+      counterStep: 0,
+      dividingRatio: 0,
+    },
+  },
+  // ── GAME OVER ─────────────────────────────────────────────────────────────
+  {
+    name: "Game Over",
+    type: "PULSE1",
+    pulse1: {
+      sweepTime: 4,
+      sweepDirection: "DOWN",
+      sweepShift: 3,
+      duty: 2,
+      length: 30,
+      initialVolume: 14,
+      envelopeDirection: "DOWN",
+      envelopeSweep: 1,
