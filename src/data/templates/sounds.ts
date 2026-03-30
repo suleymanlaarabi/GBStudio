@@ -75,3 +75,28 @@ const SOUNDS: Omit<SoundAsset, "id">[] = [
     type: "PULSE2",
     pulse2: {
       duty: 1,
+      length: 12,
+      initialVolume: 10,
+      envelopeDirection: "DOWN",
+      envelopeSweep: 2,
+      frequency: 1616,
+    },
+  },
+  // ── SELECT / UI BEEP ──────────────────────────────────────────────────────
+  {
+    name: "Select",
+    type: "PULSE2",
+    pulse2: {
+      duty: 2,
+      length: 4,
+      initialVolume: 8,
+      envelopeDirection: "DOWN",
+      envelopeSweep: 5,
+      frequency: 1808,
+    },
+  },
+  // ── CONFIRM ───────────────────────────────────────────────────────────────
+  {
+    name: "Confirm",
+    type: "PULSE1",
+    pulse1: {
