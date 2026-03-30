@@ -44,3 +44,25 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
+
+  const handleSelect = (option: SelectOption) => {
+    if (option.disabled) return;
+    onChange(option.value);
+    setIsOpen(false);
+  };
+
+  return (
+    <div
+      ref={containerRef}
+      className={className}
+      style={{ position: "relative", width: "100%" }}
+    >
+      <button
+        className={`btn ${isOpen ? "" : "btn-secondary"}`}
+        onClick={() => setIsOpen(!isOpen)}
+        style={{
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
