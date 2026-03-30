@@ -50,3 +50,28 @@ const SOUNDS: Omit<SoundAsset, "id">[] = [
       initialVolume: 14,
       envelopeDirection: "DOWN",
       envelopeSweep: 1,
+      frequency: 1750,
+    },
+  },
+  // ── POWER UP ──────────────────────────────────────────────────────────────
+  {
+    name: "Power Up",
+    type: "PULSE1",
+    pulse1: {
+      sweepTime: 2,
+      sweepDirection: "UP",
+      sweepShift: 1,
+      duty: 2,
+      length: 16,
+      initialVolume: 14,
+      envelopeDirection: "DOWN",
+      envelopeSweep: 1,
+      frequency: 1664,
+    },
+  },
+  // ── DOOR OPEN ─────────────────────────────────────────────────────────────
+  {
+    name: "Door Open",
+    type: "PULSE2",
+    pulse2: {
+      duty: 1,
