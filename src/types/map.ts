@@ -21,3 +21,22 @@ export interface MapLayer {
 export interface WindowLayer {
   enabled: boolean;
   wx: number;   // tile columns from left edge (0 = full screen)
+  wy: number;   // tile rows from top edge (0 = full screen)
+  layer: MapLayer;
+}
+
+export interface TileMap {
+  id: string;
+  name: string;
+  width: number;
+  height: number;
+  tileSize: TileSize;
+  layers: MapLayer[];
+  cameraSpawn?: { x: number; y: number };
+  collisionData?: Record<string, boolean[][]>;
+  spriteInstances?: SpriteInstance[];
+  windowLayer?: WindowLayer;
+}
+
+export type MapClipboard = (TileCell | null)[][];
+export type MapSelectionState = SelectionState;
