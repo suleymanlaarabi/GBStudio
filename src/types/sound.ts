@@ -30,3 +30,21 @@ export interface WaveChannel {
 }
 
 export interface NoiseChannel {
+  length: number; // 0-63
+  initialVolume: number; // 0-15
+  envelopeDirection: "UP" | "DOWN";
+  envelopeSweep: number; // 0-7
+  shiftClockFrequency: number; // 0-15
+  counterStep: 0 | 1; // 0=15-bit, 1=7-bit
+  dividingRatio: number; // 0-7
+}
+
+export interface SoundAsset {
+  id: string;
+  name: string;
+  type: SoundChannelType;
+  pulse1?: Pulse1Channel;
+  pulse2?: Pulse2Channel;
+  wave?: WaveChannel;
+  noise?: NoiseChannel;
+}
