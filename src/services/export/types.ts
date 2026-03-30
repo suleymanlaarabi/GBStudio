@@ -43,3 +43,20 @@ export interface MapExport {
   collisionBank: number;
   collisionRomSize: number;
 
+  spawnX: number;
+  spawnY: number;
+  minX: number;
+  minY: number;
+  sourceTileCount: number;
+}
+
+export interface RomBank {
+  id: number;
+  usedBytes: number;
+  assetNames: string[];
+}
+
+export interface RomAllocationPlan {
+  banks: RomBank[];
+  totalBytes: number;
+}
