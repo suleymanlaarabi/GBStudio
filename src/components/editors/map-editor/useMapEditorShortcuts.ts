@@ -69,3 +69,22 @@ export const useMapEditorShortcuts = ({ hoverCell }: UseMapEditorShortcutsProps)
         matcher: (event) => event.key.toLowerCase() === "g",
         handler: () => setMapTool("fill"),
       },
+      {
+        matcher: (event) => event.key.toLowerCase() === "l",
+        handler: () => setMapTool("line"),
+      },
+      {
+        matcher: (event) => event.key.toLowerCase() === "r",
+        handler: () => setMapTool("rectangle"),
+      },
+      {
+        matcher: (event) => event.key.toLowerCase() === "m",
+        handler: () => setMapTool("select"),
+      },
+      {
+        matcher: (event) => event.key === "Escape",
+        handler: () => clearMapSelection(),
+      },
+    ],
+  });
+};
