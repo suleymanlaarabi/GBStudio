@@ -29,3 +29,32 @@ export const createSpriteSlice: StateCreator<
   SpriteState,
   [],
   [],
+  SpriteSlice
+> = (set, get) => ({
+  sprites: [],
+  selectedSpriteId: null,
+  selectedAnimId: null,
+
+  addSprite: (name) => {
+    const newSpriteId = crypto.randomUUID();
+    set((state) => ({
+      sprites: [
+        ...state.sprites,
+        { id: newSpriteId, name, animations: [] },
+      ],
+      selectedSpriteId: newSpriteId,
+    }));
+    get().commit();
+  },
+
+  setSelectedSpriteId: (spriteId) => {
+    set({ selectedSpriteId: spriteId });
+  },
+
+  setSelectedAnimId: (animId) => {
+    set({ selectedAnimId: animId });
+  },
+
+  addAnimation: (spriteId, name) => {
+    set((state) => ({
+      sprites: state.sprites.map((sprite) =>
