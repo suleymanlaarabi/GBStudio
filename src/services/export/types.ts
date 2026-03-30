@@ -28,3 +28,18 @@ export interface MapExport {
   tileBytes: number[][];
   tileCount: number;
   tilesBank: number;
+  tileRomSize: number;
+
+  allChunks: number[][];
+  chunkBanks: ChunkBankData[];
+  worldChunkIndices: number[];
+  worldRefs: WorldRef[];
+  worldW: number;
+  worldH: number;
+  worldBank: number;
+  worldRomSize: number;
+
+  collisionData: number[];
+  collisionBank: number;
+  collisionRomSize: number;
+
