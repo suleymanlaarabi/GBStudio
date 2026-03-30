@@ -24,3 +24,19 @@ export type EditorState = TileSlice &
   MapSlice &
   SpriteSlice &
   SoundSlice &
+  HistorySlice &
+  SelectionSlice &
+  ProjectSlice &
+  UISlice;
+
+export const useStore = create<EditorState>()((...args) => {
+  const slices = {
+    ...createUISlice(...args),
+    ...createTileSlice(...args),
+    ...createMapSlice(...args),
+    ...createSpriteSlice(...args),
+    ...createSoundSlice(...args),
+    ...createSelectionSlice(...args),
+    ...createProjectSlice(...args),
+    ...createHistorySlice(...args),
+  };
