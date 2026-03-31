@@ -45,3 +45,18 @@ export const createHistorySlice: StateCreator<
       selection: state.selection,
       mapSelection: state.mapSelection,
     };
+    
+    const snapshot = JSON.stringify(snapshotObj);
+    const { history, historyIndex } = get();
+
+    // Avoid duplicate snapshots
+    if (historyIndex >= 0 && history[historyIndex] === snapshot) return;
+
+    const nextHistory = history.slice(0, historyIndex + 1);
+    nextHistory.push(snapshot);
+    
+    // Limit history to 50 steps
+    if (nextHistory.length > 50) {
+      nextHistory.shift();
+    }
+
