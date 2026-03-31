@@ -229,3 +229,59 @@ export const TilePixelEditor: React.FC = () => {
 
     ctx.fillStyle = "#000";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const renderData = previewData || tile.data;
+    const checkerA = "#aaaaaa";
+    const checkerB = "#888888";
+    const half = pixelSize / 2;
+
+    renderData.forEach((row, y) => row.forEach((colorIndex, x) => {
+      if (colorIndex === null) {
+        // Checkerboard for transparent pixels
+        const isEvenCell = (x + y) % 2 === 0;
+        ctx.fillStyle = isEvenCell ? checkerA : checkerB;
+        ctx.fillRect(x * pixelSize, y * pixelSize, half, half);
+        ctx.fillStyle = isEvenCell ? checkerB : checkerA;
+        ctx.fillRect(x * pixelSize + half, y * pixelSize, half, half);
+        ctx.fillStyle = isEvenCell ? checkerB : checkerA;
+        ctx.fillRect(x * pixelSize, y * pixelSize + half, half, half);
+        ctx.fillStyle = isEvenCell ? checkerA : checkerB;
+        ctx.fillRect(x * pixelSize + half, y * pixelSize + half, half, half);
+      } else {
+        ctx.fillStyle = GB_COLORS[colorIndex];
+        ctx.fillRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize);
+      }
+
+      ctx.strokeStyle = "rgba(0,0,0,0.15)";
+      ctx.lineWidth = 0.5;
+      ctx.strokeRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize);
+    }));
+
+    if (selection.hasSelection) {
+      ctx.strokeStyle = isMovingSelection ? "rgba(134, 59, 255, 1)" : "rgba(134, 59, 255, 0.8)";
+      ctx.lineWidth = isMovingSelection ? 3 : 2;
+      ctx.strokeRect(selection.x * pixelSize, selection.y * pixelSize, selection.width * pixelSize, selection.height * pixelSize);
+    }
+  }, [tile, pixelSize, previewData, selection, isMovingSelection]);
+
+  if (!tile || !tileset) return <div className="card">No tile selected</div>;
+
+  return (
+    <div className="card">
+      <div className="section-title">Pixel Studio ({tile.size}x{tile.size})</div>
+      <div style={{ display: "flex", justifyContent: "center", background: "#000", padding: "10px", borderRadius: "12px" }}>
+        <canvas
+          ref={canvasRef}
+          width={canvasSize}
+          height={canvasSize}
+          style={{ cursor, imageRendering: "pixelated" }}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={() => {
+            if (isDrawing && (tool === "pencil" || tool === "eraser")) {
+              commit();
+            }
+            setIsDrawing(false);
+            setIsSelecting(false);
+            setIsMovingSelection(false);
