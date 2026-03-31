@@ -58,3 +58,32 @@ export const createSpriteSlice: StateCreator<
   addAnimation: (spriteId, name) => {
     set((state) => ({
       sprites: state.sprites.map((sprite) =>
+        sprite.id === spriteId
+          ? {
+              ...sprite,
+              animations: [
+                ...sprite.animations,
+                {
+                  id: crypto.randomUUID(),
+                  name,
+                  frames: [],
+                  loop: true,
+                },
+              ],
+            }
+          : sprite,
+      ),
+    }));
+    get().commit();
+  },
+
+  addFrame: (spriteId, animationId, tileIndex, tilesetId) => {
+    set((state) => ({
+      sprites: state.sprites.map((sprite) =>
+        sprite.id === spriteId
+          ? {
+              ...sprite,
+              animations: sprite.animations.map((animation) =>
+                animation.id === animationId
+                  ? {
+                      ...animation,
