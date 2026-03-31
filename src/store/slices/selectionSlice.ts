@@ -218,3 +218,50 @@ export const createSelectionSlice: StateCreator<
     if (!tile) return;
 
     const rotated = rotateServiceClockwise(tile.data, selection);
+    if (!rotated) return;
+
+    set({
+      tilesets: updateActiveTileData(tilesets, activeTilesetIndex, activeTileIndex, rotated.data),
+      selection: { hasSelection: true, ...rotated.newSelection },
+    });
+    get().commit();
+  },
+
+  rotateSelectionCounterClockwise: () => {
+    const { tilesets, activeTilesetIndex, activeTileIndex, selection } = get();
+    if (!selection.hasSelection) return;
+    const tile = tilesets[activeTilesetIndex]?.tiles[activeTileIndex];
+    if (!tile) return;
+
+    const rotated = rotateServiceCounterClockwise(tile.data, selection);
+    if (!rotated) return;
+
+    set({
+      tilesets: updateActiveTileData(tilesets, activeTilesetIndex, activeTileIndex, rotated.data),
+      selection: { hasSelection: true, ...rotated.newSelection },
+    });
+    get().commit();
+  },
+
+  updateSelectionBounds: (x, y) => {
+    const { selection } = get();
+    if (!selection.hasSelection) return;
+    set({
+      selection: { ...selection, x, y },
+    });
+  },
+
+  fillArea: (tilesetIndex, tileIndex, selection, color) => {
+    set((state) => ({
+      tilesets: fillTileArea(state.tilesets, tilesetIndex, tileIndex, selection, color),
+    }));
+    get().commit();
+  },
+
+  clearArea: (tilesetIndex, tileIndex, selection) => {
+    set((state) => ({
+      tilesets: clearTileArea(state.tilesets, tilesetIndex, tileIndex, selection),
+    }));
+    get().commit();
+  },
+});
