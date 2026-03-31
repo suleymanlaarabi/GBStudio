@@ -75,3 +75,21 @@ export const SpriteAssetLibrary: React.FC<SpriteAssetLibraryProps> = ({
     <div
       className="card"
       style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "1rem",
+        overflow: "hidden",
+      }}
+    >
+      <div className="section-title" style={{ fontSize: "0.9rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <Database size={16} /> Asset Library
+        </div>
+      </div>
+      <CustomSelect
+        value={activeTilesetIndex.toString()}
+        onChange={(value) => onSelectTileset(parseInt(String(value), 10))}
+        options={tilesets.map((ts, i) => ({
+          label: ts.name,
+          value: i.toString(),
+        }))}
