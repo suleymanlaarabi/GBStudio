@@ -195,3 +195,96 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onUse, onDelete }
   return (
     <div
       onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background: "#111",
+        border: `1px solid ${hovered ? "var(--accent)" : "#222"}`,
+        borderRadius: "10px",
+        overflow: "hidden",
+        cursor: "pointer",
+        transition: "border-color 0.15s, transform 0.15s",
+        transform: hovered ? "translateY(-2px)" : "none",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <div
+        style={{
+          position: "relative",
+          aspectRatio: "4/3",
+          background: "#000",
+          overflow: "hidden",
+        }}
+        onClick={() => onUse(template)}
+      >
+        <TemplatePreview template={template} />
+        {hovered && (
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: "rgba(0,0,0,0.55)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <button
+              className="btn"
+              style={{ padding: "8px 18px", fontSize: "0.85rem" }}
+              onClick={(e) => { e.stopPropagation(); onUse(template); }}
+            >
+              Use
+            </button>
+          </div>
+        )}
+        {template.isBuiltin && (
+          <div
+            style={{
+              position: "absolute",
+              top: 6,
+              left: 6,
+              background: "var(--accent)",
+              borderRadius: "4px",
+              padding: "2px 6px",
+              fontSize: "0.65rem",
+              fontWeight: 700,
+              color: "#000",
+              display: "flex",
+              alignItems: "center",
+              gap: 3,
+            }}
+          >
+            <Sparkles size={9} /> OFFICIAL
+          </div>
+        )}
+      </div>
+
+      <div style={{ padding: "10px 12px", flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+          <span style={{ fontWeight: 700, fontSize: "0.9rem", color: "#fff" }}>
+            {template.name}
+          </span>
+          {!template.isBuiltin && onDelete && (
+            <button
+              className="btn btn-secondary"
+              style={{ padding: "2px 6px", color: "#ff4444" }}
+              onClick={(e) => { e.stopPropagation(); onDelete(template.id); }}
+            >
+              <X size={12} />
+            </button>
+          )}
+        </div>
+
+        <p style={{ fontSize: "0.75rem", color: "#888", margin: 0, lineHeight: 1.4 }}>
+          {template.description}
+        </p>
+
+        <div style={{ display: "flex", gap: 6, marginTop: 4, flexWrap: "wrap" }}>
+          <span
+            style={{
+              fontSize: "0.65rem",
+              padding: "2px 7px",
+              borderRadius: "4px",
+              background: CATEGORY_COLORS[template.category] + "22",
+              color: CATEGORY_COLORS[template.category],
