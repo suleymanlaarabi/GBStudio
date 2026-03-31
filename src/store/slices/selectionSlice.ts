@@ -175,3 +175,46 @@ export const createSelectionSlice: StateCreator<
     if (!moved) return;
 
     set({
+      tilesets: updateActiveTileData(tilesets, activeTilesetIndex, activeTileIndex, moved.data),
+      selection: { hasSelection: true, ...moved.newSelection },
+    });
+    get().commit();
+  },
+
+  flipSelectionHorizontal: () => {
+    const { tilesets, activeTilesetIndex, activeTileIndex, selection } = get();
+    if (!selection.hasSelection) return;
+    const tile = tilesets[activeTilesetIndex]?.tiles[activeTileIndex];
+    if (!tile) return;
+
+    const flipped = flipServiceSelectionHorizontal(tile.data, selection);
+    if (!flipped) return;
+
+    set({
+      tilesets: updateActiveTileData(tilesets, activeTilesetIndex, activeTileIndex, flipped),
+    });
+    get().commit();
+  },
+
+  flipSelectionVertical: () => {
+    const { tilesets, activeTilesetIndex, activeTileIndex, selection } = get();
+    if (!selection.hasSelection) return;
+    const tile = tilesets[activeTilesetIndex]?.tiles[activeTileIndex];
+    if (!tile) return;
+
+    const flipped = flipServiceSelectionVertical(tile.data, selection);
+    if (!flipped) return;
+
+    set({
+      tilesets: updateActiveTileData(tilesets, activeTilesetIndex, activeTileIndex, flipped),
+    });
+    get().commit();
+  },
+
+  rotateSelectionClockwise: () => {
+    const { tilesets, activeTilesetIndex, activeTileIndex, selection } = get();
+    if (!selection.hasSelection) return;
+    const tile = tilesets[activeTilesetIndex]?.tiles[activeTileIndex];
+    if (!tile) return;
+
+    const rotated = rotateServiceClockwise(tile.data, selection);
