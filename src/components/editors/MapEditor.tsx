@@ -103,3 +103,27 @@ export const MapEditor = () => {
           setMapTool={setMapTool}
           mapShapeFilled={mapShapeFilled}
           setMapShapeFilled={setMapShapeFilled}
+          mapSelection={mapSelection}
+          mapClipboard={mapClipboard}
+          copyMapSelection={copyMapSelection}
+          cutMapSelection={cutMapSelection}
+          pasteMapSelection={pasteMapSelection}
+          deleteMapSelection={deleteMapSelection}
+          clearMapSelection={clearMapSelection}
+          hoverCell={hoverCell}
+        />
+
+        <MapCanvas
+          map={map}
+          tilesets={tilesets}
+          sprites={sprites}
+          activeSpriteIndex={activeSpriteIndex}
+          activeLayerIsWindow={activeLayerIsWindow}
+          zoom={zoom}
+          setZoom={setZoom}
+          tileSize={tileSize}
+          unitSize={unitSize}
+          isDrawing={isDrawing}
+          dragStart={dragStart}
+          hoverCell={hoverCell}
+          mapTool={mapTool}
