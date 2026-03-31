@@ -40,3 +40,19 @@ export const useStore = create<EditorState>()((...args) => {
     ...createProjectSlice(...args),
     ...createHistorySlice(...args),
   };
+
+  // Initial history snapshot
+  const initialState = {
+    tilesets: slices.tilesets,
+    maps: slices.maps,
+    sprites: slices.sprites,
+    sounds: slices.sounds,
+    selection: slices.selection,
+    mapSelection: slices.mapSelection,
+  };
+
+  return {
+    ...slices,
+    history: [JSON.stringify(initialState)],
+    historyIndex: 0,
+  };
