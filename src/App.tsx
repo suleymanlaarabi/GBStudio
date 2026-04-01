@@ -211,3 +211,67 @@ function App() {
     } catch (error) {
       console.error(error);
       updateStatus(`Project save failed: ${String(error)}`, "error", 5000);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const saveProjectAs = async () => {
+    setIsSaving(true);
+    try {
+      updateStatus("Saving project as...", "busy");
+      const selected = await save({
+        title: "Save project as",
+        defaultPath: "project.cartridge",
+        filters: [{ name: "Cartridge Project", extensions: ["cartridge"] }],
+      });
+      if (!selected) {
+        updateStatus("Save as cancelled", "info", 2500);
+        return;
+      }
+
+      await saveProjectToPath(selected);
+      updateStatus(`Project saved: ${selected}`, "success", 4000);
+    } catch (error) {
+      console.error(error);
+      updateStatus(`Project save failed: ${String(error)}`, "error", 5000);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const openProject = async () => {
+    try {
+      updateStatus("Opening project...", "busy");
+      const selected = await open({
+        multiple: false,
+        directory: false,
+        title: "Open project",
+        filters: [
+          { name: "Cartridge Project", extensions: ["cartridge", "json"] },
+        ],
+      });
+
+      if (!selected) {
+        updateStatus("Open project cancelled", "info", 2500);
+        return;
+      }
+
+      const raw = await invoke<string>("read_text_file", { path: selected });
+      const project = parseProjectDocument(raw);
+      loadProjectData(project.data);
+      setProjectFilePath(selected);
+      localStorage.setItem(PROJECT_PATH_KEY, selected);
+      updateStatus(`Project opened: ${selected}`, "success", 4000);
+    } catch (error) {
+      console.error(error);
+      updateStatus(`Project open failed: ${String(error)}`, "error", 5000);
+    }
+  };
+
+  const saveToProject = async () => {
+    if (!projectPath) {
+      const didChoose = await chooseProjectFolder();
+      if (!didChoose) return;
+    }
+
