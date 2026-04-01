@@ -116,3 +116,32 @@ export const createSpriteSlice: StateCreator<
               ),
             }
           : sprite,
+      ),
+    }));
+    get().commit();
+  },
+
+  removeFrame: (spriteId, animationId, frameIndex) => {
+    set((state) => ({
+      sprites: state.sprites.map((sprite) =>
+        sprite.id === spriteId
+          ? {
+              ...sprite,
+              animations: sprite.animations.map((animation) =>
+                animation.id === animationId
+                  ? {
+                      ...animation,
+                      frames: animation.frames.filter(
+                        (_, currentIndex) => currentIndex !== frameIndex,
+                      ),
+                    }
+                  : animation,
+              ),
+            }
+          : sprite,
+      ),
+    }));
+    get().commit();
+  },
+
+  removeAnimation: (spriteId, animationId) => {
