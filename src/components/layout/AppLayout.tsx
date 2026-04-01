@@ -36,3 +36,21 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   onOpenShortcuts,
   onOpenTemplates,
 }) => (
+  <div className="app-container">
+    <TitleBar />
+    <Sidebar
+      isSaving={isSaving}
+      onExportToProject={onExportToProject}
+      onDownload={onDownload}
+      onChooseProjectFolder={onChooseProjectFolder}
+      onOpenProject={onOpenProject}
+      onSaveProject={onSaveProject}
+      onSaveProjectAs={onSaveProjectAs}
+      projectPath={projectPath}
+      projectFilePath={projectFilePath}
+      onOpenTemplates={onOpenTemplates}
+    />
+    <main className="main-content">{children}</main>
+    <StatusBar message={statusMessage} tone={statusTone} onOpenShortcuts={onOpenShortcuts} />
+  </div>
+);
