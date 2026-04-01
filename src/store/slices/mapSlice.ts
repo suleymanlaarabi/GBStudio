@@ -199,3 +199,101 @@ export const createMapSlice: StateCreator<MapState, [], [], MapSlice> = (set, ge
     set((state) => ({
       maps: updateMap(state.maps, mapIndex, (map) => {
         const collisionData = map.collisionData ? { ...map.collisionData } : {};
+        const clonedKeys = new Set<string>();
+
+        for (const { x, y, solid } of cells) {
+          const cx = Math.floor(x / CHUNK_SIZE);
+          const cy = Math.floor(y / CHUNK_SIZE);
+          const key = `${cx},${cy}`;
+          const localX = ((x % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
+          const localY = ((y % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
+
+          if (!clonedKeys.has(key)) {
+            collisionData[key] = collisionData[key]
+              ? collisionData[key]!.map((row) => [...row])
+              : Array.from({ length: CHUNK_SIZE }, () => new Array<boolean>(CHUNK_SIZE).fill(false));
+            clonedKeys.add(key);
+          }
+          collisionData[key]![localY]![localX] = solid;
+        }
+
+        for (const key of clonedKeys) {
+          const chunk = collisionData[key];
+          if (chunk && chunk.every((row) => row.every((v) => !v))) {
+            delete collisionData[key];
+          }
+        }
+
+        return { ...map, collisionData };
+      }),
+    }));
+  },
+
+  fillMap: (mapIndex, x, y, tilesetId, tileIndex) => {
+    const { activeLayerIndex } = get();
+    set((state) => ({
+      maps: updateMap(state.maps, mapIndex, (map) =>
+        applyToActiveLayer(map, activeLayerIndex, (data) =>
+          floodFillLayer(data, x, y, { tilesetId, tileIndex })
+        )
+      ),
+    }));
+    get().commit();
+  },
+
+  paintTileBrush: (mapIndex, x, y) => {
+    const { tileSelection, activeLayerIndex } = get();
+    if (!tileSelection.hasSelection || tileSelection.width === 0 || tileSelection.height === 0) return;
+    set((state) => ({
+      maps: updateMap(state.maps, mapIndex, (map) =>
+        applyToActiveLayer(map, activeLayerIndex, (data) =>
+          paintBrushOnLayer(data, x, y, tileSelection)
+        )
+      ),
+    }));
+  },
+
+  drawMapLine: (mapIndex, startX, startY, endX, endY, cell) => {
+    const { activeLayerIndex } = get();
+    set((state) => ({
+      maps: updateMap(state.maps, mapIndex, (map) =>
+        applyToActiveLayer(map, activeLayerIndex, (data) =>
+          drawLineOnLayer(data, startX, startY, endX, endY, cell)
+        )
+      ),
+    }));
+    get().commit();
+  },
+
+  drawMapRectangle: (mapIndex, selection, cell, filled) => {
+    const { activeLayerIndex } = get();
+    set((state) => ({
+      maps: updateMap(state.maps, mapIndex, (map) =>
+        applyToActiveLayer(map, activeLayerIndex, (data) =>
+          drawRectangleOnLayer(data, selection, cell, filled)
+        )
+      ),
+    }));
+    get().commit();
+  },
+
+  beginMapSelection: (x, y) => set({ mapSelection: createMapSelectionState(x, y) }),
+
+  updateMapSelection: (x, y) => {
+    const { mapSelection } = get();
+    const startX = mapSelection.startX ?? mapSelection.x;
+    const startY = mapSelection.startY ?? mapSelection.y;
+    set({ mapSelection: { hasSelection: true, startX, startY, ...normalizeMapSelection(startX, startY, x, y) } });
+  },
+endMapSelection: () => {
+  const { mapSelection } = get();
+  if (!(mapSelection.width > 0 && mapSelection.height > 0)) {
+    set({ mapSelection: emptyMapSelection });
+  }
+  get().commit();
+},
+
+
+  clearMapSelection: () => set({ mapSelection: emptyMapSelection }),
+
+  copyMapSelection: () => {
