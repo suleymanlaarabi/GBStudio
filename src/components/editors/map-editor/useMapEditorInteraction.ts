@@ -97,3 +97,50 @@ export const useMapEditorInteraction = ({
     collisionFlushScheduled.current = false;
 
     const paintCells = pendingPaintCells.current.splice(0);
+    flushPaintCells(paintCells);
+
+    const collCells = Array.from(pendingCollisionCells.current.entries()).map(([key, solid]) => {
+      const [xStr, yStr] = key.split(",");
+      return { x: Number(xStr), y: Number(yStr), solid };
+    });
+    if (collCells.length > 0) batchSetCollisionCells(activeMapIndex, collCells);
+    pendingCollisionCells.current.clear();
+  };
+
+  const handlePaint = (coords: CellCoords) => {
+    if (!map || !activeTileset) return;
+
+    const { tileSelection } = useStore.getState();
+
+    if (tileSelection.hasSelection && tileSelection.width > 0 && tileSelection.height > 0) {
+      for (let dy = 0; dy < tileSelection.height; dy++) {
+        for (let dx = 0; dx < tileSelection.width; dx++) {
+          const selectedTile = tileSelection.tileData[dy]?.[dx];
+          if (selectedTile) {
+            pendingPaintCells.current.push({
+              x: coords.x + dx,
+              y: coords.y + dy,
+              cell: { tilesetId: selectedTile.tilesetId, tileIndex: selectedTile.tileIndex },
+            });
+          }
+        }
+      }
+    } else if (mapTool === "pencil" && activeCell) {
+      pendingPaintCells.current.push({ x: coords.x, y: coords.y, cell: activeCell });
+    } else if (mapTool === "eraser") {
+      pendingPaintCells.current.push({ x: coords.x, y: coords.y, cell: null });
+    }
+    schedulePaintFlush();
+  };
+
+  const handleMouseDown = (coords: CellCoords, button: number = 0) => {
+    if (!map) return;
+
+    setHoverCell(coords);
+
+    if (mapTool === "camera_spawn") {
+      setCameraSpawn(activeMapIndex, coords.x, coords.y);
+      return;
+    }
+
+    if (mapTool === "sprite_place") {
