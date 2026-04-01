@@ -381,3 +381,96 @@ export const TemplateGallery: React.FC<TemplateGalleryProps> = ({ isOpen, onClos
         onClick={(e) => e.stopPropagation()}
         style={{
           display: "flex",
+          width: "min(1100px, 96vw)",
+          height: "min(750px, 90vh)",
+          margin: "auto",
+          background: "#0a0a0a",
+          border: "1px solid #222",
+          borderRadius: "14px",
+          overflow: "hidden",
+        }}
+      >
+        {/* Left sidebar */}
+        <div
+          style={{
+            width: 200,
+            flexShrink: 0,
+            background: "#0d0d0d",
+            borderRight: "1px solid #1a1a1a",
+            display: "flex",
+            flexDirection: "column",
+            padding: "1.25rem 0.75rem",
+            gap: "0.4rem",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              color: "var(--accent)",
+              fontWeight: 700,
+              fontSize: "0.8rem",
+              marginBottom: "0.75rem",
+              paddingLeft: "0.5rem",
+            }}
+          >
+            <Layers size={14} />
+            CATEGORIES
+          </div>
+
+          {(["all", "dungeon", "overworld", "platformer", "shooter", "assets", "sounds", "custom"] as const).map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setCategory(cat)}
+              style={{
+                background: category === cat ? "#1a1a1a" : "transparent",
+                border: category === cat ? "1px solid #333" : "1px solid transparent",
+                borderRadius: "7px",
+                padding: "8px 10px",
+                textAlign: "left",
+                cursor: "pointer",
+                color: category === cat ? "#fff" : "#888",
+                fontSize: "0.82rem",
+                fontWeight: category === cat ? 600 : 400,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                transition: "all 0.1s",
+              }}
+            >
+              <span>{CATEGORY_LABELS[cat]}</span>
+              <span
+                style={{
+                  fontSize: "0.7rem",
+                  background: "#222",
+                  borderRadius: "4px",
+                  padding: "1px 6px",
+                  color: "#555",
+                }}
+              >
+                {counts[cat] ?? 0}
+              </span>
+            </button>
+          ))}
+
+          <div style={{ flex: 1 }} />
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".cartridge-template,.json"
+            style={{ display: "none" }}
+            onChange={handleImportFile}
+          />
+          <button
+            className="btn btn-secondary"
+            style={{ fontSize: "0.78rem", padding: "8px 10px", gap: "0.4rem" }}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Upload size={13} />
+            Import
+          </button>
+        </div>
+
+        {/* Main content */}
