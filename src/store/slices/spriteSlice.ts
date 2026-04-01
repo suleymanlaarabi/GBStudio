@@ -87,3 +87,32 @@ export const createSpriteSlice: StateCreator<
                 animation.id === animationId
                   ? {
                       ...animation,
+                      frames: [...animation.frames, { tileIndex, tilesetId, duration: 8 }],
+                    }
+                  : animation,
+              ),
+            }
+          : sprite,
+      ),
+    }));
+    get().commit();
+  },
+
+  updateFrameDuration: (spriteId, animationId, frameIndex, duration) => {
+    set((state) => ({
+      sprites: state.sprites.map((sprite) =>
+        sprite.id === spriteId
+          ? {
+              ...sprite,
+              animations: sprite.animations.map((animation) =>
+                animation.id === animationId
+                  ? {
+                      ...animation,
+                      frames: animation.frames.map((frame, currentIndex) =>
+                        currentIndex === frameIndex ? { ...frame, duration } : frame,
+                      ),
+                    }
+                  : animation,
+              ),
+            }
+          : sprite,
