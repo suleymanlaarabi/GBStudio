@@ -285,3 +285,60 @@ export const TilePixelEditor: React.FC = () => {
             setIsDrawing(false);
             setIsSelecting(false);
             setIsMovingSelection(false);
+            setPreviewData(null);
+          }}
+        />
+      </div>
+
+      {selection.hasSelection && (
+        <div style={{ display: "flex", gap: "0.5rem", justifyContent: "center", marginTop: "0.5rem" }}>
+          <button
+            className="btn btn-secondary"
+            style={{ padding: "4px 8px" }}
+            onClick={flipSelectionHorizontal}
+            title="Flip Horizontal (Ctrl+Shift+H)"
+          >
+            <FlipHorizontal size={14} />
+          </button>
+          <button
+            className="btn btn-secondary"
+            style={{ padding: "4px 8px" }}
+            onClick={flipSelectionVertical}
+            title="Flip Vertical (Ctrl+Shift+V)"
+          >
+            <FlipVertical size={14} />
+          </button>
+          <button
+            className="btn btn-secondary"
+            style={{ padding: "4px 8px" }}
+            onClick={rotateSelectionClockwise}
+            title="Rotate Clockwise (Ctrl+R)"
+          >
+            <RotateCw size={14} />
+          </button>
+          <button
+            className="btn btn-secondary"
+            style={{ padding: "4px 8px" }}
+            onClick={rotateSelectionCounterClockwise}
+            title="Rotate Counter-Clockwise (Ctrl+Shift+R)"
+          >
+            <RotateCcw size={14} />
+          </button>
+          <button
+            className="btn btn-secondary"
+            style={{ padding: "4px 8px" }}
+            onClick={copySelection}
+            title="Copy (Ctrl+C)"
+          >
+            <Copy size={14} />
+          </button>
+        </div>
+      )}
+
+      <p style={{ fontSize: "0.75rem", color: "#888", marginTop: "0.5rem", textAlign: "center" }}>
+        {tileset.name} / Tile #{activeTileIndex} • Tool: {tool.toUpperCase()}
+        {selection.hasSelection && ` • Selection: ${selection.width}x${selection.height}`}
+      </p>
+    </div>
+  );
+};
