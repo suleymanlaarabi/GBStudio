@@ -89,3 +89,47 @@ export const Modal: React.FC<ModalProps> = (props) => {
       return field.validate(val);
     }
     return null;
+  };
+
+  const handleConfirm = () => {
+    if (props.type === "confirm") {
+      props.onConfirm();
+    } else if (props.type === "multi") {
+      props.onConfirm(multiValues);
+    } else {
+      props.onConfirm(value as any);
+    }
+  };
+
+  const updateMultiValue = (name: string, val: any) => {
+    setMultiValues((prev) => ({ ...prev, [name]: val }));
+    const field = props.type === "multi" ? props.fields.find(f => f.name === name) : undefined;
+    if (field) {
+      const error = validateMultiField(val, field);
+      setErrors(prev => ({
+        ...prev,
+        [name]: error || null
+      }));
+    }
+  };
+
+  const isFormValid = (): boolean => {
+    if (props.type === "text" || props.type === "number") {
+      const error = validateTextField(value, props as TextModalProps);
+      return !error;
+    } else if (props.type === "multi") {
+      // Validate all fields in multi form
+      for (const field of props.fields) {
+        const error = validateMultiField(multiValues[field.name], field);
+        if (error) return false;
+      }
+      return true;
+    }
+    return true;
+  };
+
+  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setValue(newValue);
+    if (props.type === "text" || props.type === "number") {
+      const error = validateTextField(newValue, props as TextModalProps);
