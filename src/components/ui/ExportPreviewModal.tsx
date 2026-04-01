@@ -50,3 +50,50 @@ export const ExportPreviewModal: React.FC<ExportPreviewModalProps> = ({
             backgroundColor: "#0d1117",
             padding: "0.75rem",
           }}
+        >
+          <pre
+            style={{
+              margin: 0,
+              color: "#c9d1d9",
+              fontFamily: "monospace",
+              fontSize: "0.75rem",
+              lineHeight: "1.4",
+            }}
+          >
+            {previewLines.map((line, index) => (
+              <div key={`line-${index}`} style={{ display: "flex" }}>
+                <span
+                  style={{
+                    color: "#6e7681",
+                    userSelect: "none",
+                    paddingRight: "1rem",
+                    minWidth: "2.5rem",
+                    textAlign: "right",
+                  }}
+                >
+                  {index + 1}
+                </span>
+                <span>{line || " "}</span>
+              </div>
+            ))}
+            {hasMore && (
+              <div
+                style={{
+                  color: "#6e7681",
+                  fontStyle: "italic",
+                  marginTop: "0.5rem",
+                }}
+              >
+                ... and {lines.length - 100} more lines
+              </div>
+            )}
+          </pre>
+        </div>
+      );
+    } catch (error) {
+      return (
+        <div
+          style={{
+            flex: 1,
+            display: "flex",
+            alignItems: "center",
