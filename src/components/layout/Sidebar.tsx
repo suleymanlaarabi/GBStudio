@@ -114,3 +114,31 @@ export const Sidebar: React.FC<SidebarProps> = ({
             display: "flex",
             alignItems: "center",
             gap: "0.8rem",
+          }}
+        >
+          <LayoutTemplate size={20} />
+          Templates
+        </button>
+
+        <button
+          className={`btn ${view === "settings" ? "" : "btn-secondary"}`}
+          onClick={() => setView("settings")}
+          title="Open application settings"
+          style={{
+            textAlign: "left",
+            display: "flex",
+            alignItems: "center",
+            gap: "0.8rem",
+          }}
+        >
+          <Settings size={20} />
+          Settings
+        </button>
+        <div style={{ display: "flex", gap: "0.5rem" }}>
+          <button
+            className="btn btn-secondary"
+            style={{ flex: 1, padding: "10px" }}
+            onClick={undo}
+            disabled={historyIndex <= 0}
+            title="Undo"
+          >
