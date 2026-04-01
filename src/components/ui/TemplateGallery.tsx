@@ -288,3 +288,96 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onUse, onDelete }
               borderRadius: "4px",
               background: CATEGORY_COLORS[template.category] + "22",
               color: CATEGORY_COLORS[template.category],
+              border: `1px solid ${CATEGORY_COLORS[template.category]}44`,
+              fontWeight: 600,
+              textTransform: "uppercase",
+            }}
+          >
+            {CATEGORY_LABELS[template.category]}
+          </span>
+          {template.tilesets.length > 0 && (
+            <span style={{ fontSize: "0.65rem", color: "#555" }}>
+              {template.tilesets.length} tileset{template.tilesets.length > 1 ? "s" : ""}
+            </span>
+          )}
+          {template.maps.length > 0 && (
+            <span style={{ fontSize: "0.65rem", color: "#555" }}>
+              {template.maps.length} map{template.maps.length > 1 ? "s" : ""}
+            </span>
+          )}
+          {(template.sounds?.length ?? 0) > 0 && (
+            <span style={{ fontSize: "0.65rem", color: "#555" }}>
+              {template.sounds!.length} sound{template.sounds!.length > 1 ? "s" : ""}
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+interface TemplateGalleryProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export const TemplateGallery: React.FC<TemplateGalleryProps> = ({ isOpen, onClose }) => {
+  const { importTemplate } = useStore();
+  const [category, setCategory] = useState<TemplateCategory | "all">("all");
+  const [templates, setTemplates] = useState(getAllTemplates());
+  const [errorModalOpen, setErrorModalOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+
+  useEffect(() => {
+    if (isOpen) setTemplates(getAllTemplates());
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  const filtered = category === "all"
+    ? templates
+    : templates.filter((t) => t.category === category);
+
+  const counts: Record<string, number> = { all: templates.length };
+  for (const t of templates) {
+    counts[t.category] = (counts[t.category] ?? 0) + 1;
+  }
+
+  const handleUse = (template: Template) => {
+    onClose();
+  };
+
+  const handleDelete = (id: string) => {
+    deleteUserTemplate(id);
+    setTemplates(getAllTemplates());
+  };
+
+  const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const template = parseTemplateFile(ev.target?.result as string);
+        onClose();
+      } catch (err) {
+        setErrorMessage(`Import failed: ${String(err)}`);
+        setErrorModalOpen(true);
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  };
+
+  return (
+    <div
+      className="modal-overlay"
+      onClick={onClose}
+      style={{ alignItems: "stretch", padding: 0 }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          display: "flex",
