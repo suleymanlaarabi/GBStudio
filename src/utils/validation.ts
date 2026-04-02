@@ -59,3 +59,33 @@ export const validateGameBoyHardwareLimits = (
   const spriteTileCount = spriteTileKeys.size;
   const totalTileCount = bgTileCount + spriteTileCount;
   const errors: string[] = [];
+
+  if (bgTileCount > GB_BG_TILE_LIMIT) {
+    errors.push(
+      `BG tiles: ${bgTileCount}/${GB_BG_TILE_LIMIT} (${bgTileCount - GB_BG_TILE_LIMIT} en trop)`,
+    );
+  }
+
+  if (spriteTileCount > GB_SPRITE_TILE_LIMIT) {
+    errors.push(
+      `Sprite tiles: ${spriteTileCount}/${GB_SPRITE_TILE_LIMIT} (${spriteTileCount - GB_SPRITE_TILE_LIMIT} en trop)`,
+    );
+  }
+
+  if (totalTileCount > GB_TOTAL_VRAM_TILE_LIMIT) {
+    errors.push(
+      `VRAM totale: ${totalTileCount}/${GB_TOTAL_VRAM_TILE_LIMIT} (${totalTileCount - GB_TOTAL_VRAM_TILE_LIMIT} en trop)`,
+    );
+  }
+
+  return {
+    bgTileCount,
+    spriteTileCount,
+    totalTileCount,
+    bgTileLimit: GB_BG_TILE_LIMIT,
+    spriteTileLimit: GB_SPRITE_TILE_LIMIT,
+    totalTileLimit: GB_TOTAL_VRAM_TILE_LIMIT,
+    errors,
+    isValid: errors.length === 0,
+  };
+};
