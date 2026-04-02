@@ -145,3 +145,36 @@ export const createSpriteSlice: StateCreator<
   },
 
   removeAnimation: (spriteId, animationId) => {
+    set((state) => ({
+      sprites: state.sprites.map((sprite) =>
+        sprite.id === spriteId
+          ? {
+              ...sprite,
+              animations: sprite.animations.filter((animation) => animation.id !== animationId),
+            }
+          : sprite,
+      ),
+    }));
+    get().commit();
+  },
+
+  removeSprite: (spriteId) => {
+    set((state) => {
+      // Vérifier si le sprite supprimé est le sprite sélectionné
+      const isSelectedSprite = state.selectedSpriteId === spriteId;
+      const nextSelectedSprite = isSelectedSprite ? null : state.selectedSpriteId;
+
+      // Vérifier si le sprite supprimé contient l'animation sélectionnée
+      const spriteToDelete = state.sprites.find((sprite) => sprite.id === spriteId);
+      const hasSelectedAnim = spriteToDelete?.animations.some((animation) => animation.id === state.selectedAnimId) ?? false;
+      const nextSelectedAnim = hasSelectedAnim ? null : state.selectedAnimId;
+
+      return {
+        sprites: state.sprites.filter((sprite) => sprite.id !== spriteId),
+        selectedSpriteId: nextSelectedSprite,
+        selectedAnimId: nextSelectedAnim,
+      };
+    });
+    get().commit();
+  },
+});
