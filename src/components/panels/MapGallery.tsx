@@ -76,3 +76,38 @@ const MapPreview: React.FC<{ map: TileMap; tilesets: Tileset[] }> = ({
       style={{ width: "100%", height: "100%", background: "#000" }}
     />
   );
+};
+
+export const MapGallery: React.FC = () => {
+  const { maps, tilesets, sprites, setActiveMap, addMap, removeMap } = useStore();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isExportTemplateOpen, setIsExportTemplateOpen] = useState(false);
+
+  return (
+    <>
+      <div className="card">
+        <div className="section-title" style={{ marginBottom: "2rem" }}>
+          <div
+            style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}
+          >
+            <MapIcon size={24} color="var(--accent)" />
+            Map Collection
+          </div>
+          <div style={{ display: "flex", gap: "0.5rem" }}>
+            <button
+              className="btn btn-secondary"
+              onClick={() => setIsExportTemplateOpen(true)}
+              disabled={maps.length === 0}
+              title="Exporter des maps comme template"
+            >
+              <Package size={16} /> Export Template
+            </button>
+            <button className="btn" onClick={() => setIsModalOpen(true)}>
+              <Plus size={18} /> New Map
+            </button>
+          </div>
+        </div>
+
+        <div className="map-gallery-grid">
+          {maps.map((map, index) => (
+            <div
