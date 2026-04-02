@@ -108,3 +108,38 @@ export const TilesetGrid: React.FC<TilesetGridProps> = ({
       const scaledX = selection.x * tilePixelSize;
       const scaledY = selection.y * tilePixelSize;
       const scaledWidth = selection.width * tilePixelSize;
+      const scaledHeight = selection.height * tilePixelSize;
+
+      ctx.strokeStyle = "rgba(80, 200, 255, 1)";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(scaledX, scaledY, scaledWidth, scaledHeight);
+
+      ctx.fillStyle = "rgba(80, 200, 255, 0.18)";
+      ctx.fillRect(scaledX, scaledY, scaledWidth, scaledHeight);
+      return;
+    }
+
+    if (showSingleSelection && selectedTileIndex >= 0 && selectedTileIndex < normalizedTileset.tiles.length) {
+      const selectedTile = normalizedTileset.tiles[selectedTileIndex];
+      const position = selectedTile ? getTilesetPositionForTile(normalizedTileset, selectedTile.id) : null;
+      if (!position) return;
+      const scaledX = position.x * tilePixelSize;
+      const scaledY = position.y * tilePixelSize;
+
+      ctx.strokeStyle = "rgba(255, 214, 82, 1)";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(scaledX, scaledY, tilePixelSize, tilePixelSize);
+
+      ctx.fillStyle = "rgba(255, 214, 82, 0.22)";
+      ctx.fillRect(scaledX, scaledY, tilePixelSize, tilePixelSize);
+    }
+  }, [normalizedTileset, selectedTileIndex, showSingleSelection, tilePixelSize]);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => drawFrame(tileSelection));
+    return () => window.cancelAnimationFrame(frame);
+  }, [drawFrame, tileSelection]);
+
+  const clampCell = useCallback((x: number, y: number) => ({
+    x: Math.max(0, Math.min(tilesPerRow - 1, x)),
+    y: Math.max(0, Math.min(rows - 1, y)),
