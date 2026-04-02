@@ -16,3 +16,19 @@ type SoundState = SoundSlice & {
 
 export const createSoundSlice: StateCreator<
   SoundState,
+  [],
+  [],
+  SoundSlice
+> = (set, get) => ({
+  sounds: [],
+  selectedSoundId: null,
+
+  addSound: (name, type) => {
+    const newSoundId = crypto.randomUUID();
+    const newSound: SoundAsset = {
+      id: newSoundId,
+      name,
+      type,
+    };
+
+    // Initialize with default values based on type
