@@ -275,3 +275,67 @@ function App() {
       if (!didChoose) return;
     }
 
+    setConfirmExportAction("project");
+    setIsPreviewOpen(true);
+  };
+
+  const confirmExport = async () => {
+    if (!confirmExportAction) return;
+    const name = "MyGameSet";
+
+    if (confirmExportAction === "download") {
+      const cContent = generateCFile(name, tilesets, maps, sprites);
+      const hContent = generateHFile(name, tilesets, maps, sprites);
+      const downloadFile = (filename: string, content: string) => {
+        const blob = new Blob([content], { type: "text/plain" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        link.click();
+        URL.revokeObjectURL(url);
+      };
+      downloadFile(`${name}.c`, cContent);
+      downloadFile(`${name}.h`, hContent);
+      updateStatus("C/H export downloaded", "success", 3000);
+    } else if (confirmExportAction === "project") {
+      if (!projectPath) {
+        updateStatus("No project path selected", "error", 4000);
+        return;
+      }
+      setIsSaving(true);
+      try {
+        updateStatus("Exporting C/H files...", "busy");
+        const cContent = generateCFile(name, tilesets, maps, sprites, sounds);
+        const hContent = generateHFile(name, tilesets, maps, sprites, sounds);
+        await invoke("save_file", {
+          path: projectPath,
+          filename: `${name}.c`,
+          content: cContent,
+        });
+        await invoke("save_file", {
+          path: projectPath,
+          filename: `${name}.h`,
+          content: hContent,
+        });
+        updateStatus(`C/H exported to ${projectPath}`, "success", 4000);
+      } catch (error) {
+        console.error(error);
+        updateStatus(`Export failed: ${String(error)}`, "error", 5000);
+      } finally {
+        setIsSaving(false);
+      }
+    }
+    setIsPreviewOpen(false);
+    setConfirmExportAction(null);
+  };
+
+  const handleCancelExport = () => {
+    setIsPreviewOpen(false);
+    setConfirmExportAction(null);
+  };
+
+  return (
+    <AppLayout
+      isSaving={isSaving}
+      onExportToProject={saveToProject}
