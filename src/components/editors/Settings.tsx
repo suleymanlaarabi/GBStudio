@@ -146,3 +146,39 @@ export const Settings: React.FC = () => {
             <div style={{ fontWeight: "500", color: "#ff4444" }}>
               Dangerous Area
             </div>
+            <div style={{ fontSize: "0.85rem", opacity: 0.7 }}>
+              Irreversibly clear all application data
+            </div>
+          </div>
+          {!showConfirmReset ? (
+            <button
+              className="btn"
+              style={{ background: "#ff4444", border: "none" }}
+              onClick={() => setShowConfirmReset(true)}
+            >
+              <Trash2 size={18} style={{ marginRight: "8px" }} />
+              Clear All Data
+            </button>
+          ) : (
+            <div style={{ display: "flex", gap: "0.5rem" }}>
+              <button
+                className="btn btn-secondary"
+                onClick={() => setShowConfirmReset(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn"
+                style={{ background: "#ff4444", border: "none" }}
+                onClick={handleClearData}
+              >
+                Confirm Reset
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* About Section */}
+      <div style={sectionStyle}>
+        <div style={headerStyle}>
