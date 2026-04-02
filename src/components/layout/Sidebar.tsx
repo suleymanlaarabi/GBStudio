@@ -142,3 +142,31 @@ export const Sidebar: React.FC<SidebarProps> = ({
             disabled={historyIndex <= 0}
             title="Undo"
           >
+            <Undo2 size={18} />
+          </button>
+          <button
+            className="btn btn-secondary"
+            style={{ flex: 1, padding: "10px" }}
+            onClick={redo}
+            disabled={historyIndex >= history.length - 1}
+            title="Redo"
+          >
+            <Redo2 size={18} />
+          </button>
+        </div>
+      </nav>
+
+      <ExportPanel
+        isSaving={isSaving}
+        onExportToProject={onExportToProject}
+        onDownload={onDownload}
+        onChooseProjectFolder={onChooseProjectFolder}
+        onOpenProject={onOpenProject}
+        onSaveProject={onSaveProject}
+        onSaveProjectAs={onSaveProjectAs}
+        projectPath={projectPath}
+        projectFilePath={projectFilePath}
+      />
+    </aside>
+  );
+};
