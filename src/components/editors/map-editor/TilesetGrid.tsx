@@ -143,3 +143,38 @@ export const TilesetGrid: React.FC<TilesetGridProps> = ({
   const clampCell = useCallback((x: number, y: number) => ({
     x: Math.max(0, Math.min(tilesPerRow - 1, x)),
     y: Math.max(0, Math.min(rows - 1, y)),
+  }), [rows, tilesPerRow]);
+
+  const getCellFromEvent = useCallback((event: React.PointerEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return null;
+    const rect = canvas.getBoundingClientRect();
+    const x = Math.floor((event.clientX - rect.left) / tilePixelSize);
+    const y = Math.floor((event.clientY - rect.top) / tilePixelSize);
+    return clampCell(x, y);
+  }, [clampCell, tilePixelSize]);
+
+  const handlePointerDown = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    if (event.button !== 0) return;
+    event.preventDefault();
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    canvas.setPointerCapture(event.pointerId);
+    isPointerDownRef.current = true;
+    lastEmittedCellRef.current = null;
+
+    const cell = getCellFromEvent(event);
+    if (!cell) return;
+    if (showSingleSelection && !getTileAtTilesetPosition(normalizedTileset, cell.x, cell.y)) return;
+    lastEmittedCellRef.current = cell;
+    onTileSelectionStart(cell.x, cell.y);
+  };
+
+  const handlePointerMove = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!isPointerDownRef.current) return;
+    const cell = getCellFromEvent(event);
+    if (!cell) return;
+
+    const last = lastEmittedCellRef.current;
+    if (last && last.x === cell.x && last.y === cell.y) return;
