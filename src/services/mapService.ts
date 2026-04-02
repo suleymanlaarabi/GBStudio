@@ -289,3 +289,65 @@ export const paintBrushOnLayer = (
     for (let y = 0; y < patternHeight; y++) {
       for (let x = 0; x < patternWidth; x++) {
         const selectedTile = tileSelection.tileData[y]?.[x];
+        if (selectedTile) {
+          setCell(startX + x, startY + y, selectedTile);
+        }
+      }
+    }
+  });
+};
+
+// --- Map-level helpers ---
+
+export const createEmptyLayer = (name: string): MapLayer => ({
+  id: crypto.randomUUID(),
+  name,
+  visible: true,
+  chunks: {},
+});
+
+export const applyToActiveLayer = (
+  map: TileMap,
+  layerIndex: number,
+  fn: (data: LayerData) => LayerData,
+): TileMap => {
+  const idx = Math.max(0, Math.min(layerIndex, map.layers.length - 1));
+  if (!map.layers[idx]) return map;
+  return {
+    ...map,
+    layers: map.layers.map((layer, i) =>
+      i === idx ? { ...layer, chunks: fn(layer.chunks) } : layer
+    ),
+  };
+};
+
+export const getActiveLayerData = (map: TileMap, layerIndex: number): LayerData => {
+  const idx = Math.max(0, Math.min(layerIndex, map.layers.length - 1));
+  return map.layers[idx]?.chunks ?? {};
+};
+
+// --- Legacy compat & other helpers ---
+
+export const normalizeMapSelection = (
+  startX: number,
+  startY: number,
+  currentX: number,
+  currentY: number,
+): SelectionBounds => ({
+  x: Math.min(startX, currentX),
+  y: Math.min(startY, currentY),
+  width: Math.abs(currentX - startX) + 1,
+  height: Math.abs(currentY - startY) + 1,
+});
+
+export const createMapSelectionState = (
+  startX: number,
+  startY: number,
+  currentX = startX,
+  currentY = startY,
+): MapSelectionState => ({
+  hasSelection: true,
+  startX,
+  startY,
+  ...normalizeMapSelection(startX, startY, currentX, currentY),
+});
