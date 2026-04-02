@@ -297,3 +297,101 @@ endMapSelection: () => {
   clearMapSelection: () => set({ mapSelection: emptyMapSelection }),
 
   copyMapSelection: () => {
+    const { maps, activeMapIndex, mapSelection, activeLayerIndex } = get();
+    const map = maps[activeMapIndex];
+    if (!map || !mapSelection.hasSelection) return;
+    const data = getActiveLayerData(map, activeLayerIndex);
+    set({ mapClipboard: extractLayerSelection(data, mapSelection) });
+  },
+
+  cutMapSelection: () => {
+    const { maps, activeMapIndex, mapSelection, activeLayerIndex } = get();
+    const map = maps[activeMapIndex];
+    if (!map || !mapSelection.hasSelection) return;
+    const data = getActiveLayerData(map, activeLayerIndex);
+    set((state) => ({
+      mapClipboard: extractLayerSelection(data, mapSelection),
+      maps: updateMap(state.maps, activeMapIndex, (m) =>
+        applyToActiveLayer(m, activeLayerIndex, (d) =>
+          clearLayerArea(d, mapSelection)
+        )
+      ),
+    }));
+    get().commit();
+  },
+
+  pasteMapSelection: (targetX, targetY) => {
+    const { activeMapIndex, mapClipboard, activeLayerIndex } = get();
+    if (!mapClipboard) return;
+    set((state) => ({
+      maps: updateMap(state.maps, activeMapIndex, (map) =>
+        applyToActiveLayer(map, activeLayerIndex, (data) =>
+          pasteLayerSelection(data, mapClipboard, targetX, targetY)
+        )
+      ),
+      mapSelection: {
+        hasSelection: true,
+        x: targetX,
+        y: targetY,
+        width: mapClipboard[0]?.length ?? 0,
+        height: mapClipboard.length,
+      },
+    }));
+    get().commit();
+  },
+
+  deleteMapSelection: () => {
+    const { activeMapIndex, mapSelection, activeLayerIndex } = get();
+    if (!mapSelection.hasSelection) return;
+    set((state) => ({
+      maps: updateMap(state.maps, activeMapIndex, (map) =>
+        applyToActiveLayer(map, activeLayerIndex, (data) =>
+          clearLayerArea(data, mapSelection)
+        )
+      ),
+      mapSelection: emptyMapSelection,
+    }));
+    get().commit();
+  },
+
+  pickMapCell: (mapIndex, x, y) => {
+    const { maps, tilesets, activeLayerIndex } = get();
+    const map = maps[mapIndex];
+    if (!map) return;
+    const data = getActiveLayerData(map, activeLayerIndex);
+    const cell = getCellFromChunks(data, x, y);
+    if (!cell) return;
+    const tilesetIndex = tilesets.findIndex((ts) => ts.id === cell.tilesetId);
+    if (tilesetIndex < 0) return;
+    set({ activeTilesetIndex: tilesetIndex, activeTileIndex: cell.tileIndex });
+  },
+
+  addMap: (name, width, height, tileSize) => {
+    set((state) => ({
+      maps: [...state.maps, createEmptyMap(name, width, height, tileSize)],
+      activeMapIndex: state.maps.length,
+      activeLayerIndex: 0,
+      view: "map_editor",
+    }));
+    get().commit();
+  },
+
+  removeMap: (index) => {
+    set((state) => ({
+      maps: state.maps.filter((_, i) => i !== index),
+      activeMapIndex: -1,
+    }));
+    get().commit();
+  },
+
+  setCameraSpawn: (mapIndex, x, y) => {
+    set((state) => ({
+      maps: updateMap(state.maps, mapIndex, (map) => ({ ...map, cameraSpawn: { x, y } })),
+    }));
+    get().commit();
+  },
+
+  setCollisionCell: (mapIndex, x, y, solid) => {
+    const cx = Math.floor(x / CHUNK_SIZE);
+    const cy = Math.floor(y / CHUNK_SIZE);
+    const key = `${cx},${cy}`;
