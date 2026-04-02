@@ -145,3 +145,51 @@ const TILES = {
       [null, 3, 1, 1, 1, 1, 3, null],
       [null, 3, 1, 1, 1, 1, 3, null],
       [null, 3, 2, 2, 2, 2, 3, null],
+      [null, null, 3, 3, null, 3, 3, null],
+    ]),
+  },
+};
+
+const G = { tilesetId: TS, tileIndex: 0 };
+const P = { tilesetId: TS, tileIndex: 1 };
+const Fn = { tilesetId: TS, tileIndex: 2 };
+const Fl = { tilesetId: TS, tileIndex: 3 };
+const R = { tilesetId: TS, tileIndex: 5 };
+const Wi = { tilesetId: TS, tileIndex: 6 };
+const D = { tilesetId: TS, tileIndex: 7 };
+const n = null;
+
+export const VILLAGE_TEMPLATE: Template = {
+  id: "builtin-village",
+  name: "RPG Village",
+  description:
+    "Cozy village with houses, paths, and NPCs. Perfect for starting an RPG.",
+  category: "overworld",
+  isBuiltin: true,
+  createdAt: "2024-01-01T00:00:00.000Z",
+  tilesets: [
+    {
+      id: TS,
+      name: "Village Assets",
+      tileSize: 8,
+      tiles: [
+        TILES.grass,
+        TILES.path,
+        TILES.fence,
+        TILES.flower,
+        TILES.wall,
+        TILES.roof,
+        TILES.window,
+        TILES.door,
+      ],
+      layout: {
+        columns: 4,
+        positions: {
+          "bv-t0": { x: 0, y: 0 },
+          "bv-t1": { x: 1, y: 0 },
+          "bv-t2": { x: 2, y: 0 },
+          "bv-t3": { x: 3, y: 0 },
+          "bv-t4": { x: 0, y: 1 },
+          "bv-t5": { x: 1, y: 1 },
+          "bv-t6": { x: 2, y: 1 },
+          "bv-t7": { x: 3, y: 1 },
