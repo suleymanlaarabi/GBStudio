@@ -231,3 +231,61 @@ export const drawRectangleOnLayer = (
   });
 };
 
+export const extractLayerSelection = (
+  chunks: LayerData,
+  selection: SelectionBounds
+): MapClipboard => {
+  const result: MapClipboard = [];
+  for (let y = selection.y; y < selection.y + selection.height; y++) {
+    const row: (TileCell | null)[] = [];
+    for (let x = selection.x; x < selection.x + selection.width; x++) {
+      row.push(cloneCell(getCellFromChunks(chunks, x, y)));
+    }
+    result.push(row);
+  }
+  return result;
+};
+
+export const pasteLayerSelection = (
+  chunks: LayerData,
+  clipboard: MapClipboard,
+  targetX: number,
+  targetY: number
+): LayerData => {
+  return withBatchUpdate(chunks, (setCell) => {
+    clipboard.forEach((row, rowIndex) => {
+      row.forEach((cell, columnIndex) => {
+        setCell(targetX + columnIndex, targetY + rowIndex, cell);
+      });
+    });
+  });
+};
+
+export const clearLayerArea = (
+  chunks: LayerData,
+  selection: SelectionBounds
+): LayerData => {
+  return withBatchUpdate(chunks, (setCell) => {
+    for (let y = selection.y; y < selection.y + selection.height; y++) {
+      for (let x = selection.x; x < selection.x + selection.width; x++) {
+        setCell(x, y, null);
+      }
+    }
+  });
+};
+
+export const paintBrushOnLayer = (
+  chunks: LayerData,
+  startX: number,
+  startY: number,
+  tileSelection: TileSelection
+): LayerData => {
+  if (!tileSelection.hasSelection || tileSelection.width === 0 || tileSelection.height === 0) return chunks;
+
+  return withBatchUpdate(chunks, (setCell) => {
+    const patternWidth = tileSelection.width;
+    const patternHeight = tileSelection.height;
+
+    for (let y = 0; y < patternHeight; y++) {
+      for (let x = 0; x < patternWidth; x++) {
+        const selectedTile = tileSelection.tileData[y]?.[x];
