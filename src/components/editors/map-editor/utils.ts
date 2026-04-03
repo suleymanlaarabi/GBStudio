@@ -30,3 +30,18 @@ export const drawSelectionOverlay = (
 
   ctx.strokeStyle = stroke;
   ctx.lineWidth = 2;
+  ctx.strokeRect(
+    selection.x * unitSize,
+    selection.y * unitSize,
+    selection.width * unitSize,
+    selection.height * unitSize,
+  );
+};
+
+export const drawLineOverlay = (
+  ctx: CanvasRenderingContext2D,
+  start: CellCoords,
+  end: CellCoords,
+  unitSize: number,
+) => {
+  let x = start.x;
