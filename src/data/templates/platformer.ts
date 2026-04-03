@@ -196,3 +196,42 @@ export const PLATFORMER_TEMPLATE: Template = {
           [n, n, n, n, C, n, n, n, n, n, C, n, n, n, n, n],
           [n, n, n, n, Sp, n, n, n, n, n, n, Sp, n, n, n, n],
           [n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n],
+          [n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n],
+        ]),
+      },
+    ],
+  }],
+  sprites: [
+    {
+      id: "player-sprite",
+      name: "Player",
+      animations: [
+        {
+          id: "player-walk",
+          name: "Walk",
+          loop: true,
+          frames: [
+            { tilesetId: CTS, tileIndex: 0, duration: 200 },
+            { tilesetId: CTS, tileIndex: 1, duration: 200 },
+          ],
+        },
+      ],
+    },
+    {
+      id: "bird-sprite",
+      name: "Bird Enemy",
+      animations: [
+        {
+          id: "bird-fly",
+          name: "Fly",
+          loop: true,
+          frames: [
+            { tilesetId: CTS, tileIndex: 2, duration: 150 },
+            { tilesetId: CTS, tileIndex: 3, duration: 150 },
+          ],
+        },
+      ],
+    },
+  ],
+};
+
