@@ -89,3 +89,33 @@ export const validateGameBoyHardwareLimits = (
     isValid: errors.length === 0,
   };
 };
+
+/**
+ * Validates a parsed project document structure
+ * Checks for required fields, correct types, and data integrity
+ */
+export const isValidProjectDocument = (obj: unknown): obj is ProjectDocument => {
+  if (!obj || typeof obj !== "object") {
+    return false;
+  }
+
+  const doc = obj as Partial<ProjectDocument>;
+
+  // Check required top-level fields
+  if (
+    typeof doc.format !== "string" ||
+    typeof doc.version !== "number" ||
+    typeof doc.appVersion !== "string" ||
+    typeof doc.savedAt !== "string" ||
+    typeof doc.name !== "string" ||
+    !doc.data ||
+    typeof doc.data !== "object"
+  ) {
+    return false;
+  }
+
+  // Validate format
+  if (doc.format !== "cartridge-project") {
+    return false;
+  }
+
