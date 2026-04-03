@@ -56,3 +56,19 @@ export const useStore = create<EditorState>()((...args) => {
     history: [JSON.stringify(initialState)],
     historyIndex: 0,
   };
+});
+
+export type {
+  GBColor,
+  MapClipboard,
+  MapSelectionState,
+  MapTool,
+  ProjectData,
+  SelectionBounds as Selection,
+  SpriteAsset,
+  TileMap,
+  TileSize,
+  Tileset,
+};
+
+export type { Template, TemplateCategory } from "../types/template";
