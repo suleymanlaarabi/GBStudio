@@ -30,3 +30,18 @@ export interface UISlice {
   setActiveLayerIsWindow: (v: boolean) => void;
 }
 
+type UIState = UISlice & {
+  mapSelection: { hasSelection: boolean; x: number; y: number; width: number; height: number };
+  activeLayerIndex: number;
+};
+
+export const createUISlice: StateCreator<UIState, [], [], UISlice> = (set) => ({
+  activeTilesetIndex: 0,
+  activeTileIndex: 0,
+  activeMapIndex: -1,
+  activeSpriteIndex: 0,
+  activeLayerIndex: 0,
+  selectedColor: 3,
+  tool: "pencil",
+  mapTool: "pencil",
+  mapShapeFilled: true,
