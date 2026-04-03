@@ -193,3 +193,51 @@ export const VILLAGE_TEMPLATE: Template = {
           "bv-t5": { x: 1, y: 1 },
           "bv-t6": { x: 2, y: 1 },
           "bv-t7": { x: 3, y: 1 },
+        },
+      },
+    },
+    {
+      id: CTS,
+      name: "Villagers",
+      tileSize: 8,
+      tiles: [TILES.villager1, TILES.villager2],
+      layout: {
+        columns: 2,
+        positions: {
+          "bv-c0": { x: 0, y: 0 },
+          "bv-c1": { x: 1, y: 0 },
+        },
+      },
+    },
+  ],
+  maps: [
+    {
+      id: "builtin-village-map",
+      name: "Quiet Town",
+      width: 20,
+      height: 15,
+      tileSize: 8,
+      layers: [
+        {
+          id: "bv-layer1",
+          name: "Ground",
+          visible: true,
+          chunks: migrateFlatDataToChunks(
+            Array(15)
+              .fill(null)
+              .map((_, y) =>
+                Array(20)
+                  .fill(null)
+                  .map((_, x) => {
+                    if (y > 6 && y < 10) return P;
+                    if (x > 8 && x < 12) return P;
+                    return G;
+                  }),
+              ),
+          ),
+        },
+        {
+          id: "bv-layer2",
+          name: "Buildings & Props",
+          visible: true,
+          chunks: migrateFlatDataToChunks(
