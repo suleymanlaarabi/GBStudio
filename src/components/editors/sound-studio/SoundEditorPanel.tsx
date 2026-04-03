@@ -83,3 +83,83 @@ const FrequencyControl = ({
       />
       <span style={{ minWidth: "4rem", textAlign: "right" }}>
         {value}
+        {note && (
+          <span style={{ opacity: 0.5, marginLeft: "0.3rem", fontSize: "0.75rem" }}>
+            {note}
+          </span>
+        )}
+      </span>
+    </div>
+  );
+};
+
+const SelectControl = ({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string | number;
+  onChange: (value: string | number) => void;
+  options: Array<{ label: string; value: string | number }>;
+}) => (
+  <div className="sound-control-group">
+    <label>{label}</label>
+    <div style={{ flex: 2 }}>
+      <CustomSelect value={value} onChange={onChange} options={options} />
+    </div>
+  </div>
+);
+
+const ToggleControl = ({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: boolean;
+  onChange: (value: boolean) => void;
+}) => (
+  <div className="sound-control-group">
+    <label>{label}</label>
+    <input
+      type="checkbox"
+      checked={value}
+      onChange={(e) => onChange(e.target.checked)}
+      style={{ width: "auto", cursor: "pointer" }}
+    />
+  </div>
+);
+
+// ── Channel editors ───────────────────────────────────────────────────────────
+
+const PulseEditor = ({
+  sound,
+  onUpdate,
+}: {
+  sound: SoundAsset;
+  onUpdate: (updates: Partial<SoundAsset>) => void;
+}) => {
+  const pulse = (sound.type === "PULSE1" ? sound.pulse1 : sound.pulse2) as
+    | PulseChannel
+    | undefined;
+  if (!pulse) return null;
+
+  const updatePulse = (updates: Partial<PulseChannel>) => {
+    if (sound.type === "PULSE1") {
+      onUpdate({ pulse1: { ...sound.pulse1!, ...updates } });
+    } else {
+      onUpdate({ pulse2: { ...sound.pulse2!, ...updates } });
+    }
+  };
+
+  return (
+    <>
+      {sound.type === "PULSE1" && sound.pulse1 && (
+        <section className="sound-editor-section">
+          <h4>Sweep (Pulse 1 only)</h4>
+          <SliderControl
+            label="Time (0–7)"
+            min={0}
+            max={7}
