@@ -69,3 +69,20 @@ export const buildHeader = (
 
   content += "void gbt_update_sprite(uint8_t hardware_sprite_id, GBT_SPRITE_STATE *state);\n\n";
 
+  content += "void gbt_init_camera(const GBT_MAP *map);\n";
+  content += "void gbt_update_camera(uint16_t x, uint16_t y);\n";
+  content += "void gbt_init_camera_controller(GBT_CAMERA_CTRL *ctrl, const GBT_MAP *map);\n";
+  content += "void gbt_update_camera_controller(GBT_CAMERA_CTRL *ctrl, int8_t dx, int8_t dy);\n";
+  content += "void gbt_update_free_camera(GBT_CAMERA_CTRL *ctrl, int8_t dx, int8_t dy);\n\n";
+
+  content += "void     gbt_init_sound(void);\n";
+  content += "void     gbt_sound_stop(uint8_t channel);\n";
+  content += "uint8_t  gbt_sound_active(uint8_t channel);\n\n";
+
+  if (sounds.length > 0) {
+    const maxLen = Math.max(...sounds.map((s) => sanitizeName(s.name).length));
+    sounds.forEach((sound) => {
+      const name = sanitizeName(sound.name).padEnd(maxLen);
+      const ch = CHANNEL_NUM[sound.type];
+      const label = CHANNEL_LABEL[sound.type];
+      content += `void play_sfx_${name}(void); // CH${ch} ${label}\n`;
