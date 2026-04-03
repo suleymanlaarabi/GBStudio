@@ -35,3 +35,21 @@ export const playSoundPreview = (
     const regToHz = (reg: number) => 131072 / (2048 - reg);
     const startHz = regToHz(pulse.frequency);
 
+    if (sound.type === "PULSE1" && sound.pulse1 && sound.pulse1.sweepTime > 0) {
+      const sweepDuration = (sound.pulse1.sweepTime * 7.8) / 1000;
+      const factor = 1 / Math.pow(2, sound.pulse1.sweepShift);
+      const endHz =
+        sound.pulse1.sweepDirection === "UP"
+          ? startHz * (1 + factor)
+          : startHz * (1 - factor);
+
+      osc.frequency.setValueAtTime(startHz, now);
+      osc.frequency.exponentialRampToValueAtTime(
+        Math.max(20, endHz),
+        now + sweepDuration,
+      );
+    } else {
+      osc.frequency.setValueAtTime(startHz, now);
+    }
+
+    const initialVol = pulse.initialVolume / 15;
