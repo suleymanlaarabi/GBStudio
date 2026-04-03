@@ -24,3 +24,20 @@ export const SoundStudio: React.FC = () => {
 
   const handleAddSound = (type: SoundChannelType) => {
     const name = `SFX ${sounds.length + 1}`;
+    addSound(name, type);
+  };
+
+  const handleRequestDelete = (soundId: string) => {
+    setSoundToDelete(soundId);
+    setDeleteModalOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (soundToDelete) {
+      removeSound(soundToDelete);
+      setSoundToDelete(null);
+    }
+    setDeleteModalOpen(false);
+  };
+
+  return (
