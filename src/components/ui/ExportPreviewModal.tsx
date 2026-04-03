@@ -97,3 +97,50 @@ export const ExportPreviewModal: React.FC<ExportPreviewModalProps> = ({
             flex: 1,
             display: "flex",
             alignItems: "center",
+            justifyContent: "center",
+            color: "#ff7a7a",
+          }}
+        >
+          Error generating preview:{" "}
+          {error instanceof Error ? error.message : String(error)}
+        </div>
+      );
+    }
+  };
+
+  return (
+    <div className="modal-overlay">
+      <div
+        className="modal-content card"
+        style={{
+          width: "90vw",
+          height: "90vh",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <div className="section-title">
+          Export Preview: {projectName}.{selectedTab}
+          <button
+            type="button"
+            className="btn btn-secondary"
+            style={{ padding: "4px" }}
+            onClick={onClose}
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            gap: "0.5rem",
+            padding: "0.6rem",
+            borderBottom: "1px solid #30363d",
+          }}
+        >
+          <button
+            type="button"
+            className={`btn ${selectedTab === "h" ? "btn-primary" : "btn-secondary"}`}
+            style={{
+              fontSize: "0.875rem",
