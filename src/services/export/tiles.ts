@@ -18,3 +18,20 @@ export const convertTileDataTo2BPP = (
       const highBit = (color >> 1) & 1;
       lowByte |= lowBit << (7 - x);
       highByte |= highBit << (7 - x);
+    }
+
+    bytes.push(lowByte, highByte);
+  }
+
+  return bytes.map((byte) => `0x${byte.toString(16).padStart(2, "0")}`);
+};
+
+export const expandTileData = (data: (GBColor | null)[][], size: number): number[][] => {
+  if (size === 16) {
+    const result: number[][] = [];
+
+    for (let segment = 0; segment < 4; segment += 1) {
+      const offsetX = (segment % 2) * 8;
+      const offsetY = Math.floor(segment / 2) * 8;
+      const subTile: GBColor[][] = [];
+
