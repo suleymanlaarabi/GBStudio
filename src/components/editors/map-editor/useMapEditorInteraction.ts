@@ -144,3 +144,50 @@ export const useMapEditorInteraction = ({
     }
 
     if (mapTool === "sprite_place") {
+      if (button === 2) {
+        // Right-click: remove sprite instance at coords
+        const instances = map.spriteInstances ?? [];
+        const hit = instances.find((i) => i.x === coords.x && i.y === coords.y);
+        if (hit) {
+          removeSpriteInstance(activeMapIndex, hit.id);
+          if (selectedSpriteInstanceId === hit.id) setSelectedSpriteInstance(null);
+        }
+      } else {
+        // Left-click: place sprite instance
+        const spriteAsset = sprites[activeSpriteIndex];
+        if (!spriteAsset) return;
+        const animId = spriteAsset.animations[0]?.id ?? "";
+        addSpriteInstance(activeMapIndex, {
+          spriteAssetId: spriteAsset.id,
+          animationId: animId,
+          x: coords.x,
+          y: coords.y,
+          flipH: false,
+          flipV: false,
+          paletteId: "obp0",
+          priority: false,
+        });
+      }
+      return;
+    }
+
+    if (mapTool === "collision") {
+      const erase = button === 2;
+      isErasingCollisionRef.current = erase;
+      pendingCollisionCells.current.set(`${coords.x},${coords.y}`, !erase);
+      scheduleCollisionFlush();
+      setIsDrawing(true);
+      return;
+    }
+
+    if (mapTool === "eyedropper") {
+      pickMapCell(activeMapIndex, coords.x, coords.y);
+      return;
+    }
+
+    if (mapTool === "fill" && activeCell) {
+      fillMap(
+        activeMapIndex,
+        coords.x,
+        coords.y,
+        activeCell.tilesetId,
