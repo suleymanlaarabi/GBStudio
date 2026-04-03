@@ -163,3 +163,83 @@ const PulseEditor = ({
             label="Time (0–7)"
             min={0}
             max={7}
+            value={sound.pulse1.sweepTime}
+            onChange={(v) => onUpdate({ pulse1: { ...sound.pulse1!, sweepTime: v } })}
+          />
+          <SelectControl
+            label="Direction"
+            value={sound.pulse1.sweepDirection}
+            onChange={(v) =>
+              onUpdate({ pulse1: { ...sound.pulse1!, sweepDirection: v as "UP" | "DOWN" } })
+            }
+            options={[
+              { label: "Up (pitch rise)", value: "UP" },
+              { label: "Down (pitch fall)", value: "DOWN" },
+            ]}
+          />
+          <SliderControl
+            label="Shift (0–7)"
+            min={0}
+            max={7}
+            value={sound.pulse1.sweepShift}
+            onChange={(v) => onUpdate({ pulse1: { ...sound.pulse1!, sweepShift: v } })}
+          />
+        </section>
+      )}
+
+      <section className="sound-editor-section">
+        <h4>Envelope</h4>
+        <SliderControl
+          label="Volume (0–15)"
+          min={0}
+          max={15}
+          value={pulse.initialVolume}
+          onChange={(v) => updatePulse({ initialVolume: v })}
+        />
+        <SelectControl
+          label="Direction"
+          value={pulse.envelopeDirection}
+          onChange={(v) => updatePulse({ envelopeDirection: v as "UP" | "DOWN" })}
+          options={[
+            { label: "Increase", value: "UP" },
+            { label: "Decrease", value: "DOWN" },
+          ]}
+        />
+        <SliderControl
+          label="Sweep (0–7)"
+          hint="0=off"
+          min={0}
+          max={7}
+          value={pulse.envelopeSweep}
+          onChange={(v) => updatePulse({ envelopeSweep: v })}
+        />
+      </section>
+
+      <section className="sound-editor-section">
+        <h4>Settings</h4>
+        <SelectControl
+          label="Duty Cycle"
+          value={pulse.duty}
+          onChange={(v) => updatePulse({ duty: v as 0 | 1 | 2 | 3 })}
+          options={[
+            { label: "12.5%", value: 0 },
+            { label: "25%", value: 1 },
+            { label: "50%", value: 2 },
+            { label: "75%", value: 3 },
+          ]}
+        />
+        <SliderControl
+          label="Length (0–63)"
+          hint="0=∞"
+          min={0}
+          max={63}
+          value={pulse.length}
+          onChange={(v) => updatePulse({ length: v })}
+        />
+        <FrequencyControl value={pulse.frequency} onChange={(v) => updatePulse({ frequency: v })} />
+      </section>
+    </>
+  );
+};
+
+const NoiseEditor = ({
