@@ -37,3 +37,38 @@ const FrameCanvas: React.FC<FrameCanvasProps> = ({ tile, size }) => {
       }),
     );
   }, [tile, size]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      width={size}
+      height={size}
+      style={{ width: "100%", height: "auto", imageRendering: "pixelated" }}
+    />
+  );
+};
+
+interface TimelineProps {
+  activeAnim: SpriteAnimation | undefined;
+  tilesets: Tileset[];
+  onUpdateDuration: (frameIndex: number, duration: number) => void;
+  onRemoveFrame: (frameIndex: number) => void;
+  onAddFrame: () => void;
+}
+
+export const Timeline: React.FC<TimelineProps> = ({
+  activeAnim,
+  tilesets,
+  onUpdateDuration,
+  onRemoveFrame,
+  onAddFrame,
+}) => {
+  return (
+    <div
+      className="card"
+      style={{
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+        padding: 0,
