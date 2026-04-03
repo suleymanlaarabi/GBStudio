@@ -15,3 +15,18 @@ export const drawSelectionOverlay = (
   ctx: CanvasRenderingContext2D,
   selection: SelectionBounds,
   unitSize: number,
+  stroke: string,
+  fill?: string,
+) => {
+  if (fill) {
+    ctx.fillStyle = fill;
+    ctx.fillRect(
+      selection.x * unitSize,
+      selection.y * unitSize,
+      selection.width * unitSize,
+      selection.height * unitSize,
+    );
+  }
+
+  ctx.strokeStyle = stroke;
+  ctx.lineWidth = 2;
