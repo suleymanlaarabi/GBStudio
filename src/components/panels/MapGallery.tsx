@@ -111,3 +111,38 @@ export const MapGallery: React.FC = () => {
         <div className="map-gallery-grid">
           {maps.map((map, index) => (
             <div
+              key={map.id}
+              className="map-card"
+              onClick={() => setActiveMap(index)}
+            >
+              <div className="map-preview">
+                <MapPreview map={map} tilesets={tilesets} />
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <div>
+                  <div style={{ fontWeight: "bold", fontSize: "1rem" }}>
+                    {map.name}
+                  </div>
+                  <div style={{ fontSize: "0.8rem", color: "#888" }}>
+                    {map.width}x{map.height} • {map.tileSize}x{map.tileSize} mode
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: "0.5rem" }}>
+                  <button
+                    className="btn btn-secondary"
+                    style={{ padding: "6px" }}
+                    onClick={() => setActiveMap(index)}
+                  >
+                    <Edit3 size={16} />
+                  </button>
+                  <button
+                    className="btn btn-secondary"
+                    style={{ padding: "6px", color: "#ff4444" }}
+                    onClick={(e) => {
+                      e.stopPropagation();
