@@ -53,3 +53,21 @@ export const playSoundPreview = (
     }
 
     const initialVol = pulse.initialVolume / 15;
+    gain.gain.setValueAtTime(initialVol, now);
+    if (pulse.envelopeSweep > 0) {
+      const envDuration = (pulse.envelopeSweep * 64) / 1000;
+      const endVol = pulse.envelopeDirection === "UP" ? Math.min(1, initialVol + 0.5) : 0;
+      gain.gain.linearRampToValueAtTime(endVol, now + envDuration + 0.1);
+    } else {
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+    }
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(now + 0.5);
+    return;
+  }
+
+  if (sound.type === "NOISE" && sound.noise) {
+    const bufferSize = ctx.sampleRate * 0.2;
