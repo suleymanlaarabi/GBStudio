@@ -37,3 +37,21 @@ export const pasteSelectionContent = (
 export const deleteSelectionContent = (
   data: PixelData,
   selection: SelectionBounds,
+) => clearArea(data, selection);
+
+export const moveSelectionContent = (
+  data: PixelData,
+  selection: SelectionBounds,
+  deltaX: number,
+  deltaY: number,
+) => moveArea(data, selection, deltaX, deltaY);
+
+const extractSelectionData = (
+  data: PixelData,
+  selection: SelectionBounds,
+): { extracted: PixelData; startX: number; startY: number; endX: number; endY: number } | null => {
+  const tileSize = data.length;
+  const startX = Math.max(0, Math.min(selection.x, tileSize));
+  const startY = Math.max(0, Math.min(selection.y, tileSize));
+  const endX = Math.max(0, Math.min(selection.x + selection.width, tileSize));
+  const endY = Math.max(0, Math.min(selection.y + selection.height, tileSize));
