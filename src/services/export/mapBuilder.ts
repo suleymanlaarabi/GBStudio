@@ -69,3 +69,36 @@ export const buildMapExport = (map: TileMap, tilesets: Tileset[]): MapExport => 
   const logicalW = maxX - minX + 1;
   const logicalH = maxY - minY + 1;
   const hwW = is16 ? logicalW * 2 : logicalW;
+  const hwH = is16 ? logicalH * 2 : logicalH;
+  const hwData = new Array<number>(hwW * hwH).fill(0);
+
+  const getLocalBase = (tilesetId: string, tileIndex: number): number => {
+    const key = `${tilesetId}:${tileIndex}`;
+    const hit = tileIndexLookup.get(key);
+    if (hit !== undefined) return hit;
+    const tileset = tilesetLookup.get(tilesetId);
+    const tile = tileset?.tiles[tileIndex];
+    if (!tile) return 0;
+    const base = tileBytes.length;
+    expandTileData(tile.data, tile.size).forEach((b) => tileBytes.push(b));
+    tileIndexLookup.set(key, base);
+    sourceTileCount++;
+    return base;
+  };
+
+  for (let ly = 0; ly < logicalH; ly++) {
+    for (let lx = 0; lx < logicalW; lx++) {
+      const gx = minX + lx;
+      const gy = minY + ly;
+      const cx = Math.floor(gx / CHUNK_SIZE);
+      const cy = Math.floor(gy / CHUNK_SIZE);
+      const localX = ((gx % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
+      const localY = ((gy % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
+      const chunkKey = `${cx},${cy}`;
+
+      let cell = null;
+      for (let li = visibleLayers.length - 1; li >= 0; li--) {
+        const ch = visibleLayers[li].chunks[chunkKey];
+        if (ch && ch.data[localY]?.[localX]) { cell = ch.data[localY][localX]; break; }
+      }
+      if (!cell) continue;
