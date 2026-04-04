@@ -178,3 +178,41 @@ export const TilesetGrid: React.FC<TilesetGridProps> = ({
 
     const last = lastEmittedCellRef.current;
     if (last && last.x === cell.x && last.y === cell.y) return;
+
+    lastEmittedCellRef.current = cell;
+    onTileSelectionUpdate(cell.x, cell.y);
+  };
+
+  const handlePointerUp = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (canvas && canvas.hasPointerCapture(event.pointerId)) {
+      canvas.releasePointerCapture(event.pointerId);
+    }
+    if (!isPointerDownRef.current) return;
+    isPointerDownRef.current = false;
+    lastEmittedCellRef.current = null;
+    onTileSelectionEnd();
+  };
+
+  return (
+    <div style={{ overflow: "auto", maxHeight: "400px" }}>
+      <canvas
+        ref={canvasRef}
+        width={canvasWidth}
+        height={canvasHeight}
+        style={{
+          imageRendering: "pixelated",
+          display: "block",
+          background: "#000",
+          cursor: "crosshair",
+          touchAction: "none",
+          userSelect: "none",
+        }}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+      />
+    </div>
+  );
+};
