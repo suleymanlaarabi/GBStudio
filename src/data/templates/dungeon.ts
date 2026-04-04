@@ -118,3 +118,42 @@ const S = { tilesetId: TS, tileIndex: 5 };
 const n = null;
 
 const CTS = "builtin-dungeon-chars";
+
+export const DUNGEON_TEMPLATE: Template = {
+  id: "builtin-dungeon",
+  name: "Dungeon",
+  description: "A complete dungeon environment with a hero, monsters, and animated objects.",
+  category: "dungeon",
+  isBuiltin: true,
+  createdAt: "2024-01-01T00:00:00.000Z",
+  tilesets: [
+    {
+      id: TS,
+      name: "Dungeon Environment",
+      tileSize: 8,
+      tiles: [TILES.floor, TILES.wall, TILES.door, TILES.chest, TILES.torch, TILES.stairs],
+      layout: {
+        columns: 3,
+        positions: {
+          "bd-t0": { x: 0, y: 0 },
+          "bd-t1": { x: 1, y: 0 },
+          "bd-t2": { x: 2, y: 0 },
+          "bd-t3": { x: 0, y: 1 },
+          "bd-t4": { x: 1, y: 1 },
+          "bd-t5": { x: 2, y: 1 },
+        },
+      },
+    },
+    {
+      id: CTS,
+      name: "Dungeon Characters",
+      tileSize: 8,
+      tiles: [TILES.hero_d1, TILES.hero_d2, TILES.slime1, TILES.slime2],
+      layout: {
+        columns: 2,
+        positions: {
+          "bd-c0": { x: 0, y: 0 },
+          "bd-c1": { x: 1, y: 0 },
+          "bd-c2": { x: 0, y: 1 },
+          "bd-c3": { x: 1, y: 1 },
+        },
