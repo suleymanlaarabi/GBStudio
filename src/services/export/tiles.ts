@@ -35,3 +35,20 @@ export const expandTileData = (data: (GBColor | null)[][], size: number): number
       const offsetY = Math.floor(segment / 2) * 8;
       const subTile: GBColor[][] = [];
 
+      for (let y = 0; y < 8; y += 1) {
+        const row: GBColor[] = [];
+        for (let x = 0; x < 8; x += 1) {
+          row.push((data[offsetY + y]![offsetX + x] ?? 0) as GBColor);
+        }
+        subTile.push(row);
+      }
+
+      result.push(
+        convertTileDataTo2BPP(subTile, 8).map((value) => parseInt(value, 16)),
+      );
+    }
+
+    return result;
+  }
+
+  return [convertTileDataTo2BPP(data, 8).map((value) => parseInt(value, 16))];
