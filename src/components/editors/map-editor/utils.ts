@@ -45,3 +45,18 @@ export const drawLineOverlay = (
   unitSize: number,
 ) => {
   let x = start.x;
+  let y = start.y;
+  const dx = Math.abs(end.x - start.x);
+  const sx = start.x < end.x ? 1 : -1;
+  const dy = -Math.abs(end.y - start.y);
+  const sy = start.y < end.y ? 1 : -1;
+  let err = dx + dy;
+
+  ctx.fillStyle = "rgba(255,255,255,0.25)";
+  while (true) {
+    ctx.fillRect(x * unitSize, y * unitSize, unitSize, unitSize);
+    if (x === end.x && y === end.y) break;
+    const e2 = 2 * err;
+    if (e2 >= dy) {
+      err += dy;
+      x += sx;
