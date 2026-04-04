@@ -157,3 +157,42 @@ export const SPACE_TEMPLATE: Template = {
     },
   ],
   maps: [
+    {
+      id: "builtin-space-map",
+      name: "Sector 7",
+      width: 16,
+      height: 12,
+      tileSize: 8,
+      layers: [
+        {
+          id: "builtin-space-layer1",
+          name: "Stars",
+          visible: true,
+          chunks: migrateFlatDataToChunks([
+            [S1, n, n, S2, n, n, n, n, S1, n, n, n, n, S2, n, n],
+            [n, n, S1, n, n, n, S2, n, n, n, n, S1, n, n, n, n],
+            [n, S2, n, n, n, n, n, n, n, S2, n, n, n, n, S1, n],
+            [n, n, n, n, S1, n, n, S1, n, n, n, n, S2, n, n, n],
+            [S1, n, n, n, n, n, n, n, n, n, S1, n, n, n, n, S2],
+            [n, n, S2, n, n, S1, n, n, S2, n, n, n, n, n, n, n],
+            [n, n, n, n, n, n, n, n, n, n, n, S1, n, n, S2, n],
+            [S2, n, n, S1, n, n, S2, n, n, n, n, n, n, n, n, n],
+            [n, n, n, n, n, n, n, n, S1, n, n, n, S2, n, n, S1],
+            [n, S1, n, n, S2, n, n, n, n, n, S1, n, n, n, n, n],
+            [n, n, n, n, n, n, S1, n, n, n, n, n, n, S2, n, n],
+            [S2, n, n, n, S1, n, n, n, S2, n, n, n, n, n, n, S1],
+          ]),
+        },
+        {
+          id: "builtin-space-layer2",
+          name: "Nebulae",
+          visible: true,
+          chunks: migrateFlatDataToChunks(
+            Array(12)
+              .fill(null)
+              .map(() => Array(16).fill(null))
+          ),
+        },
+      ],
+    },
+  ],
