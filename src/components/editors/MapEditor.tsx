@@ -127,3 +127,28 @@ export const MapEditor = () => {
           dragStart={dragStart}
           hoverCell={hoverCell}
           mapTool={mapTool}
+          mapSelection={mapSelection}
+          mapShapeFilled={mapShapeFilled}
+          onMouseDown={(e, coords) => handleMouseDown(coords, e.button)}
+          onMouseMove={(_, coords) => handleMouseMove(coords)}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseLeave}
+        />
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+        <LayersPanel mapIndex={activeMapIndex} />
+        <MapAssetPanel
+          tilesets={tilesets}
+          activeTilesetIndex={activeTilesetIndex}
+          setActiveTileset={setActiveTileset}
+          activeTileIndex={activeTileIndex}
+          setActiveTile={setActiveTile}
+          tileSize={tileSize}
+          mapTool={mapTool}
+          mapSelection={mapSelection}
+        />
+      </div>
+    </div>
+  );
+};
