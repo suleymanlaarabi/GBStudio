@@ -86,3 +86,25 @@ export const buildHeader = (
       const ch = CHANNEL_NUM[sound.type];
       const label = CHANNEL_LABEL[sound.type];
       content += `void play_sfx_${name}(void); // CH${ch} ${label}\n`;
+    });
+    content += "\n";
+  }
+
+  if (mapExports.length > 0) {
+    mapExports.forEach((m) => { content += `extern const GBT_MAP ${m.safeName};\n`; });
+    content += "\n";
+  }
+
+  if (sprites.length > 0) {
+    sprites.forEach((sprite) => {
+      const sn = sanitizeName(sprite.name);
+      sprite.animations.forEach((anim) => {
+        content += `extern const GBT_ANIMATION ${sn}_${sanitizeName(anim.name)};\n`;
+      });
+    });
+    content += "\n";
+  }
+
+  content += "#endif\n";
+  return content;
+};
