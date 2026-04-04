@@ -118,3 +118,42 @@ export const SPACE_TEMPLATE: Template = {
   description:
     "Futuristic space setting with starfields, nebulae, and animated spaceships.",
   category: "shooter",
+  isBuiltin: true,
+  createdAt: "2024-01-01T00:00:00.000Z",
+  tilesets: [
+    {
+      id: TS,
+      name: "Space Background",
+      tileSize: 8,
+      tiles: [TILES.star1, TILES.star2, TILES.nebula],
+      layout: {
+        columns: 3,
+        positions: {
+          "bs-t0": { x: 0, y: 0 },
+          "bs-t1": { x: 1, y: 0 },
+          "bs-t2": { x: 2, y: 0 },
+        },
+      },
+    },
+    {
+      id: CTS,
+      name: "Spacecraft",
+      tileSize: 8,
+      tiles: [
+        TILES.ship_player,
+        TILES.ship_enemy1,
+        TILES.explosion1,
+        TILES.explosion2,
+      ],
+      layout: {
+        columns: 2,
+        positions: {
+          "bs-c0": { x: 0, y: 0 },
+          "bs-c1": { x: 1, y: 0 },
+          "bs-c2": { x: 0, y: 1 },
+          "bs-c3": { x: 1, y: 1 },
+        },
+      },
+    },
+  ],
+  maps: [
