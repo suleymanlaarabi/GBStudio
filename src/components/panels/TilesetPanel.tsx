@@ -168,3 +168,85 @@ export const TilesetPanel: React.FC = () => {
 
     if (isUsed) {
       const confirmMessage = `Cette tile est utilisée dans ${usedMaps.length} map(s).\n\nLa suppression va effacer toutes les cellules qui l'utilisent.\n\nÊtes-vous sûr de vouloir supprimer la Tile #${tileIndex} ?`;
+      if (!confirm(confirmMessage)) return;
+    } else {
+      if (
+        !confirm(`Êtes-vous sûr de vouloir supprimer la Tile #${tileIndex} ?`)
+      )
+        return;
+    }
+
+    removeTile(activeTilesetIndex, tileIndex);
+    if (activeTileIndex >= normalizedActiveTileset.tiles.length - 1) {
+      setActiveTile(Math.max(0, activeTileIndex - 1));
+    }
+  };
+
+  const getSlotFromPointer = (clientX: number, clientY: number) => {
+    const grid = gridRef.current;
+    if (!grid) return null;
+
+    const rect = grid.getBoundingClientRect();
+    const relativeX = clientX - rect.left + grid.scrollLeft - TILE_GRID_PADDING;
+    const relativeY = clientY - rect.top + grid.scrollTop - TILE_GRID_PADDING;
+
+    if (relativeX < 0 || relativeY < 0) return null;
+
+    const slotPitch = TILE_SLOT_SIZE + TILE_GRID_GAP;
+    const x = Math.floor(relativeX / slotPitch);
+    const y = Math.floor(relativeY / slotPitch);
+
+    if (x < 0 || x >= gridColumns || y < 0 || y >= gridRows) return null;
+
+    return { x, y };
+  };
+
+  return (
+    <div
+      className="card"
+      style={{
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
+        gap: "1rem",
+        minHeight: "400px",
+      }}
+    >
+      <div className="section-title">
+        Tileset Registry
+        {!isCreating && (
+          <button
+            className="btn btn-secondary"
+            style={{ padding: "4px 8px" }}
+            onClick={() => setIsCreating(true)}
+          >
+            <Plus size={16} />
+          </button>
+        )}
+      </div>
+
+      {isCreating && (
+        <div
+          style={{
+            background: "#151515",
+            padding: "1rem",
+            borderRadius: "8px",
+            border: "1px solid var(--accent)",
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.75rem",
+          }}
+        >
+          <input
+            autoFocus
+            placeholder="Tileset Name..."
+            className="btn btn-secondary"
+            style={{ textAlign: "left", cursor: "text", fontSize: "0.75rem" }}
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+          />
+          <div style={{ display: "flex", gap: "0.5rem" }}>
+            <button
+              className={`btn ${newSize === 8 ? "" : "btn-secondary"}`}
+              style={{ flex: 1, fontSize: "0.75rem" }}
+              onClick={() => setNewSize(8)}
