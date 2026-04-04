@@ -31,3 +31,19 @@ const SHORTCUTS: ShortcutItem[] = [
   { action: "Map select", keys: "M", context: "Map editor" },
   { action: "Clear selection", keys: "Escape", context: "Tile / Map editor" },
 ];
+
+export const ShortcutsModal = ({ isOpen, onClose }: ShortcutsModalProps) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div
+        className="modal-content card"
+        onClick={(event) => event.stopPropagation()}
+        style={{ maxWidth: "720px", width: "90%" }}
+      >
+        <div className="section-title">
+          <span style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <Keyboard size={16} />
+            Keyboard shortcuts
+          </span>
