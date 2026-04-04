@@ -182,3 +182,44 @@ export const Settings: React.FC = () => {
       {/* About Section */}
       <div style={sectionStyle}>
         <div style={headerStyle}>
+          <Info size={20} />
+          About Cartridge
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              fontSize: "0.9rem",
+            }}
+          >
+            <span style={{ opacity: 0.7 }}>Version</span>
+            <span style={{ fontWeight: "bold" }}>1.0.0-alpha</span>
+          </div>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              fontSize: "0.9rem",
+            }}
+          >
+            <span style={{ opacity: 0.7 }}>Platform</span>
+            <span>Tauri Desktop</span>
+          </div>
+          <div
+            style={{
+              paddingTop: "1rem",
+              marginTop: "0.5rem",
+              borderTop: "1px solid rgba(255,255,255,0.05)",
+              fontSize: "0.8rem",
+              opacity: 0.5,
+              textAlign: "center",
+            }}
+          >
+            Built with ❤️ for Game Boy developers.
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
