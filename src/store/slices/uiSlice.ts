@@ -45,3 +45,18 @@ export const createUISlice: StateCreator<UIState, [], [], UISlice> = (set) => ({
   tool: "pencil",
   mapTool: "pencil",
   mapShapeFilled: true,
+  view: "tiles",
+  zoom: 3,
+  selectedSpriteInstanceId: null,
+  activeLayerIsWindow: false,
+
+  setView: (view) => set({ view }),
+  setZoom: (zoom) => set({ zoom: Math.max(0.5, Math.min(15, zoom)) }),
+  setActiveTileset: (index) => set({ activeTilesetIndex: index, activeTileIndex: 0 }),
+  setActiveTile: (index) => set({ activeTileIndex: index }),
+  setActiveMap: (index) => {
+    set({
+      activeMapIndex: index,
+      activeLayerIndex: 0,
+      view: "map_editor",
+      mapSelection: {
