@@ -339,3 +339,68 @@ function App() {
     <AppLayout
       isSaving={isSaving}
       onExportToProject={saveToProject}
+      onDownload={exportLocal}
+      onChooseProjectFolder={chooseProjectFolder}
+      onOpenProject={openProject}
+      onSaveProject={saveProject}
+      onSaveProjectAs={saveProjectAs}
+      projectPath={projectPath}
+      projectFilePath={projectFilePath}
+      statusMessage={statusMessage}
+      statusTone={statusTone}
+      onOpenShortcuts={() => setIsShortcutsOpen(true)}
+      onOpenTemplates={() => setIsTemplatesOpen(true)}
+    >
+      {view === "gallery" ? (
+        <MapGallery />
+      ) : view === "map_editor" ? (
+        <MapEditor />
+      ) : view === "studio" ? (
+        <SpriteStudio />
+      ) : view === "sound" ? (
+        <SoundStudio />
+      ) : view === "settings" ? (
+        <Settings />
+      ) : (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 350px",
+            gap: "1.5rem",
+            alignItems: "start",
+          }}
+        >
+          <div
+            style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}
+          >
+            <div style={{ display: "flex", gap: "1.5rem" }}>
+              <Palette />
+              <Toolbox />
+            </div>
+            <TilePixelEditor />
+          </div>
+          <TilesetPanel />
+        </div>
+      )}
+      <ExportPreviewModal
+        isOpen={isPreviewOpen}
+        onClose={handleCancelExport}
+        onConfirm={confirmExport}
+        projectName="MyGameSet"
+        tilesets={tilesets}
+        maps={maps}
+        sprites={sprites}
+      />
+      <TemplateGallery
+        isOpen={isTemplatesOpen}
+        onClose={() => setIsTemplatesOpen(false)}
+      />
+      <ShortcutsModal
+        isOpen={isShortcutsOpen}
+        onClose={() => setIsShortcutsOpen(false)}
+      />
+    </AppLayout>
+  );
+}
+
+export default App;
