@@ -243,3 +243,83 @@ const PulseEditor = ({
 };
 
 const NoiseEditor = ({
+  noise,
+  onUpdate,
+}: {
+  noise: NoiseChannel;
+  onUpdate: (noise: NoiseChannel) => void;
+}) => (
+  <>
+    <section className="sound-editor-section">
+      <h4>Envelope</h4>
+      <SliderControl
+        label="Volume (0–15)"
+        min={0}
+        max={15}
+        value={noise.initialVolume}
+        onChange={(v) => onUpdate({ ...noise, initialVolume: v })}
+      />
+      <SelectControl
+        label="Direction"
+        value={noise.envelopeDirection}
+        onChange={(v) => onUpdate({ ...noise, envelopeDirection: v as "UP" | "DOWN" })}
+        options={[
+          { label: "Increase", value: "UP" },
+          { label: "Decrease", value: "DOWN" },
+        ]}
+      />
+      <SliderControl
+        label="Sweep (0–7)"
+        hint="0=off"
+        min={0}
+        max={7}
+        value={noise.envelopeSweep}
+        onChange={(v) => onUpdate({ ...noise, envelopeSweep: v })}
+      />
+    </section>
+
+    <section className="sound-editor-section">
+      <h4>Settings</h4>
+      <SliderControl
+        label="Length (0–63)"
+        hint="0=∞"
+        min={0}
+        max={63}
+        value={noise.length}
+        onChange={(v) => onUpdate({ ...noise, length: v })}
+      />
+      <SliderControl
+        label="Shift Clock (0–15)"
+        min={0}
+        max={15}
+        value={noise.shiftClockFrequency}
+        onChange={(v) => onUpdate({ ...noise, shiftClockFrequency: v })}
+      />
+      <SelectControl
+        label="LFSR Step"
+        value={noise.counterStep}
+        onChange={(v) => onUpdate({ ...noise, counterStep: v as 0 | 1 })}
+        options={[
+          { label: "15-bit (noisy)", value: 0 },
+          { label: "7-bit (metallic)", value: 1 },
+        ]}
+      />
+      <SliderControl
+        label="Dividing Ratio (0–7)"
+        min={0}
+        max={7}
+        value={noise.dividingRatio}
+        onChange={(v) => onUpdate({ ...noise, dividingRatio: v })}
+      />
+    </section>
+  </>
+);
+
+const WaveEditor = ({
+  wave,
+  onUpdate,
+}: {
+  wave: WaveChannel;
+  onUpdate: (wave: WaveChannel) => void;
+}) => {
+  const containerRef = useRef<HTMLDivElement>(null);
