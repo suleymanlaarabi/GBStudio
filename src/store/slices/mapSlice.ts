@@ -395,3 +395,101 @@ endMapSelection: () => {
     const cx = Math.floor(x / CHUNK_SIZE);
     const cy = Math.floor(y / CHUNK_SIZE);
     const key = `${cx},${cy}`;
+    const localX = ((x % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
+    const localY = ((y % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
+
+    set((state) => ({
+      maps: updateMap(state.maps, mapIndex, (map) => {
+        const collisionData = map.collisionData ? { ...map.collisionData } : {};
+        let chunk = collisionData[key]
+          ? collisionData[key]!.map((row) => [...row])
+          : Array.from({ length: CHUNK_SIZE }, () => new Array<boolean>(CHUNK_SIZE).fill(false));
+
+        chunk[localY]![localX] = solid;
+
+        const isEmpty = chunk.every((row) => row.every((v) => !v));
+        if (isEmpty) delete collisionData[key];
+        else collisionData[key] = chunk;
+
+        return { ...map, collisionData };
+      }),
+    }));
+  },
+
+  // --- Layer operations ---
+
+  addLayer: (mapIndex) => {
+    set((state) => {
+      const map = state.maps[mapIndex];
+      if (!map) return state;
+      const newLayer = createEmptyLayer(`Layer ${map.layers.length + 1}`);
+      const newLayers = [...map.layers, newLayer];
+      return {
+        maps: updateMap(state.maps, mapIndex, (m) => ({ ...m, layers: newLayers })),
+        activeLayerIndex: newLayers.length - 1,
+      };
+    });
+    get().commit();
+  },
+
+  removeLayer: (mapIndex, layerIndex) => {
+    set((state) => {
+      const map = state.maps[mapIndex];
+      if (!map || map.layers.length <= 1) return state;
+      const newLayers = map.layers.filter((_, i) => i !== layerIndex);
+      const newActiveLayer = Math.min(state.activeLayerIndex, newLayers.length - 1);
+      return {
+        maps: updateMap(state.maps, mapIndex, (m) => ({ ...m, layers: newLayers })),
+        activeLayerIndex: newActiveLayer,
+      };
+    });
+    get().commit();
+  },
+
+  moveLayerUp: (mapIndex, layerIndex) => {
+    set((state) => {
+      const map = state.maps[mapIndex];
+      if (!map || layerIndex >= map.layers.length - 1) return state;
+      const newLayers = [...map.layers];
+      [newLayers[layerIndex], newLayers[layerIndex + 1]] = [newLayers[layerIndex + 1]!, newLayers[layerIndex]!];
+      return {
+        maps: updateMap(state.maps, mapIndex, (m) => ({ ...m, layers: newLayers })),
+        activeLayerIndex: layerIndex + 1,
+      };
+    });
+    get().commit();
+  },
+
+  moveLayerDown: (mapIndex, layerIndex) => {
+    set((state) => {
+      const map = state.maps[mapIndex];
+      if (!map || layerIndex <= 0) return state;
+      const newLayers = [...map.layers];
+      [newLayers[layerIndex], newLayers[layerIndex - 1]] = [newLayers[layerIndex - 1]!, newLayers[layerIndex]!];
+      return {
+        maps: updateMap(state.maps, mapIndex, (m) => ({ ...m, layers: newLayers })),
+        activeLayerIndex: layerIndex - 1,
+      };
+    });
+    get().commit();
+  },
+
+  toggleLayerVisibility: (mapIndex, layerIndex) => {
+    set((state) => ({
+      maps: updateMap(state.maps, mapIndex, (map) => ({
+        ...map,
+        layers: map.layers.map((layer, i) =>
+          i === layerIndex ? { ...layer, visible: !layer.visible } : layer
+        ),
+      })),
+    }));
+  },
+
+  renameLayer: (mapIndex, layerIndex, name) => {
+    set((state) => ({
+      maps: updateMap(state.maps, mapIndex, (map) => ({
+        ...map,
+        layers: map.layers.map((layer, i) =>
+          i === layerIndex ? { ...layer, name } : layer
+        ),
+      })),
