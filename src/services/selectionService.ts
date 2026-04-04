@@ -19,3 +19,21 @@ export const copySelectionContent = (
   selection: SelectionBounds,
 ) => extractSelection(data, selection);
 
+export const cutSelectionContent = (
+  data: PixelData,
+  selection: SelectionBounds,
+) => ({
+  clipboard: extractSelection(data, selection),
+  data: clearArea(data, selection),
+});
+
+export const pasteSelectionContent = (
+  data: PixelData,
+  clipboard: PixelData,
+  x: number,
+  y: number,
+) => applySelectionContent(data, clipboard, x, y);
+
+export const deleteSelectionContent = (
+  data: PixelData,
+  selection: SelectionBounds,
