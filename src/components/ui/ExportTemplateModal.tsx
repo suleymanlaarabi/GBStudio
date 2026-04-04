@@ -95,3 +95,49 @@ export const ExportTemplateModal: React.FC<ExportTemplateModalProps> = ({
     onClose();
     setName("");
     setDescription("");
+    setSelectedMapIds(new Set());
+    setSelectedSpriteIds(new Set());
+  };
+
+  const inputStyle: React.CSSProperties = {
+    background: "#111",
+    border: "1px solid #333",
+    borderRadius: "7px",
+    padding: "8px 10px",
+    color: "#fff",
+    fontSize: "0.85rem",
+    width: "100%",
+    boxSizing: "border-box",
+  };
+
+  const labelStyle: React.CSSProperties = {
+    fontSize: "0.75rem",
+    color: "#888",
+    marginBottom: 4,
+    display: "block",
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div
+        className="modal-content card"
+        onClick={(e) => e.stopPropagation()}
+        style={{ maxWidth: 560, width: "90%", display: "flex", flexDirection: "column", gap: "1.1rem" }}
+      >
+        {/* Header */}
+        <div className="section-title">
+          <span style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <Package size={16} />
+            Export as template
+          </span>
+          <button className="btn btn-secondary" style={{ padding: "4px 10px" }} onClick={onClose}>
+            <X size={14} />
+          </button>
+        </div>
+
+        {/* Name + category */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 160px", gap: "0.75rem" }}>
+          <div>
+            <label style={labelStyle}>Template name *</label>
+            <input
+              style={inputStyle}
