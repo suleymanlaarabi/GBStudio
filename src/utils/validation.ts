@@ -119,3 +119,33 @@ export const isValidProjectDocument = (obj: unknown): obj is ProjectDocument => 
     return false;
   }
 
+  // Validate version
+  if (doc.version !== 1) {
+    return false;
+  }
+
+  // Validate data structure
+  const data = doc.data as Partial<ProjectDocument["data"]>;
+
+  if (!Array.isArray(data.tilesets) || !Array.isArray(data.maps) || !Array.isArray(data.sprites)) {
+    return false;
+  }
+
+  // Validate that arrays don't contain undefined/null in a basic way
+  if (data.tilesets.some((item) => !item || typeof item !== "object")) {
+    return false;
+  }
+  if (data.maps.some((item) => !item || typeof item !== "object")) {
+    return false;
+  }
+  if (data.sprites.some((item) => !item || typeof item !== "object")) {
+    return false;
+  }
+
+  return true;
+};
+
+/**
+ * Attempts to parse and validate a project document from a JSON string
+ * Returns the parsed document if valid, null if invalid or corrupted
+ */
