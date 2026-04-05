@@ -88,3 +88,25 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
         <div
           style={{
             position: "absolute",
+            top: "100%",
+            left: 0,
+            right: 0,
+            marginTop: "4px",
+            background: "var(--bg-card)",
+            border: "1px solid var(--border)",
+            borderRadius: "8px",
+            maxHeight: "200px",
+            overflowY: "auto",
+            zIndex: 1000,
+            boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+          }}
+        >
+          <div
+            style={{ display: "flex", flexDirection: "column", padding: "4px" }}
+          >
+            {options.map((option) => (
+              <button
+                key={String(option.value)}
+                className="btn"
+                disabled={option.disabled}
+                style={{
