@@ -47,3 +47,19 @@ export const ShortcutsModal = ({ isOpen, onClose }: ShortcutsModalProps) => {
             <Keyboard size={16} />
             Keyboard shortcuts
           </span>
+          <button className="btn btn-secondary" style={{ padding: "4px 10px" }} onClick={onClose}>
+            Close
+          </button>
+        </div>
+
+        <div style={{ display: "grid", gap: "0.5rem", maxHeight: "60vh", overflowY: "auto", paddingTop: "0.5rem" }}>
+          {SHORTCUTS.map((shortcut) => (
+            <div
+              key={`${shortcut.context}-${shortcut.action}`}
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1.2fr 1fr 1fr",
+                gap: "0.75rem",
+                padding: "0.75rem",
+                background: "#111",
+                border: "1px solid #222",
