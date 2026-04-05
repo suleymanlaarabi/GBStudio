@@ -493,3 +493,106 @@ endMapSelection: () => {
           i === layerIndex ? { ...layer, name } : layer
         ),
       })),
+    }));
+  },
+
+  duplicateLayer: (mapIndex, layerIndex) => {
+    set((state) => {
+      const map = state.maps[mapIndex];
+      if (!map) return state;
+      const source = map.layers[layerIndex];
+      if (!source) return state;
+      const newLayer: MapLayer = {
+        id: crypto.randomUUID(),
+        name: `${source.name} (copie)`,
+        visible: true,
+        chunks: cloneLayerData(source.chunks),
+      };
+      const newLayers = [...map.layers.slice(0, layerIndex + 1), newLayer, ...map.layers.slice(layerIndex + 1)];
+      return {
+        maps: updateMap(state.maps, mapIndex, (m) => ({ ...m, layers: newLayers })),
+        activeLayerIndex: layerIndex + 1,
+      };
+    });
+    get().commit();
+  },
+
+  // --- Sprite instance operations ---
+
+  addSpriteInstance: (mapIndex, instance) => {
+    const newInst: SpriteInstance = { ...instance, id: crypto.randomUUID() };
+    set((state) => ({
+      maps: updateMap(state.maps, mapIndex, (map) => ({
+        ...map,
+        spriteInstances: [...(map.spriteInstances ?? []), newInst],
+      })),
+    }));
+    get().commit();
+  },
+
+  removeSpriteInstance: (mapIndex, instanceId) => {
+    set((state) => ({
+      maps: updateMap(state.maps, mapIndex, (map) => ({
+        ...map,
+        spriteInstances: (map.spriteInstances ?? []).filter((i) => i.id !== instanceId),
+      })),
+    }));
+    get().commit();
+  },
+
+  updateSpriteInstance: (mapIndex, instanceId, patch) => {
+    set((state) => ({
+      maps: updateMap(state.maps, mapIndex, (map) => ({
+        ...map,
+        spriteInstances: (map.spriteInstances ?? []).map((i) =>
+          i.id === instanceId ? { ...i, ...patch } : i
+        ),
+      })),
+    }));
+    get().commit();
+  },
+
+  // --- Window layer operations ---
+
+  setWindowLayerEnabled: (mapIndex, enabled) => {
+    set((state) => ({
+      maps: updateMap(state.maps, mapIndex, (map) => ({
+        ...map,
+        windowLayer: map.windowLayer
+          ? { ...map.windowLayer, enabled }
+          : { enabled, wx: 0, wy: 0, layer: createEmptyLayer("Window") },
+      })),
+    }));
+    get().commit();
+  },
+
+  setWindowLayerConfig: (mapIndex, wx, wy) => {
+    set((state) => ({
+      maps: updateMap(state.maps, mapIndex, (map) => {
+        if (!map.windowLayer) return map;
+        return { ...map, windowLayer: { ...map.windowLayer, wx, wy } };
+      }),
+    }));
+    get().commit();
+  },
+
+  batchUpdateWindowCells: (mapIndex, cells) => {
+    if (cells.length === 0) return;
+    set((state) => ({
+      maps: updateMap(state.maps, mapIndex, (map) => {
+        if (!map.windowLayer) return map;
+        return {
+          ...map,
+          windowLayer: {
+            ...map.windowLayer,
+            layer: {
+              ...map.windowLayer.layer,
+              chunks: batchSetLayerCells(map.windowLayer.layer.chunks, cells),
+            },
+          },
+        };
+      }),
+    }));
+  },
+});
+
