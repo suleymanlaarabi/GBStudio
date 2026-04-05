@@ -63,3 +63,19 @@ export const allocateRomBanks = (mapExports: MapExport[]): RomAllocationPlan => 
         chunkVarName: chunkBanks[bankSlot].varName,
         byteOffset: idxInBank * 256,
       };
+    });
+    m.worldRefs = worldRefs;
+  }
+
+  // 3. World lookup tables
+  const worldBanks = packFlat(
+    mapExports,
+    (m) => m.worldRomSize,
+    (m, id) => { m.worldBank = id; },
+    (m) => `${m.map.name}_world`,
+    nextId,
+  );
+  allBanks.push(...worldBanks);
+  nextId += worldBanks.length;
+
+  // 4. Collision bitfields
