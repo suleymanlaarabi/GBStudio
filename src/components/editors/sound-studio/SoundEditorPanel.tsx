@@ -323,3 +323,83 @@ const WaveEditor = ({
   onUpdate: (wave: WaveChannel) => void;
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const isDragging = useRef(false);
+
+  const applyAtPosition = (clientX: number, clientY: number) => {
+    const el = containerRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const barIndex = Math.max(
+      0,
+      Math.min(31, Math.floor(((clientX - rect.left) / rect.width) * 32)),
+    );
+    const ratio = 1 - (clientY - rect.top) / rect.height;
+    const nibble = Math.max(0, Math.min(15, Math.round(ratio * 15)));
+    const nextData = [...wave.waveData];
+    nextData[barIndex] = nibble;
+    onUpdate({ ...wave, waveData: nextData });
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    isDragging.current = true;
+    applyAtPosition(e.clientX, e.clientY);
+
+    const onMove = (ev: MouseEvent) => {
+      if (isDragging.current) applyAtPosition(ev.clientX, ev.clientY);
+    };
+    const onUp = () => {
+      isDragging.current = false;
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onUp);
+    };
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
+  };
+
+  return (
+    <>
+      <section className="sound-editor-section" style={{ gridColumn: "span 2" }}>
+        <h4>Waveform RAM (32 nibbles)</h4>
+        <div
+          ref={containerRef}
+          onMouseDown={handleMouseDown}
+          style={{
+            display: "flex",
+            gap: "2px",
+            alignItems: "flex-end",
+            height: "100px",
+            background: "rgba(0,0,0,0.2)",
+            padding: "8px",
+            borderRadius: "8px",
+            cursor: "crosshair",
+            userSelect: "none",
+          }}
+        >
+          {wave.waveData.map((value, index) => (
+            <div
+              key={index}
+              style={{
+                flex: 1,
+                height: `${(value / 15) * 100}%`,
+                background: "var(--accent)",
+                opacity: 0.85,
+                borderRadius: "2px 2px 0 0",
+                minHeight: "2px",
+              }}
+              title={`${index}: ${value}`}
+            />
+          ))}
+        </div>
+        <p style={{ fontSize: "0.75rem", opacity: 0.5, marginTop: "0.4rem" }}>
+          Drag to draw the waveform
+        </p>
+      </section>
+
+      <section className="sound-editor-section">
+        <h4>Settings</h4>
+        <ToggleControl
+          label="DAC Enabled"
+          value={wave.dacEnabled}
+          onChange={(v) => onUpdate({ ...wave, dacEnabled: v })}
+        />
