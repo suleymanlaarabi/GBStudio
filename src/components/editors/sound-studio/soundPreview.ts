@@ -71,3 +71,21 @@ export const playSoundPreview = (
 
   if (sound.type === "NOISE" && sound.noise) {
     const bufferSize = ctx.sampleRate * 0.2;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+
+    for (let i = 0; i < bufferSize; i += 1) {
+      data[i] = Math.random() * 2 - 1;
+    }
+
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(sound.noise.initialVolume / 15, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+    noise.connect(gain);
+    gain.connect(ctx.destination);
+    noise.start();
+    return;
+  }
+
