@@ -196,3 +196,44 @@ export const DUNGEON_TEMPLATE: Template = {
           [n, n, n, n, n, n, n, n, n, n, n, n],
           [n, n, n, C, n, n, n, n, C, n, n, n],
           [n, n, n, n, n, n, n, n, n, n, n, n],
+          [n, n, n, n, n, n, n, n, n, n, n, n],
+          [n, n, n, n, n, n, n, n, n, n, n, n],
+          [n, n, n, n, n, n, n, n, n, n, n, n],
+        ]),
+      },
+    ],
+  }],
+  sprites: [
+    {
+      id: "hero-sprite",
+      name: "Hero",
+      animations: [
+        {
+          id: "hero-walk",
+          name: "Walk Down",
+          loop: true,
+          frames: [
+            { tilesetId: CTS, tileIndex: 0, duration: 200 },
+            { tilesetId: CTS, tileIndex: 1, duration: 200 },
+          ],
+        },
+      ],
+    },
+    {
+      id: "slime-sprite",
+      name: "Slime",
+      animations: [
+        {
+          id: "slime-idle",
+          name: "Idle",
+          loop: true,
+          frames: [
+            { tilesetId: CTS, tileIndex: 2, duration: 400 },
+            { tilesetId: CTS, tileIndex: 3, duration: 400 },
+          ],
+        },
+      ],
+    },
+  ],
+};
+
