@@ -60,3 +60,20 @@ export const createUISlice: StateCreator<UIState, [], [], UISlice> = (set) => ({
       activeLayerIndex: 0,
       view: "map_editor",
       mapSelection: {
+        hasSelection: false,
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0,
+      },
+    });
+  },
+  setActiveSprite: (index) => set({ activeSpriteIndex: index }),
+  setActiveLayer: (index) => set({ activeLayerIndex: index }),
+  setSelectedColor: (color) => set({ selectedColor: color }),
+  setTool: (tool) => set({ tool }),
+  setMapTool: (mapTool) => set({ mapTool }),
+  setMapShapeFilled: (mapShapeFilled) => set({ mapShapeFilled }),
+  setSelectedSpriteInstance: (selectedSpriteInstanceId) => set({ selectedSpriteInstanceId }),
+  setActiveLayerIsWindow: (activeLayerIsWindow) => set({ activeLayerIsWindow }),
+});
