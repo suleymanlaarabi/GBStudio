@@ -363,3 +363,93 @@ void gbt_update_camera_controller(GBT_CAMERA_CTRL *ctrl, int8_t dx, int8_t dy) {
         uint16_t max_cam_y = (map_px_h >= 144u) ? (uint16_t)(map_px_h - 144u) : 0u;
         if (cam_x > max_cam_x) cam_x = max_cam_x;
         if (cam_y > max_cam_y) cam_y = max_cam_y;
+        gbt_update_camera(cam_x, cam_y);
+    }
+}
+
+void gbt_update_free_camera(GBT_CAMERA_CTRL *ctrl, int8_t dx, int8_t dy) {
+    const GBT_MAP *map = ctrl->map;
+    uint16_t map_w_tiles = (uint16_t)map->world_w << 4;
+    uint16_t map_h_tiles = (uint16_t)map->world_h << 4;
+    uint16_t max_x = (map_w_tiles >= 20u) ? (uint16_t)((map_w_tiles - 20u) << 3) : 0u;
+    uint16_t max_y = (map_h_tiles >= 18u) ? (uint16_t)((map_h_tiles - 18u) << 3) : 0u;
+    int16_t nx = (int16_t)ctrl->x + (int16_t)dx;
+    int16_t ny = (int16_t)ctrl->y + (int16_t)dy;
+    if (nx >= 0 && (uint16_t)nx <= max_x) ctrl->x = (uint16_t)nx;
+    if (ny >= 0 && (uint16_t)ny <= max_y) ctrl->y = (uint16_t)ny;
+    gbt_update_camera(ctrl->x, ctrl->y);
+}
+
+void gbt_update_camera(uint16_t x, uint16_t y) {
+    uint16_t tx = x >> 3;
+    uint16_t ty = y >> 3;
+
+    if (!gbt_cam_map) return;
+
+    if (tx > gbt_cam_tx) {
+        uint16_t c;
+        for (c = gbt_cam_tx + 1u; c <= tx; c++) gbt_stream_column_active(c + 20u, gbt_cam_ty);
+    } else if (tx < gbt_cam_tx) {
+        uint16_t c;
+        for (c = gbt_cam_tx - 1u; c >= tx; c--) {
+            gbt_stream_column_active(c, gbt_cam_ty);
+            if (c == 0u) break;
+        }
+    }
+
+    if (ty > gbt_cam_ty) {
+        uint16_t r;
+        for (r = gbt_cam_ty + 1u; r <= ty; r++) gbt_stream_row_active(r + 18u, tx);
+    } else if (ty < gbt_cam_ty) {
+        uint16_t r;
+        for (r = gbt_cam_ty - 1u; r >= ty; r--) {
+            gbt_stream_row_active(r, tx);
+            if (r == 0u) break;
+        }
+    }
+
+    gbt_cam_x = x;
+    gbt_cam_y = y;
+    gbt_cam_tx = tx;
+    gbt_cam_ty = ty;
+    gbt_pending_scx = (uint8_t)x;
+    gbt_pending_scy = (uint8_t)y;
+}
+
+void gbt_update_sprite(uint8_t id, GBT_SPRITE_STATE *state) {
+    if (state->tick_counter == 0u) {
+        state->current_frame++;
+        if (state->current_frame >= state->current_anim->frame_count) {
+            state->current_frame = state->current_anim->loop ? 0u : state->current_anim->frame_count - 1u;
+        }
+        state->tick_counter = state->current_anim->frames[state->current_frame].duration;
+        set_sprite_tile(id, state->current_anim->frames[state->current_frame].tile);
+    }
+    state->tick_counter--;
+    move_sprite(id, state->x, state->y);
+}
+`;
+
+// ── Data emission ──────────────────────────────────────────────────────────
+
+const hex = (n: number) => `0x${n.toString(16).padStart(2, "0")}`;
+
+const formatChunkBytes = (bytes: number[]): string => {
+  const rows: string[] = [];
+  for (let i = 0; i < bytes.length; i += 16) {
+    rows.push("    " + bytes.slice(i, i + 16).map(hex).join(", "));
+  }
+  return rows.join(",\n") + "\n";
+};
+
+const buildMapDataSection = (mapExports: MapExport[], romPlan: RomAllocationPlan): string => {
+  let content = "";
+
+  // 1. Tile pixel data
+  const byTilesBank = [...mapExports].sort((a, b) =>
+    a.tilesBank === b.tilesBank ? a.safeName.localeCompare(b.safeName) : a.tilesBank - b.tilesBank,
+  );
+  let curBank = -1;
+  byTilesBank.forEach((m) => {
+    if (m.tilesBank !== curBank) { curBank = m.tilesBank; content += `#pragma bank ${curBank}\n`; }
+    content += `const unsigned char ${m.tilesSafeName}[] = {\n${formatFlatByteArray(m.tileBytes.flat())}};\n\n`;
