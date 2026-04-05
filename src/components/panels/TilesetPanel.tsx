@@ -250,3 +250,85 @@ export const TilesetPanel: React.FC = () => {
               className={`btn ${newSize === 8 ? "" : "btn-secondary"}`}
               style={{ flex: 1, fontSize: "0.75rem" }}
               onClick={() => setNewSize(8)}
+            >
+              8x8
+            </button>
+            <button
+              className={`btn ${newSize === 16 ? "" : "btn-secondary"}`}
+              style={{ flex: 1, fontSize: "0.75rem" }}
+              onClick={() => setNewSize(16)}
+            >
+              16x16
+            </button>
+          </div>
+          <div style={{ display: "flex", gap: "0.5rem" }}>
+            <button
+              className="btn"
+              style={{ flex: 1, padding: "8px", background: "#22c55e" }}
+              onClick={handleCreate}
+            >
+              <Check size={16} />
+            </button>
+            <button
+              className="btn btn-secondary"
+              style={{ flex: 1, padding: "8px" }}
+              onClick={() => setIsCreating(false)}
+            >
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div
+        style={{
+          display: "flex",
+          gap: "0.5rem",
+          flexWrap: "wrap",
+          paddingBottom: "4px",
+        }}
+      >
+        {tilesets.map((ts, idx) => (
+          <div
+            key={ts.id}
+            style={{ position: "relative", display: "flex", alignItems: "center" }}
+          >
+            <button
+              className={`btn ${idx === activeTilesetIndex ? "" : "btn-secondary"}`}
+              style={{
+                whiteSpace: "nowrap",
+                fontSize: "0.75rem",
+                padding: "6px 24px 6px 10px",
+                border:
+                  idx === activeTilesetIndex ? "1px solid var(--accent)" : "",
+              }}
+              onClick={() => setActiveTileset(idx)}
+            >
+              <Database size={12} style={{ marginRight: "4px" }} />
+              {ts.name} ({ts.tileSize}x{ts.tileSize})
+            </button>
+            <button
+              onClick={(e) => handleDeleteTileset(idx, e)}
+              style={{
+                position: "absolute",
+                right: "4px",
+                background: "transparent",
+                border: "none",
+                color: idx === activeTilesetIndex ? "#fff" : "#666",
+                cursor: "pointer",
+                padding: "2px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              title="Supprimer ce tileset"
+            >
+              <Trash2 size={12} />
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {normalizedActiveTileset ? (
+        <>
+          <div
