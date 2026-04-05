@@ -93,3 +93,24 @@ export const SpriteAssetLibrary: React.FC<SpriteAssetLibraryProps> = ({
           label: ts.name,
           value: i.toString(),
         }))}
+      />
+      <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden" }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(64px, 1fr))",
+          }}
+        >
+          {tiles.map((t, i) => (
+            <TileThumbnail
+              key={t.id}
+              tile={t}
+              isActive={activeTileIndex === i}
+              onClick={() => onSelectTile(i)}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
