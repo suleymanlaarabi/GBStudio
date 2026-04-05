@@ -125,3 +125,33 @@ const SOUNDS: Omit<SoundAsset, "id">[] = [
         6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
       ],
     },
+  },
+  // ── STEP / FOOTSTEP ───────────────────────────────────────────────────────
+  {
+    name: "Footstep",
+    type: "NOISE",
+    noise: {
+      length: 2,
+      initialVolume: 6,
+      envelopeDirection: "DOWN",
+      envelopeSweep: 6,
+      shiftClockFrequency: 4,
+      counterStep: 1,
+      dividingRatio: 3,
+    },
+  },
+];
+
+export const SOUNDS_TEMPLATE: Template = {
+  id: "builtin-sounds-sfx-pack",
+  name: "GB Sound FX Pack",
+  description: "9 classic Game Boy sound effects.",
+  category: "sounds",
+  author: "Cartridge Editor",
+  createdAt: "2026-04-17T00:00:00.000Z",
+  tilesets: [],
+  maps: [],
+  sprites: [],
+  sounds: SOUNDS.map((s) => ({ ...s, id: crypto.randomUUID() })),
+  isBuiltin: true,
+};
