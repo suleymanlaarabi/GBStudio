@@ -66,3 +66,25 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
           width: "100%",
           display: "flex",
           alignItems: "center",
+          justifyContent: "space-between",
+          textAlign: "left",
+          cursor: "pointer",
+          position: "relative",
+        }}
+      >
+        <span
+          style={{
+            color: selectedLabel === placeholder ? "#888" : "#fff",
+            width: "100%",
+            textAlign: "left",
+          }}
+        >
+          {selectedLabel}
+        </span>
+        {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+      </button>
+
+      {isOpen && (
+        <div
+          style={{
+            position: "absolute",
