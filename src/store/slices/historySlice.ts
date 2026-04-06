@@ -75,3 +75,20 @@ export const createHistorySlice: StateCreator<
     
     set({
       ...snapshot,
+      historyIndex: nextIndex,
+    } as any);
+  },
+
+  redo: () => {
+    const { history, historyIndex } = get();
+    if (historyIndex >= history.length - 1) return;
+
+    const nextIndex = historyIndex + 1;
+    const snapshot = JSON.parse(history[nextIndex]!) as HistorySnapshot;
+    
+    set({
+      ...snapshot,
+      historyIndex: nextIndex,
+    } as any);
+  },
+});
