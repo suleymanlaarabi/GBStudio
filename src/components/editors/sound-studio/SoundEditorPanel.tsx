@@ -403,3 +403,83 @@ const WaveEditor = ({
           value={wave.dacEnabled}
           onChange={(v) => onUpdate({ ...wave, dacEnabled: v })}
         />
+        <SelectControl
+          label="Volume"
+          value={wave.volumeCode}
+          onChange={(v) => onUpdate({ ...wave, volumeCode: v as 0 | 1 | 2 | 3 })}
+          options={[
+            { label: "0% (mute)", value: 0 },
+            { label: "100%", value: 1 },
+            { label: "50%", value: 2 },
+            { label: "25%", value: 3 },
+          ]}
+        />
+        <SliderControl
+          label="Length (0–255)"
+          hint="0=∞"
+          min={0}
+          max={255}
+          value={wave.length}
+          onChange={(v) => onUpdate({ ...wave, length: v })}
+        />
+        <FrequencyControl
+          value={wave.frequency}
+          onChange={(v) => onUpdate({ ...wave, frequency: v })}
+        />
+      </section>
+    </>
+  );
+};
+
+// ── Panel ─────────────────────────────────────────────────────────────────────
+
+export const SoundEditorPanel: React.FC<SoundEditorPanelProps> = ({
+  sound,
+  onUpdate,
+}) => {
+  const audioContextRef = useRef<AudioContext | null>(null);
+
+  return (
+    <div style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "2rem" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <input
+          type="text"
+          className="input"
+          value={sound.name}
+          onChange={(e) => onUpdate({ name: e.target.value })}
+          style={{
+            fontSize: "1.2rem",
+            fontWeight: "bold",
+            background: "transparent",
+            border: "none",
+            color: "var(--text-primary)",
+          }}
+        />
+        <button
+          className="btn btn-primary"
+          onClick={() =>
+            playSoundPreview(sound, audioContextRef.current, (ctx) => {
+              audioContextRef.current = ctx;
+            })
+          }
+          style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
+        >
+          <Play size={18} fill="currentColor" />
+          Preview SFX
+        </button>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2rem" }}>
+        {(sound.type === "PULSE1" || sound.type === "PULSE2") && (
+          <PulseEditor sound={sound} onUpdate={onUpdate} />
+        )}
+        {sound.type === "NOISE" && sound.noise && (
+          <NoiseEditor noise={sound.noise} onUpdate={(n) => onUpdate({ noise: n })} />
+        )}
+        {sound.type === "WAVE" && sound.wave && (
+          <WaveEditor wave={sound.wave} onUpdate={(w) => onUpdate({ wave: w })} />
+        )}
+      </div>
+    </div>
+  );
+};
