@@ -319,3 +319,109 @@ const BL = { tilesetId: TS, tileIndex: 9  };  // pipe body left
 const BR = { tilesetId: TS, tileIndex: 10 };  // pipe body right
 const FT = { tilesetId: TS, tileIndex: 11 };  // flag top
 const FP = { tilesetId: TS, tileIndex: 12 };  // flag pole
+const WT = { tilesetId: TS, tileIndex: 13 };  // water top
+const WF = { tilesetId: TS, tileIndex: 14 };  // water fill
+const Ld = { tilesetId: TS, tileIndex: 15 };  // ladder
+
+// ── Map data (32 × 14) ───────────────────────────────────────────────────────
+// Layer 1 – Terrain (solid ground, platforms, water)
+const TERRAIN_LAYER = [
+  /* R0  */ [n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n],
+  /* R1  */ [n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n],
+  /* R2  */ [n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n],
+  /* R3  */ [n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n],
+  /* R4  */ [n,n,n,n,P,P,P,n, n,n,n,n,n,n,n,n, n,n,n,n,n,P,P,P, n,n,n,n,n,n,n,n],
+  /* R5  */ [n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n],
+  /* R6  */ [n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n],
+  /* R7  */ [n,n,n,n,n,n,n,n, n,n,P,P,P,P,P,n, n,n,n,n,n,n,n,n, n,n,n,P,P,P,n,n],
+  /* R8  */ [n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n],
+  /* R9  */ [n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n],
+  /* R10 */ [n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n],
+  /* R11 */ [T,T,T,T,T,T,T,T, T,T,WT,WT,T,T,T, T,T,T,T,T,T,T,T,T, T,T,T,T,T,T,T,T],
+  /* R12 */ [F,F,F,F,F,F,F,F, F,F,WF,WF,F,F,F, F,F,F,F,F,F,F,F,F, F,F,F,F,F,F,F,F],
+  /* R13 */ [F,F,F,F,F,F,F,F, F,F,WF,WF,F,F,F, F,F,F,F,F,F,F,F,F, F,F,F,F,F,F,F,F],
+];
+
+// Layer 2 – Details (pipes, items, flag, hazards)
+const DETAILS_LAYER = [
+  /* R0  */ [n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n, n,n,n,n,n,n,FT,n],
+  /* R1  */ [n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n, n,n,n,n,n,n,FP,n],
+  /* R2  */ [n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n, n,n,n,n,n,n,FP,n],
+  /* R3  */ [n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n, n,n,n,n,n,n,FP,n],
+  /* R4  */ [n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n, n,n,n,n,n,n,FP,n],
+  /* R5  */ [n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n, n,n,n,n,n,n,FP,n],
+  /* R6  */ [n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n, n,n,n,n,n,n,FP,n],
+  /* R7  */ [n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n, n,n,n,n,n,n,FP,n],
+  /* R8  */ [n,n,Br,n,Q,n,Br,n, PL,PR,n,n,n,n,n,n, Br,Br,Q,Br,Br,n,n,n, PL,PR,n,n,n,n,n,n],
+  /* R9  */ [Co,Co,n,Co,n,Co,n,Co, BL,BR,n,n,n,Co,Co,Co, n,n,n,n,n,Co,Co,Co, BL,BR,n,n,n,n,FP,n],
+  /* R10 */ [n,n,n,n,n,n,n,n, BL,BR,Ld,Ld,n,n,n,n, n,n,n,n,n,n,n,n, BL,BR,n,Sk,Sk,n,FP,n],
+  /* R11 */ [n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n, n,n,n,n,n,n,FP,n],
+  /* R12 */ [n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n],
+  /* R13 */ [n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n, n,n,n,n,n,n,n,n],
+];
+
+// ── Template export ───────────────────────────────────────────────────────────
+
+export const PLATFORMER_PRO_TEMPLATE: Template = {
+  id: "builtin-platformer-pro",
+  name: "Platformer Pro",
+  description: "Complete Mario/Kirby-style platformer: 16 terrain tiles, hero (5 anims), 2 enemies, coin FX, pipes, water, flag, and 7 SFX.",
+  category: "platformer",
+  isBuiltin: true,
+  createdAt: "2026-04-17T00:00:00.000Z",
+
+  tilesets: [
+    {
+      id: TS,
+      name: "Platformer Terrain",
+      tileSize: 8,
+      tiles: [
+        TERRAIN.ground_top,
+        TERRAIN.ground_fill,
+        TERRAIN.platform,
+        TERRAIN.brick,
+        TERRAIN.question,
+        TERRAIN.coin,
+        TERRAIN.spike,
+        TERRAIN.pipe_head_l,
+        TERRAIN.pipe_head_r,
+        TERRAIN.pipe_body_l,
+        TERRAIN.pipe_body_r,
+        TERRAIN.flag_top,
+        TERRAIN.flag_pole,
+        TERRAIN.water_top,
+        TERRAIN.water_fill,
+        TERRAIN.ladder,
+      ],
+      layout: {
+        columns: 4,
+        positions: {
+          "pp-t0":  { x: 0, y: 0 },
+          "pp-t1":  { x: 1, y: 0 },
+          "pp-t2":  { x: 2, y: 0 },
+          "pp-t3":  { x: 3, y: 0 },
+          "pp-t4":  { x: 0, y: 1 },
+          "pp-t5":  { x: 1, y: 1 },
+          "pp-t6":  { x: 2, y: 1 },
+          "pp-t7":  { x: 3, y: 1 },
+          "pp-t8":  { x: 0, y: 2 },
+          "pp-t9":  { x: 1, y: 2 },
+          "pp-t10": { x: 2, y: 2 },
+          "pp-t11": { x: 3, y: 2 },
+          "pp-t12": { x: 0, y: 3 },
+          "pp-t13": { x: 1, y: 3 },
+          "pp-t14": { x: 2, y: 3 },
+          "pp-t15": { x: 3, y: 3 },
+        },
+      },
+    },
+    {
+      id: CS,
+      name: "Characters & Enemies",
+      tileSize: 8,
+      tiles: [
+        CHARS.hero_idle,
+        CHARS.hero_walk1,
+        CHARS.hero_walk2,
+        CHARS.hero_jump,
+        CHARS.hero_hurt,
