@@ -149,3 +149,33 @@ export const isValidProjectDocument = (obj: unknown): obj is ProjectDocument => 
  * Attempts to parse and validate a project document from a JSON string
  * Returns the parsed document if valid, null if invalid or corrupted
  */
+export const safeParseProjectDocument = (jsonString: string): ProjectDocument | null => {
+  try {
+    const parsed = JSON.parse(jsonString);
+    if (isValidProjectDocument(parsed)) {
+      return parsed;
+    }
+    return null;
+  } catch {
+    // JSON parsing failed - data is corrupted
+    return null;
+  }
+};
+
+/**
+ * Attempts to parse autosave data from localStorage with robust error handling
+ * Returns validated project data or null if invalid
+ */
+export const loadAutosaveData = (storageKey: string): ProjectDocument | null => {
+  try {
+    const autosaveData = localStorage.getItem(storageKey);
+    if (!autosaveData) {
+      return null;
+    }
+
+    return safeParseProjectDocument(autosaveData);
+  } catch (error) {
+    console.error("Failed to load autosave data:", error);
+    return null;
+  }
+};
