@@ -141,3 +141,49 @@ export const ExportTemplateModal: React.FC<ExportTemplateModalProps> = ({
             <label style={labelStyle}>Template name *</label>
             <input
               style={inputStyle}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="My awesome template"
+            />
+          </div>
+          <div>
+            <label style={labelStyle}>Category</label>
+            <select
+              style={{ ...inputStyle, appearance: "none" }}
+              value={category}
+              onChange={(e) => setCategory(e.target.value as TemplateCategory)}
+            >
+              <option value="dungeon">Dungeon</option>
+              <option value="overworld">Overworld</option>
+              <option value="platformer">Platformer</option>
+              <option value="custom">Custom</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Description */}
+        <div>
+          <label style={labelStyle}>Description</label>
+          <textarea
+            style={{ ...inputStyle, resize: "vertical", minHeight: 60 }}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Describe your template..."
+          />
+        </div>
+
+        {/* Maps */}
+        <div>
+          <label style={{ ...labelStyle, marginBottom: 8 }}>
+            Maps to include * ({selectedMapIds.size} selected)
+          </label>
+          {maps.length === 0 ? (
+            <p style={{ color: "#555", fontSize: "0.8rem", margin: 0 }}>No maps in the project</p>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 180, overflowY: "auto" }}>
+              {maps.map((map) => (
+                <label
+                  key={map.id}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
