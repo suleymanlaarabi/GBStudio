@@ -453,3 +453,97 @@ const buildMapDataSection = (mapExports: MapExport[], romPlan: RomAllocationPlan
   byTilesBank.forEach((m) => {
     if (m.tilesBank !== curBank) { curBank = m.tilesBank; content += `#pragma bank ${curBank}\n`; }
     content += `const unsigned char ${m.tilesSafeName}[] = {\n${formatFlatByteArray(m.tileBytes.flat())}};\n\n`;
+  });
+
+  // 2. Chunk data (each map's chunk banks are already assigned unique IDs)
+  mapExports.forEach((m) => {
+    m.chunkBanks.forEach((cb) => {
+      content += `#pragma bank ${cb.bankId}\n`;
+      content += `const unsigned char ${cb.varName}[] = {\n${formatChunkBytes(cb.bytes)}};\n\n`;
+    });
+  });
+
+  // 3. World lookup tables
+  const byWorldBank = [...mapExports].sort((a, b) =>
+    a.worldBank === b.worldBank ? a.safeName.localeCompare(b.safeName) : a.worldBank - b.worldBank,
+  );
+  curBank = -1;
+  byWorldBank.forEach((m) => {
+    if (m.worldBank !== curBank) { curBank = m.worldBank; content += `#pragma bank ${curBank}\n`; }
+    content += `const GBT_CHUNK_REF ${m.worldSafeName}[] = {\n`;
+    m.worldRefs.forEach((ref) => {
+      content += `    { ${ref.bankId}, ${ref.chunkVarName} + ${ref.byteOffset} },\n`;
+    });
+    content += `};\n\n`;
+  });
+
+  // 4. Collision bitfields
+  const byCollBank = [...mapExports].filter((m) => m.collisionData.length > 0).sort((a, b) =>
+    a.collisionBank === b.collisionBank ? a.safeName.localeCompare(b.safeName) : a.collisionBank - b.collisionBank,
+  );
+  curBank = -1;
+  byCollBank.forEach((m) => {
+    if (m.collisionBank !== curBank) { curBank = m.collisionBank; content += `#pragma bank ${curBank}\n`; }
+    content += `const unsigned char ${m.collisionSafeName}[] = {\n${formatFlatByteArray(m.collisionData)}};\n\n`;
+  });
+
+  // 5. GBT_MAP structs (bank 0)
+  content += "#pragma bank 0\n\n";
+  mapExports.forEach((m) => {
+    const collPtr = m.collisionData.length > 0 ? m.collisionSafeName : "0";
+    const collBank = m.collisionData.length > 0 ? m.collisionBank : 0;
+    content += `const GBT_MAP ${m.safeName} = {\n`;
+    content += `    ${m.tilesBank}, ${m.tilesSafeName}, ${m.tileCount},\n`;
+    content += `    ${m.worldBank}, ${m.worldSafeName}, ${m.worldW}, ${m.worldH},\n`;
+    content += `    ${m.spawnX}, ${m.spawnY},\n`;
+    content += `    ${collBank}, ${collPtr}\n`;
+    content += `};\n\n`;
+  });
+
+  let summary = `// ROM layout: ${romPlan.banks.length} bank(s), ${romPlan.totalBytes} bytes total\n`;
+  romPlan.banks.forEach((b) => {
+    summary += `// Bank ${b.id}: ${b.usedBytes}/${ROM_BANK_DATA_BUDGET} bytes — ${b.assetNames.join(", ")}\n`;
+  });
+
+  return summary + "\n" + content;
+};
+
+const buildSpriteSection = (sprites: SpriteAsset[]): string => {
+  let content = "";
+  sprites.forEach((sprite) => {
+    const sn = sanitizeName(sprite.name);
+    sprite.animations.forEach((anim) => {
+      const an = sanitizeName(anim.name);
+      const framesVar = `${sn}_${an}_frames`;
+      content += `const GBT_FRAME ${framesVar}[] = {\n`;
+      anim.frames.forEach((f) => { content += `    { ${f.tileIndex}, ${f.duration} },\n`; });
+      content += `};\n`;
+      content += `const GBT_ANIMATION ${sn}_${an} = { ${framesVar}, ${anim.frames.length}, ${anim.loop ? 1 : 0} };\n\n`;
+    });
+  });
+  return content;
+};
+
+export const buildSource = (
+  projectName: string,
+  expandedTilesets: ExpandedTileset[],
+  mapExports: MapExport[],
+  sprites: SpriteAsset[],
+  romPlan: RomAllocationPlan,
+  sounds: SoundAsset[],
+): string => {
+  let content = `#include "${projectName}.h"\n\n`;
+  content += `#ifndef SWITCH_ROM\n#define SWITCH_ROM(bank) ((void)(bank))\n#endif\n`;
+  content += `#ifndef CURRENT_BANK\n#define CURRENT_BANK 0\n#endif\n\n`;
+
+  content += buildSoundApiImpl();
+  sounds.forEach((s) => { content += buildSoundImpl(s); });
+  content += buildEngineImpl();
+  content += "\n";
+
+  expandedTilesets.forEach((t) => { content += `// ${t.name}: ${t.tileCount} hardware tiles\n`; });
+  content += buildMapDataSection(mapExports, romPlan);
+  content += buildSpriteSection(sprites);
+
+  return content;
+};
