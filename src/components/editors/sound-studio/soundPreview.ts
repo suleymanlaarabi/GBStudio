@@ -89,3 +89,24 @@ export const playSoundPreview = (
     return;
   }
 
+  if (sound.type === "WAVE" && sound.wave) {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const real = new Float32Array(17);
+    const imag = new Float32Array(17);
+
+    for (let i = 0; i < 16; i += 1) {
+      real[i] = (sound.wave.waveData[i] - 7.5) / 7.5;
+    }
+
+    const wave = ctx.createPeriodicWave(real, imag);
+    osc.setPeriodicWave(wave);
+    osc.frequency.setValueAtTime(131072 / (2048 - sound.wave.frequency), now);
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(now + 0.3);
+  }
+};
