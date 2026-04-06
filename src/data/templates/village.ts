@@ -241,3 +241,55 @@ export const VILLAGE_TEMPLATE: Template = {
           name: "Buildings & Props",
           visible: true,
           chunks: migrateFlatDataToChunks(
+            Array(15)
+              .fill(null)
+              .map((_, y) =>
+                Array(20)
+                  .fill(null)
+                  .map((_, x) => {
+                    // House 1
+                    if (y === 2 && x >= 3 && x <= 5) return R;
+                    if (y === 3 && x === 3) return Wi;
+                    if (y === 3 && x === 4) return D;
+                    if (y === 3 && x === 5) return Wi;
+
+                    // House 2
+                    if (y === 2 && x >= 14 && x <= 16) return R;
+                    if (y === 3 && x === 14) return Wi;
+                    if (y === 3 && x === 15) return D;
+                    if (y === 3 && x === 16) return Wi;
+
+                    // Fences
+                    if (y === 12 && x >= 2 && x <= 17) return Fn;
+
+                    // Flowers
+                    if (y === 5 && x === 2) return Fl;
+                    if (y === 11 && x === 18) return Fl;
+                    if (y === 1 && x === 10) return Fl;
+
+                    return n;
+                  }),
+              ),
+          ),
+        },
+      ],
+    },
+  ],
+  sprites: [
+    {
+      id: "villager-sprite",
+      name: "Villager",
+      animations: [
+        {
+          id: "villager-walk",
+          name: "Idle/Walk",
+          loop: true,
+          frames: [
+            { tilesetId: CTS, tileIndex: 0, duration: 400 },
+            { tilesetId: CTS, tileIndex: 1, duration: 400 },
+          ],
+        },
+      ],
+    },
+  ],
+};
