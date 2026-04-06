@@ -133,3 +133,47 @@ export const Modal: React.FC<ModalProps> = (props) => {
     setValue(newValue);
     if (props.type === "text" || props.type === "number") {
       const error = validateTextField(newValue, props as TextModalProps);
+      setErrors(prev => ({
+        ...prev,
+        __main__: error || null
+      }));
+    }
+  };
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-content card">
+        <div className="section-title">
+          {props.title}
+          <button
+            className="btn btn-secondary"
+            style={{ padding: "4px" }}
+            onClick={props.onClose}
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        <div style={{ padding: "1rem 0", width: "100%" }}>
+          {props.type === "confirm" ? (
+            <div style={{ width: "100%" }}>
+              <p style={{ color: "#eee", margin: 0 }}>{props.message}</p>
+            </div>
+          ) : props.type === "text" || props.type === "number" ? (
+            <div style={{ width: "100%" }}>
+              <input
+                autoFocus
+                type={props.type}
+                className="btn btn-secondary"
+                style={{ width: "100%", textAlign: "left", cursor: "text", boxSizing: "border-box" }}
+                value={value}
+                onChange={handleTextChange}
+                placeholder={props.placeholder}
+                onKeyDown={(e) => e.key === "Enter" && isFormValid() && handleConfirm()}
+              />
+              {errors.__main__ && (
+                <div style={{ marginTop: "0.35rem", color: "#ff7a7a", fontSize: "0.75rem" }}>
+                  {errors.__main__}
+                </div>
+              )}
+            </div>
