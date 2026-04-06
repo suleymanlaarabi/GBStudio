@@ -474,3 +474,97 @@ export const TemplateGallery: React.FC<TemplateGalleryProps> = ({ isOpen, onClos
         </div>
 
         {/* Main content */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+          {/* Header */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "1.1rem 1.4rem",
+              borderBottom: "1px solid #1a1a1a",
+              flexShrink: 0,
+            }}
+          >
+            <div>
+              <h2 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700 }}>
+                Templates
+              </h2>
+              <p style={{ margin: 0, fontSize: "0.75rem", color: "#666", marginTop: 2 }}>
+                Choose a template to add it to your project
+              </p>
+            </div>
+            <button
+              className="btn btn-secondary"
+              style={{ padding: "6px 10px" }}
+              onClick={onClose}
+            >
+              <X size={16} />
+            </button>
+          </div>
+
+          {/* Grid */}
+          <div
+            style={{
+              flex: 1,
+              overflowY: "auto",
+              padding: "1.25rem 1.4rem",
+            }}
+          >
+            {filtered.length === 0 ? (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  height: "100%",
+                  color: "#444",
+                  gap: "0.75rem",
+                }}
+              >
+                <Download size={32} />
+                <span style={{ fontSize: "0.9rem" }}>
+                  No templates in this category
+                </span>
+                <button
+                  className="btn btn-secondary"
+                  style={{ fontSize: "0.78rem" }}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Upload size={13} /> Import template
+                </button>
+              </div>
+            ) : (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+                  gap: "1rem",
+                }}
+              >
+                {filtered.map((t) => (
+                  <TemplateCard
+                    key={t.id}
+                    template={t}
+                    onUse={handleUse}
+                    onDelete={!t.isBuiltin ? handleDelete : undefined}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <Modal
+        isOpen={errorModalOpen}
+        title="Import Error"
+        type="confirm"
+        message={errorMessage}
+        onConfirm={() => setErrorModalOpen(false)}
+        onClose={() => setErrorModalOpen(false)}
+      />
+    </div>
+  );
+};
