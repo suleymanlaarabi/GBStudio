@@ -60,3 +60,18 @@ export const createHistorySlice: StateCreator<
       nextHistory.shift();
     }
 
+    set({
+      history: nextHistory,
+      historyIndex: nextHistory.length - 1,
+    } as any);
+  },
+
+  undo: () => {
+    const { history, historyIndex } = get();
+    if (historyIndex <= 0) return;
+
+    const nextIndex = historyIndex - 1;
+    const snapshot = JSON.parse(history[nextIndex]!) as HistorySnapshot;
+    
+    set({
+      ...snapshot,
