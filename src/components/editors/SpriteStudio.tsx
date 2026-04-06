@@ -25,3 +25,23 @@ export const SpriteStudio: React.FC = () => {
     selectedAnimId,
     setSelectedAnimId,
     spriteModalOpen,
+    setSpriteModalOpen,
+    animModalOpen,
+    setAnimModalOpen,
+    tiles,
+    activeSprite,
+    activeAnim,
+  } = useSpriteStudio();
+
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "220px 1fr 300px",
+        gap: "1rem",
+        height: "calc(100% - 1rem)",
+        minHeight: 0,
+      }}
+    >
+      <SpriteSidebar
+        sprites={sprites}
