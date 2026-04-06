@@ -146,3 +146,38 @@ export const MapGallery: React.FC = () => {
                     style={{ padding: "6px", color: "#ff4444" }}
                     onClick={(e) => {
                       e.stopPropagation();
+                      removeMap(index);
+                    }}
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <ExportTemplateModal
+        isOpen={isExportTemplateOpen}
+        onClose={() => setIsExportTemplateOpen(false)}
+        maps={maps}
+        tilesets={tilesets}
+        sprites={sprites}
+      />
+
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        type="multi"
+        title="Create New Map"
+        onConfirm={(values: Record<string, string>) => {
+          addMap(
+            values.name,
+            parseInt(values.width, 10),
+            parseInt(values.height, 10),
+            parseInt(values.tileSize, 10) as TileSize
+          );
+          setIsModalOpen(false);
+        }}
+        fields={[
