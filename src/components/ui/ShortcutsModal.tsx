@@ -63,3 +63,19 @@ export const ShortcutsModal = ({ isOpen, onClose }: ShortcutsModalProps) => {
                 padding: "0.75rem",
                 background: "#111",
                 border: "1px solid #222",
+                borderRadius: "8px",
+                alignItems: "center",
+              }}
+            >
+              <div style={{ color: "#fff", fontWeight: 600 }}>{shortcut.action}</div>
+              <div style={{ color: "var(--accent)", fontFamily: "monospace", fontSize: "0.85rem" }}>
+                {shortcut.keys}
+              </div>
+              <div style={{ color: "#888", fontSize: "0.8rem" }}>{shortcut.context}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
