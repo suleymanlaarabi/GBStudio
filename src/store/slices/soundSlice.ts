@@ -32,3 +32,19 @@ export const createSoundSlice: StateCreator<
     };
 
     // Initialize with default values based on type
+    if (type === "PULSE1") {
+      newSound.pulse1 = {
+        sweepTime: 0,
+        sweepDirection: "UP",
+        sweepShift: 0,
+        duty: 2,
+        length: 0,
+        initialVolume: 10,
+        envelopeDirection: "DOWN",
+        envelopeSweep: 3,
+        frequency: 440,
+      };
+    } else if (type === "PULSE2") {
+      newSound.pulse2 = {
+        duty: 2,
+        length: 0,
