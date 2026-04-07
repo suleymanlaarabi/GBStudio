@@ -48,3 +48,19 @@ export const createSoundSlice: StateCreator<
       newSound.pulse2 = {
         duty: 2,
         length: 0,
+        initialVolume: 10,
+        envelopeDirection: "DOWN",
+        envelopeSweep: 3,
+        frequency: 440,
+      };
+    } else if (type === "WAVE") {
+      newSound.wave = {
+        dacEnabled: true,
+        length: 0,
+        volumeCode: 1,
+        frequency: 440,
+        waveData: Array(32).fill(0).map((_, i) => Math.floor(7.5 + 7.5 * Math.sin(i * Math.PI / 16))),
+      };
+    } else if (type === "NOISE") {
+      newSound.noise = {
+        length: 0,
