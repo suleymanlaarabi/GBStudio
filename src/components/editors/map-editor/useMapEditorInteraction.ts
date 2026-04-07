@@ -191,3 +191,50 @@ export const useMapEditorInteraction = ({
         coords.x,
         coords.y,
         activeCell.tilesetId,
+        activeCell.tileIndex,
+      );
+      return;
+    }
+
+    if (mapTool === "line" || mapTool === "rectangle" || mapTool === "select") {
+      setIsDrawing(true);
+      setDragStart(coords);
+      if (mapTool === "select") beginMapSelection(coords.x, coords.y);
+      return;
+    }
+
+    setIsDrawing(true);
+    handlePaint(coords);
+  };
+
+  const handleMouseMove = (coords: CellCoords | null) => {
+    setHoverCell(coords);
+    if (!coords || !isDrawing) return;
+
+    if (mapTool === "collision") {
+      pendingCollisionCells.current.set(`${coords.x},${coords.y}`, !isErasingCollisionRef.current);
+      scheduleCollisionFlush();
+      return;
+    }
+
+    if (mapTool === "select") {
+      updateMapSelection(coords.x, coords.y);
+      return;
+    }
+
+    if (mapTool === "line" || mapTool === "rectangle") return;
+    handlePaint(coords);
+  };
+
+  const handleMouseUp = () => {
+    // Always flush buffered cells before processing the release
+    flushAll();
+
+    if (!map || !dragStart || !hoverCell) {
+      if (isDrawing && (mapTool === "pencil" || mapTool === "eraser")) {
+        commit();
+      }
+      setIsDrawing(false);
+      setDragStart(null);
+      return;
+    }
