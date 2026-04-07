@@ -52,3 +52,20 @@ export const expandTileData = (data: (GBColor | null)[][], size: number): number
   }
 
   return [convertTileDataTo2BPP(data, 8).map((value) => parseInt(value, 16))];
+};
+
+export const expandTileset = (tileset: Tileset): ExpandedTileset => {
+  const tileBytes: number[][] = [];
+
+  tileset.tiles.forEach((tile) => {
+    expandTileData(tile.data, tile.size).forEach((bytes) => tileBytes.push(bytes));
+  });
+
+  return {
+    id: tileset.id,
+    name: tileset.name,
+    safeName: sanitizeName(tileset.name),
+    tileCount: tileBytes.length,
+    tileBytes,
+  };
+};
