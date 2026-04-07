@@ -60,3 +60,21 @@ export const drawLineOverlay = (
     if (e2 >= dy) {
       err += dy;
       x += sx;
+    }
+    if (e2 <= dx) {
+      err += dx;
+      y += sy;
+    }
+  }
+};
+
+export const getMapCursor = (tool: MapTool, isDrawing: boolean) => {
+  if (tool === "select") return isDrawing ? "crosshair" : "copy";
+  if (tool === "eyedropper") return "copy";
+  if (tool === "fill") return "cell";
+  if (tool === "eraser") return "not-allowed";
+  if (tool === "line" || tool === "rectangle") return "crosshair";
+  if (tool === "camera_spawn") return "crosshair";
+  if (tool === "collision") return "cell";
+  return "cell";
+};
