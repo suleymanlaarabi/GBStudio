@@ -92,3 +92,48 @@ const LayerRow: React.FC<LayerRowProps> = ({
       ) : (
         <span
           style={{ flex: 1, fontSize: "0.82rem", color: isActive ? "#fff" : "#aaa", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+          onDoubleClick={(e) => { e.stopPropagation(); setEditing(true); setDraft(layer.name); }}
+          title="Double-click to rename"
+        >
+          {layer.name}
+        </span>
+      )}
+
+      {/* Actions (visible on hover / active) */}
+      {isActive && !editing && (
+        <div style={{ display: "flex", gap: 2, flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
+          <button
+            onClick={() => { setEditing(true); setDraft(layer.name); }}
+            style={{ background: "none", border: "none", cursor: "pointer", color: "#666", padding: 2, display: "flex" }}
+            title="Rename"
+          >
+            <Pencil size={11} />
+          </button>
+          <button
+            onClick={() => duplicateLayer(mapIndex, layerIndex)}
+            style={{ background: "none", border: "none", cursor: "pointer", color: "#666", padding: 2, display: "flex" }}
+            title="Duplicate"
+          >
+            <Copy size={11} />
+          </button>
+          <button
+            onClick={() => moveLayerDown(mapIndex, layerIndex)}
+            disabled={isFirst}
+            style={{ background: "none", border: "none", cursor: isFirst ? "default" : "pointer", color: isFirst ? "#333" : "#666", padding: 2, display: "flex" }}
+            title="Move down"
+          >
+            <ChevronDown size={11} />
+          </button>
+          <button
+            onClick={() => moveLayerUp(mapIndex, layerIndex)}
+            disabled={isLast}
+            style={{ background: "none", border: "none", cursor: isLast ? "default" : "pointer", color: isLast ? "#333" : "#666", padding: 2, display: "flex" }}
+            title="Move up"
+          >
+            <ChevronUp size={11} />
+          </button>
+          {canDelete && (
+            <button
+              onClick={() => removeLayer(mapIndex, layerIndex)}
+              style={{ background: "none", border: "none", cursor: "pointer", color: "#ff4444", padding: 2, display: "flex" }}
+              title="Delete"
