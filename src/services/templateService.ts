@@ -22,3 +22,24 @@ export const getAllTemplates = (): Template[] => [
 export const saveUserTemplate = (template: Template): void => {
   const existing = getUserTemplates();
   const idx = existing.findIndex((t) => t.id === template.id);
+  if (idx >= 0) {
+    existing[idx] = template;
+  } else {
+    existing.push(template);
+  }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
+};
+
+export const deleteUserTemplate = (id: string): void => {
+  const existing = getUserTemplates().filter((t) => t.id !== id);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
+};
+
+export const exportTemplateAsFile = (template: Template): void => {
+  const file: TemplateFile = {
+    format: "cartridge-template",
+    version: 1,
+    id: template.id,
+    name: template.name,
+    description: template.description,
+    category: template.category,
