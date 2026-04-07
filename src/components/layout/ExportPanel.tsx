@@ -64,3 +64,35 @@ export const ExportPanel: React.FC<ExportPanelProps> = ({
       )}
 
       <div style={{ display: "flex", gap: "0.5rem" }}>
+        <button
+          className="btn btn-secondary"
+          style={{
+            flex: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "0.5rem",
+          }}
+          onClick={onOpenProject}
+          title="Open a .cartridge project file"
+        >
+          <FolderOpen size={16} />
+          Open
+        </button>
+        <button
+          className="btn btn-secondary"
+          style={{
+            flex: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "0.5rem",
+          }}
+          onClick={onSaveProjectAs}
+          disabled={isSaving}
+          title="Save the current project to a new .cartridge file"
+        >
+          <Save size={16} />
+          Save as
+        </button>
+      </div>
