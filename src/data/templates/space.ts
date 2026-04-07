@@ -196,3 +196,45 @@ export const SPACE_TEMPLATE: Template = {
       ],
     },
   ],
+  sprites: [
+    {
+      id: "player-ship",
+      name: "Player Ship",
+      animations: [
+        {
+          id: "player-idle",
+          name: "Idle",
+          loop: true,
+          frames: [{ tilesetId: CTS, tileIndex: 0, duration: 1000 }],
+        },
+      ],
+    },
+    {
+      id: "enemy-ship",
+      name: "Enemy Ship",
+      animations: [
+        {
+          id: "enemy-idle",
+          name: "Idle",
+          loop: true,
+          frames: [{ tilesetId: CTS, tileIndex: 1, duration: 1000 }],
+        },
+      ],
+    },
+    {
+      id: "explosion",
+      name: "Explosion",
+      animations: [
+        {
+          id: "explode",
+          name: "Explode",
+          loop: false,
+          frames: [
+            { tilesetId: CTS, tileIndex: 2, duration: 100 },
+            { tilesetId: CTS, tileIndex: 3, duration: 100 },
+          ],
+        },
+      ],
+    },
+  ],
+};
