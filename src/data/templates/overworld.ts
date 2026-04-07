@@ -100,3 +100,36 @@ const n = null;
 const CTS = "builtin-overworld-chars";
 
 export const OVERWORLD_TEMPLATE: Template = {
+  id: "builtin-overworld",
+  name: "Overworld",
+  description: "Classic world map with terrain, towns, and a navigable ship.",
+  category: "overworld",
+  isBuiltin: true,
+  createdAt: "2024-01-01T00:00:00.000Z",
+  tilesets: [
+    {
+      id: TS,
+      name: "World Terrain",
+      tileSize: 8,
+      tiles: [TILES.grass, TILES.water, TILES.tree, TILES.path, TILES.mountain, TILES.town],
+      layout: {
+        columns: 3,
+        positions: {
+          "bo-t0": { x: 0, y: 0 },
+          "bo-t1": { x: 1, y: 0 },
+          "bo-t2": { x: 2, y: 0 },
+          "bo-t3": { x: 0, y: 1 },
+          "bo-t4": { x: 1, y: 1 },
+          "bo-t5": { x: 2, y: 1 },
+        },
+      },
+    },
+    {
+      id: CTS,
+      name: "Vehicles",
+      tileSize: 8,
+      tiles: [TILES.ship1, TILES.ship2],
+      layout: {
+        columns: 2,
+        positions: {
+          "bo-c0": { x: 0, y: 0 },
