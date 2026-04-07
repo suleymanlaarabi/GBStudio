@@ -29,3 +29,18 @@ export function drawCircle(
   const size = data.length;
 
   for (let py = 0; py < size; py++) {
+    for (let px = 0; px < size; px++) {
+      const dx = (px + 0.5 - centerX) / (radiusX + 0.5);
+      const dy = (py + 0.5 - centerY) / (radiusY + 0.5);
+      const dist = dx * dx + dy * dy;
+
+      if (filled) {
+        if (dist <= 1) newData[py]![px] = color;
+      } else {
+        const dxOuter = (px + 0.5 - centerX) / (radiusX + 0.5);
+        const dyOuter = (py + 0.5 - centerY) / (radiusY + 0.5);
+        const dxInner = (px + 0.5 - centerX) / (radiusX - 0.5);
+        const dyInner = (py + 0.5 - centerY) / (radiusY - 0.5);
+        if (dxOuter * dxOuter + dyOuter * dyOuter <= 1 &&
+            dxInner * dxInner + dyInner * dyInner > 1) {
+          newData[py]![px] = color;
