@@ -238,3 +238,54 @@ export const useMapEditorInteraction = ({
       setDragStart(null);
       return;
     }
+
+    if (mapTool === "line") {
+      drawMapLine(
+        activeMapIndex,
+        dragStart.x,
+        dragStart.y,
+        hoverCell.x,
+        hoverCell.y,
+        activeCell,
+      );
+    } else if (mapTool === "rectangle") {
+      drawMapRectangle(
+        activeMapIndex,
+        normalizeBounds(dragStart, hoverCell),
+        activeCell,
+        mapShapeFilled,
+      );
+    } else if (mapTool === "select") {
+      endMapSelection();
+    } else if (mapTool === "collision") {
+      commit();
+    }
+
+    if (mapTool === "pencil" || mapTool === "eraser") {
+      commit();
+    }
+
+    setIsDrawing(false);
+    setDragStart(null);
+  };
+
+  const handleMouseLeave = () => {
+    if (isDrawing && (mapTool === "pencil" || mapTool === "eraser" || mapTool === "collision")) {
+      flushAll();
+      commit();
+    }
+    setIsDrawing(false);
+    setDragStart(null);
+    setHoverCell(null);
+  };
+
+  return {
+    isDrawing,
+    dragStart,
+    hoverCell,
+    handleMouseDown,
+    handleMouseMove,
+    handleMouseUp,
+    handleMouseLeave,
+  };
+};
