@@ -41,3 +41,20 @@ export const SoundStudio: React.FC = () => {
   };
 
   return (
+    <div
+      className="sound-studio"
+      style={{
+        display: "grid",
+        gridTemplateColumns: "300px 1fr",
+        height: "100%",
+        gap: "1rem",
+      }}
+    >
+      <SoundSidebar
+        sounds={sounds}
+        selectedSoundId={selectedSoundId}
+        onSelectSound={setSelectedSoundId}
+        onAddSound={handleAddSound}
+        onRequestDelete={handleRequestDelete}
+      />
+
