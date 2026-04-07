@@ -45,3 +45,23 @@ export const SpriteStudio: React.FC = () => {
     >
       <SpriteSidebar
         sprites={sprites}
+        selectedSpriteId={selectedSpriteId}
+        onSelectSprite={setSelectedSpriteId}
+        onAddSprite={() => setSpriteModalOpen(true)}
+        onRemoveSprite={removeSprite}
+      />
+
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "1rem",
+          overflow: "hidden",
+        }}
+      >
+        <AnimationList
+          activeSpriteName={activeSprite?.name}
+          animations={activeSprite?.animations}
+          tilesets={tilesets}
+          selectedAnimId={selectedAnimId}
+          onSelectAnim={setSelectedAnimId}
