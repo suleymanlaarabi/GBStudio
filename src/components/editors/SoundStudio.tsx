@@ -58,3 +58,20 @@ export const SoundStudio: React.FC = () => {
         onRequestDelete={handleRequestDelete}
       />
 
+      <div className="panel" style={{ display: "flex", flexDirection: "column" }}>
+        {selectedSound ? (
+          <SoundEditorPanel
+            sound={selectedSound}
+            onUpdate={(updates) => updateSound(selectedSound.id, updates)}
+          />
+        ) : (
+          <div
+            style={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              opacity: 0.5,
+            }}
+          >
