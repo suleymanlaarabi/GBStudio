@@ -55,3 +55,21 @@ const extractSelectionData = (
   const startY = Math.max(0, Math.min(selection.y, tileSize));
   const endX = Math.max(0, Math.min(selection.x + selection.width, tileSize));
   const endY = Math.max(0, Math.min(selection.y + selection.height, tileSize));
+
+  if (startX >= endX || startY >= endY) return null;
+
+  const extracted: PixelData = [];
+  for (let y = startY; y < endY; y++) {
+    const row: (GBColor | null)[] = [];
+    for (let x = startX; x < endX; x++) {
+      row.push(data[y]![x] ?? null);
+    }
+    extracted.push(row);
+  }
+
+  return { extracted, startX, startY, endX, endY };
+};
+
+export const flipSelectionHorizontal = (
+  data: PixelData,
+  selection: SelectionBounds,
