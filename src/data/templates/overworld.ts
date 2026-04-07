@@ -133,3 +133,36 @@ export const OVERWORLD_TEMPLATE: Template = {
         columns: 2,
         positions: {
           "bo-c0": { x: 0, y: 0 },
+          "bo-c1": { x: 1, y: 0 },
+        },
+      },
+    },
+  ],
+  maps: [{
+    id: "builtin-overworld-map",
+    name: "World Map",
+    width: 14,
+    height: 10,
+    tileSize: 8,
+    layers: [
+      {
+        id: "builtin-overworld-layer1",
+        name: "Terrain",
+        visible: true,
+        chunks: migrateFlatDataToChunks([
+          [M, M, M, G, G, G, G, G, G, G, G, G, G, G],
+          [M, M, G, G, G, G, G, G, G, G, W, W, G, G],
+          [M, G, G, G, G, G, P, G, G, W, W, W, G, G],
+          [G, G, G, G, G, P, P, P, G, W, W, G, G, G],
+          [G, G, G, G, P, P, G, P, P, G, G, G, G, G],
+          [G, G, G, P, P, G, G, G, P, P, G, G, G, G],
+          [G, G, P, P, G, G, G, G, G, P, P, G, G, G],
+          [G, G, P, G, G, G, G, G, G, G, P, P, G, G],
+          [G, G, G, G, G, G, G, G, G, G, G, P, P, G],
+          [G, G, G, G, G, G, G, G, G, G, G, G, P, G],
+        ]),
+      },
+      {
+        id: "builtin-overworld-layer2",
+        name: "Scenery",
+        visible: true,
