@@ -177,3 +177,47 @@ export const Modal: React.FC<ModalProps> = (props) => {
                 </div>
               )}
             </div>
+          ) : props.type === "select" ? (
+            <div style={{ width: "100%" }}>
+              <CustomSelect
+                value={value}
+                onChange={(nextValue) => setValue(String(nextValue))}
+                options={props.options || []}
+                placeholder="Select..."
+              />
+            </div>
+          ) : props.type === "multi" && "fields" in props ? (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "0.75rem",
+                width: "100%",
+              }}
+            >
+              {props.fields.map((field) => (
+                <div
+                  key={field.name}
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "0.25rem",
+                    width: "100%",
+                  }}
+                >
+                  <label
+                    style={{ fontSize: "0.8rem", color: "#aaa", display: "block" }}
+                  >
+                    {field.label}
+                  </label>
+                  {field.type === "select" ? (
+                    <div style={{ width: "100%" }}>
+                      <CustomSelect
+                        value={multiValues[field.name] || ''}
+                        onChange={(val) => updateMultiValue(field.name, val)}
+                        options={field.options || []}
+                        placeholder="Select..."
+                      />
+                    </div>
+                  ) : (
+                    <div style={{ width: "100%" }}>
