@@ -425,3 +425,109 @@ export const PLATFORMER_PRO_TEMPLATE: Template = {
         CHARS.hero_walk2,
         CHARS.hero_jump,
         CHARS.hero_hurt,
+        CHARS.walker1,
+        CHARS.walker2,
+        CHARS.flyer1,
+        CHARS.flyer2,
+        CHARS.coin_spin,
+      ],
+      layout: {
+        columns: 5,
+        positions: {
+          "pp-c0": { x: 0, y: 0 },
+          "pp-c1": { x: 1, y: 0 },
+          "pp-c2": { x: 2, y: 0 },
+          "pp-c3": { x: 3, y: 0 },
+          "pp-c4": { x: 4, y: 0 },
+          "pp-c5": { x: 0, y: 1 },
+          "pp-c6": { x: 1, y: 1 },
+          "pp-c7": { x: 2, y: 1 },
+          "pp-c8": { x: 3, y: 1 },
+          "pp-c9": { x: 4, y: 1 },
+        },
+      },
+    },
+  ],
+
+  maps: [
+    {
+      id: "pp-map-1",
+      name: "World 1-1",
+      width: 32,
+      height: 14,
+      tileSize: 8,
+      layers: [
+        {
+          id: "pp-layer-terrain",
+          name: "Terrain",
+          visible: true,
+          chunks: migrateFlatDataToChunks(TERRAIN_LAYER),
+        },
+        {
+          id: "pp-layer-details",
+          name: "Items & Pipes",
+          visible: true,
+          chunks: migrateFlatDataToChunks(DETAILS_LAYER),
+        },
+      ],
+    },
+  ],
+
+  sprites: [
+    {
+      id: "pp-hero",
+      name: "Hero",
+      animations: [
+        {
+          id: "pp-hero-idle",
+          name: "Idle",
+          loop: true,
+          frames: [{ tilesetId: CS, tileIndex: 0, duration: 16 }],
+        },
+        {
+          id: "pp-hero-walk",
+          name: "Walk",
+          loop: true,
+          frames: [
+            { tilesetId: CS, tileIndex: 1, duration: 8 },
+            { tilesetId: CS, tileIndex: 0, duration: 8 },
+            { tilesetId: CS, tileIndex: 2, duration: 8 },
+            { tilesetId: CS, tileIndex: 0, duration: 8 },
+          ],
+        },
+        {
+          id: "pp-hero-jump",
+          name: "Jump",
+          loop: false,
+          frames: [{ tilesetId: CS, tileIndex: 3, duration: 12 }],
+        },
+        {
+          id: "pp-hero-fall",
+          name: "Fall",
+          loop: false,
+          frames: [{ tilesetId: CS, tileIndex: 3, duration: 12 }],
+        },
+        {
+          id: "pp-hero-hurt",
+          name: "Hurt",
+          loop: false,
+          frames: [{ tilesetId: CS, tileIndex: 4, duration: 20 }],
+        },
+      ],
+    },
+    {
+      id: "pp-walker",
+      name: "Walker Enemy",
+      animations: [
+        {
+          id: "pp-walker-walk",
+          name: "Walk",
+          loop: true,
+          frames: [
+            { tilesetId: CS, tileIndex: 5, duration: 12 },
+            { tilesetId: CS, tileIndex: 6, duration: 12 },
+          ],
+        },
+      ],
+    },
+    {
