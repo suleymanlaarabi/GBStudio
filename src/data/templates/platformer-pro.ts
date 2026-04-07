@@ -531,3 +531,111 @@ export const PLATFORMER_PRO_TEMPLATE: Template = {
       ],
     },
     {
+      id: "pp-flyer",
+      name: "Flyer Enemy",
+      animations: [
+        {
+          id: "pp-flyer-fly",
+          name: "Fly",
+          loop: true,
+          frames: [
+            { tilesetId: CS, tileIndex: 7, duration: 10 },
+            { tilesetId: CS, tileIndex: 8, duration: 10 },
+          ],
+        },
+      ],
+    },
+    {
+      id: "pp-coin",
+      name: "Coin",
+      animations: [
+        {
+          id: "pp-coin-spin",
+          name: "Spin",
+          loop: true,
+          frames: [
+            { tilesetId: CS, tileIndex: 9, duration: 8 },  // coin (full)
+            { tilesetId: CS, tileIndex: 9, duration: 8 },  // reuse spin frame
+          ],
+        },
+      ],
+    },
+  ],
+
+  sounds: [
+    {
+      id: "pp-sfx-jump",
+      name: "Jump",
+      type: "PULSE1",
+      pulse1: {
+        sweepTime: 1, sweepDirection: "UP", sweepShift: 2,
+        duty: 2, length: 8,
+        initialVolume: 12, envelopeDirection: "DOWN", envelopeSweep: 3,
+        frequency: 1714,
+      },
+    },
+    {
+      id: "pp-sfx-coin",
+      name: "Coin",
+      type: "PULSE2",
+      pulse2: {
+        duty: 2, length: 6,
+        initialVolume: 12, envelopeDirection: "DOWN", envelopeSweep: 4,
+        frequency: 1862,
+      },
+    },
+    {
+      id: "pp-sfx-stomp",
+      name: "Stomp",
+      type: "NOISE",
+      noise: {
+        length: 8,
+        initialVolume: 10, envelopeDirection: "DOWN", envelopeSweep: 2,
+        shiftClockFrequency: 8, counterStep: 0, dividingRatio: 0,
+      },
+    },
+    {
+      id: "pp-sfx-hurt",
+      name: "Hurt",
+      type: "PULSE1",
+      pulse1: {
+        sweepTime: 3, sweepDirection: "DOWN", sweepShift: 2,
+        duty: 2, length: 20,
+        initialVolume: 14, envelopeDirection: "DOWN", envelopeSweep: 2,
+        frequency: 1750,
+      },
+    },
+    {
+      id: "pp-sfx-powerup",
+      name: "Power Up",
+      type: "PULSE1",
+      pulse1: {
+        sweepTime: 1, sweepDirection: "UP", sweepShift: 1,
+        duty: 2, length: 16,
+        initialVolume: 14, envelopeDirection: "DOWN", envelopeSweep: 1,
+        frequency: 1664,
+      },
+    },
+    {
+      id: "pp-sfx-levelclear",
+      name: "Level Clear",
+      type: "WAVE",
+      wave: {
+        dacEnabled: true, length: 30, volumeCode: 1,
+        frequency: 1862,
+        waveData: [15,14,13,12,11,10,9,8, 7,6,5,4,3,2,1,0, 0,1,2,3,4,5,6,7, 8,9,10,11,12,13,14,15],
+      },
+    },
+    {
+      id: "pp-sfx-gameover",
+      name: "Game Over",
+      type: "PULSE1",
+      pulse1: {
+        sweepTime: 4, sweepDirection: "DOWN", sweepShift: 3,
+        duty: 2, length: 40,
+        initialVolume: 14, envelopeDirection: "DOWN", envelopeSweep: 1,
+        frequency: 1750,
+      },
+    },
+  ],
+};
