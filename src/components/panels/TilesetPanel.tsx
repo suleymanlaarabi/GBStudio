@@ -332,3 +332,85 @@ export const TilesetPanel: React.FC = () => {
       {normalizedActiveTileset ? (
         <>
           <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              borderTop: "1px solid #333",
+              paddingTop: "1rem",
+            }}
+          >
+            <div
+              style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
+            >
+              <button
+                className="btn btn-secondary"
+                style={{ padding: "4px 10px", fontSize: "0.75rem" }}
+                onClick={() => handleDeleteTile(activeTileIndex)}
+                disabled={normalizedActiveTileset.tiles.length <= 1}
+                title="Delete the currently selected tile"
+              >
+                <Trash2 size={14} style={{ marginRight: "4px" }} /> Delete Tile
+              </button>
+              <button
+                className="btn btn-secondary"
+                style={{ padding: "4px 10px", fontSize: "0.75rem" }}
+                onClick={() => addTile(activeTilesetIndex)}
+                title="Add a new tile"
+              >
+                <Plus size={14} style={{ marginRight: "4px" }} /> Add Tile
+              </button>
+            </div>
+          </div>
+
+          <div
+            ref={gridRef}
+            className="tileset-grid"
+            style={{
+              gridTemplateColumns: `repeat(${gridColumns}, ${TILE_SLOT_SIZE}px)`,
+              gridTemplateRows: `repeat(${gridRows}, ${TILE_SLOT_SIZE}px)`,
+              alignContent: "start",
+              gap: `${TILE_GRID_GAP}px`,
+              justifyContent: "start",
+              padding: `${TILE_GRID_PADDING}px`,
+            }}
+          >
+            {gridSlots.map((slot) => (
+              <div
+                key={`slot-${slot.x}-${slot.y}`}
+                style={{
+                  width: `${TILE_SLOT_SIZE}px`,
+                  height: `${TILE_SLOT_SIZE}px`,
+                  boxSizing: "border-box",
+                  border:
+                    dragState?.hoverSlot?.x === slot.x && dragState?.hoverSlot?.y === slot.y
+                      ? "1px solid var(--accent)"
+                      : "1px dashed rgba(255,255,255,0.12)",
+                  borderRadius: "6px",
+                  background:
+                    dragState?.hoverSlot?.x === slot.x && dragState?.hoverSlot?.y === slot.y
+                      ? "rgba(134, 59, 255, 0.14)"
+                      : dragState
+                        ? "rgba(255,255,255,0.03)"
+                        : "transparent",
+                  gridColumnStart: slot.x + 1,
+                  gridRowStart: slot.y + 1,
+                }}
+              />
+            ))}
+            {normalizedActiveTileset.tiles.map((tile, index) => {
+              const position = getTilesetPositionForTile(normalizedActiveTileset, tile.id);
+              if (!position) return null;
+
+              return (
+                <div
+                  key={tile.id}
+                  className={`tileset-item ${index === activeTileIndex ? "active" : ""}`}
+                  style={{
+                    width: `${TILE_SLOT_SIZE}px`,
+                    height: `${TILE_SLOT_SIZE}px`,
+                    boxSizing: "border-box",
+                    border: "2px solid transparent",
+                    outline:
+                      index === activeTileIndex
+                        ? "2px solid var(--accent)"
