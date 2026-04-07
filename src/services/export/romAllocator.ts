@@ -79,3 +79,19 @@ export const allocateRomBanks = (mapExports: MapExport[]): RomAllocationPlan => 
   nextId += worldBanks.length;
 
   // 4. Collision bitfields
+  const collBanks = packFlat(
+    mapExports,
+    (m) => m.collisionRomSize,
+    (m, id) => { m.collisionBank = id; },
+    (m) => `${m.map.name}_collision`,
+    nextId,
+  );
+  allBanks.push(...collBanks);
+
+  const totalBytes = mapExports.reduce(
+    (sum, m) => sum + m.tileRomSize + m.allChunks.length * 256 + m.worldRomSize + m.collisionRomSize,
+    0,
+  );
+
+  return { banks: allBanks, totalBytes };
+};
