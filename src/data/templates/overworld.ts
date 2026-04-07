@@ -166,3 +166,37 @@ export const OVERWORLD_TEMPLATE: Template = {
         id: "builtin-overworld-layer2",
         name: "Scenery",
         visible: true,
+        chunks: migrateFlatDataToChunks([
+          [n, n, n, Tr, n, n, n, n, n, n, n, n, n, n],
+          [n, n, Tr, n, n, n, n, n, n, n, n, n, n, n],
+          [n, Tr, n, n, n, n, n, n, n, n, n, n, n, n],
+          [Tr, n, n, n, n, n, n, n, n, n, n, n, n, n],
+          [n, n, n, n, n, n, n, n, n, n, n, n, n, n],
+          [n, n, n, n, n, n, H, n, n, n, n, n, n, n],
+          [n, n, n, n, n, Tr, n, Tr, n, n, n, n, n, n],
+          [n, n, n, n, Tr, n, n, n, Tr, n, n, n, n, n],
+          [n, n, n, n, n, n, n, n, n, n, n, n, n, n],
+          [n, n, n, n, n, n, n, n, n, n, n, n, n, n],
+        ]),
+      },
+    ],
+  }],
+  sprites: [
+    {
+      id: "ship-sprite",
+      name: "Ship",
+      animations: [
+        {
+          id: "ship-sailing",
+          name: "Sailing",
+          loop: true,
+          frames: [
+            { tilesetId: CTS, tileIndex: 0, duration: 300 },
+            { tilesetId: CTS, tileIndex: 1, duration: 300 },
+          ],
+        },
+      ],
+    },
+  ],
+};
+
