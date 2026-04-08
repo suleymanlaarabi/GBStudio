@@ -181,3 +181,41 @@ export const MapGallery: React.FC = () => {
           setIsModalOpen(false);
         }}
         fields={[
+          {
+            name: "name",
+            label: "Map Name",
+            type: "text",
+            defaultValue: `Map ${maps.length + 1}`,
+            required: true,
+          },
+          {
+            name: "tileSize",
+            label: "Tile Size",
+            type: "select",
+            defaultValue: "8",
+            options: [
+              { label: "8x8 pixels", value: "8" },
+              { label: "16x16 pixels", value: "16" },
+            ],
+          },
+          {
+            name: "width",
+            label: "Width (tiles)",
+            type: "number",
+            defaultValue: 20,
+            required: true,
+            validate: validatePositiveNumber(100),
+          },
+          {
+            name: "height",
+            label: "Height (tiles)",
+            type: "number",
+            defaultValue: 18,
+            required: true,
+            validate: validatePositiveNumber(100),
+          },
+        ]}
+      />
+    </>
+  );
+};
