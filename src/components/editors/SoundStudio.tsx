@@ -75,3 +75,22 @@ export const SoundStudio: React.FC = () => {
               opacity: 0.5,
             }}
           >
+            <Music size={48} style={{ marginBottom: "1rem" }} />
+            <p>Select a sound effect to edit</p>
+          </div>
+        )}
+      </div>
+
+      <Modal
+        isOpen={deleteModalOpen}
+        title="Delete Sound"
+        type="confirm"
+        message="Are you sure you want to delete this sound effect?"
+        onConfirm={confirmDelete}
+        onClose={() => setDeleteModalOpen(false)}
+      />
+
+      <SoundStudioStyles />
+    </div>
+  );
+};
