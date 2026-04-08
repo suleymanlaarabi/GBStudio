@@ -110,3 +110,29 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
                 className="btn"
                 disabled={option.disabled}
                 style={{
+                  justifyContent: "flex-start",
+                  padding: "8px",
+                  marginBottom: "2px",
+                  border: "none",
+                  background:
+                    option.value === value ? "var(--accent)" : "transparent",
+                  color: option.disabled
+                    ? "#555"
+                    : option.value === value
+                      ? "#fff"
+                      : "#eee",
+                  opacity: option.disabled ? 0.6 : 1,
+                  cursor: option.disabled ? "not-allowed" : "pointer",
+                  transition: "all 0.1s",
+                }}
+                onClick={() => handleSelect(option)}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
