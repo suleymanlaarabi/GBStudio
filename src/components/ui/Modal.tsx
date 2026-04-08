@@ -221,3 +221,52 @@ export const Modal: React.FC<ModalProps> = (props) => {
                     </div>
                   ) : (
                     <div style={{ width: "100%" }}>
+                      <input
+                        type={field.type}
+                        className="btn btn-secondary"
+                        style={{
+                          width: "100%",
+                          textAlign: "left",
+                          cursor: "text",
+                          boxSizing: "border-box",
+                        }}
+                        value={multiValues[field.name] || ""}
+                        onChange={(e) =>
+                          updateMultiValue(field.name, e.target.value)
+                        }
+                        placeholder={field.label}
+                      />
+                      {errors[field.name] && (
+                        <div style={{ marginTop: "0.35rem", color: "#ff7a7a", fontSize: "0.75rem" }}>
+                          {errors[field.name]}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </div>
+
+        <div style={{ display: "flex", gap: "0.5rem", marginTop: "1rem" }}>
+          <button
+            className="btn"
+            style={{ flex: 1, background: "#22c55e", justifyContent: "center" }}
+            onClick={handleConfirm}
+            disabled={!isFormValid()}
+          >
+            <Check size={18} /> {props.type === "confirm" ? "Confirm" : "OK"}
+          </button>
+          <button
+            className="btn btn-secondary"
+            style={{ flex: 1, justifyContent: "center" }}
+            onClick={props.onClose}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
