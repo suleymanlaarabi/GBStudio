@@ -102,3 +102,36 @@ export const buildMapExport = (map: TileMap, tilesets: Tileset[]): MapExport => 
         if (ch && ch.data[localY]?.[localX]) { cell = ch.data[localY][localX]; break; }
       }
       if (!cell) continue;
+
+      const base = getLocalBase(cell.tilesetId, cell.tileIndex);
+      if (is16) {
+        for (let seg = 0; seg < 4; seg++) {
+          const hx = lx * 2 + (seg % 2);
+          const hy = ly * 2 + Math.floor(seg / 2);
+          hwData[hy * hwW + hx] = base + seg;
+        }
+      } else {
+        hwData[ly * hwW + lx] = base;
+      }
+    }
+  }
+
+  // Build 16×16 hardware-tile chunks with deduplication
+  const worldW = Math.ceil(hwW / HW_CHUNK);
+  const worldH = Math.ceil(hwH / HW_CHUNK);
+  const chunkCache = new Map<string, number>();
+  const allChunks: number[][] = [];
+  const worldChunkIndices: number[] = [];
+
+  for (let cy = 0; cy < worldH; cy++) {
+    for (let cx = 0; cx < worldW; cx++) {
+      const chunk = new Array<number>(256).fill(0);
+      for (let ty = 0; ty < HW_CHUNK; ty++) {
+        for (let tx = 0; tx < HW_CHUNK; tx++) {
+          const hx = cx * HW_CHUNK + tx;
+          const hy = cy * HW_CHUNK + ty;
+          if (hx < hwW && hy < hwH) chunk[ty * HW_CHUNK + tx] = hwData[hy * hwW + hx];
+        }
+      }
+      const key = chunk.join(",");
+      let idx = chunkCache.get(key);
