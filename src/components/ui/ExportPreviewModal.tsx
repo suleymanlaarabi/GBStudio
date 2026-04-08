@@ -144,3 +144,50 @@ export const ExportPreviewModal: React.FC<ExportPreviewModalProps> = ({
             className={`btn ${selectedTab === "h" ? "btn-primary" : "btn-secondary"}`}
             style={{
               fontSize: "0.875rem",
+              padding: "0.5rem 1rem",
+            }}
+            onClick={() => setSelectedTab("h")}
+          >
+            {projectName}.h (header)
+          </button>
+          <button
+            type="button"
+            className={`btn ${selectedTab === "c" ? "btn-primary" : "btn-secondary"}`}
+            style={{
+              fontSize: "0.875rem",
+              padding: "0.5rem 1rem",
+            }}
+            onClick={() => setSelectedTab("c")}
+          >
+            {projectName}.c (implementation)
+          </button>
+        </div>
+
+        <div
+          style={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+          }}
+        >
+          <div
+            style={{
+              padding: "0.5rem",
+              display: "flex",
+              gap: "1rem",
+              alignItems: "center",
+              borderBottom: "1px solid #30363d",
+            }}
+          >
+            <div style={{ flex: 1 }}>
+              <span style={{ fontSize: "0.875rem", color: "#ccc" }}>
+                Statistics:{" "}
+                {selectedTab === "h"
+                  ? `${maps.length} maps, ${tilesets.length} tilesets, ${sprites.length} sprites`
+                  : `${maps.length} maps implementation, ${tilesets.length} tilesets data, ${sprites.length} animations`}
+              </span>
+            </div>
+            <span style={{ fontSize: "0.75rem", color: "#888" }}>
+              First 100 lines shown
+            </span>
