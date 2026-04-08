@@ -233,3 +233,52 @@ export const ExportTemplateModal: React.FC<ExportTemplateModalProps> = ({
         {sprites.length > 0 && (
           <div>
             <label style={{ ...labelStyle, marginBottom: 8 }}>
+              Sprites to include (optional)
+            </label>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 120, overflowY: "auto" }}>
+              {sprites.map((sprite) => (
+                <label
+                  key={sprite.id}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.6rem",
+                    padding: "8px 10px",
+                    background: selectedSpriteIds.has(sprite.id) ? "#1a1a2e" : "#111",
+                    border: `1px solid ${selectedSpriteIds.has(sprite.id) ? "var(--accent)" : "#222"}`,
+                    borderRadius: "7px",
+                    cursor: "pointer",
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedSpriteIds.has(sprite.id)}
+                    onChange={() => toggleSprite(sprite.id)}
+                    style={{ accentColor: "var(--accent)" }}
+                  />
+                  <span style={{ fontSize: "0.85rem" }}>{sprite.name}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Actions */}
+        <div style={{ display: "flex", gap: "0.75rem", justifyContent: "flex-end", paddingTop: "0.25rem" }}>
+          <button className="btn btn-secondary" onClick={onClose}>
+            Cancel
+          </button>
+          <button
+            className="btn"
+            disabled={!canExport}
+            onClick={handleExport}
+            style={{ display: "flex", alignItems: "center", gap: "0.4rem", opacity: canExport ? 1 : 0.4 }}
+          >
+            <Download size={15} />
+            Export template
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
