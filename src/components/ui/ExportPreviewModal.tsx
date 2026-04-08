@@ -191,3 +191,50 @@ export const ExportPreviewModal: React.FC<ExportPreviewModalProps> = ({
             <span style={{ fontSize: "0.75rem", color: "#888" }}>
               First 100 lines shown
             </span>
+          </div>
+          <div
+            style={{
+              margin: "0.5rem",
+              padding: "0.5rem",
+              borderRadius: "10px",
+              border: `1px solid ${hardwareValidation.isValid ? "#1f6f43" : "#7f1d1d"}`,
+              background: hardwareValidation.isValid ? "#0f2418" : "#2a1313",
+              color: hardwareValidation.isValid ? "#bbf7d0" : "#fecaca",
+            }}
+          >
+            <div
+              style={{
+                fontSize: "0.85rem",
+                fontWeight: 600,
+                marginBottom: "0.5rem",
+              }}
+            >
+              Game Boy hardware validation
+            </div>
+            <div
+              style={{
+                fontSize: "0.8rem",
+                display: "flex",
+                gap: "1rem",
+                flexWrap: "wrap",
+              }}
+            >
+              <span>
+                BG: {hardwareValidation.bgTileCount}/
+                {hardwareValidation.bgTileLimit}
+              </span>
+              <span>
+                Sprites: {hardwareValidation.spriteTileCount}/
+                {hardwareValidation.spriteTileLimit}
+              </span>
+              <span>
+                VRAM total: {hardwareValidation.totalTileCount}/
+                {hardwareValidation.totalTileLimit}
+              </span>
+            </div>
+            {hardwareValidation.isValid ? (
+              <div style={{ fontSize: "0.8rem", marginTop: "0.55rem" }}>
+                Budget VRAM respecté pour le hardware GB.
+              </div>
+            ) : (
+              <div style={{ fontSize: "0.8rem", marginTop: "0.55rem" }}>
