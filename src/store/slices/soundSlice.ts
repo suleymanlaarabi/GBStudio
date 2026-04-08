@@ -80,3 +80,24 @@ export const createSoundSlice: StateCreator<
     get().commit();
   },
 
+  updateSound: (soundId, updates) => {
+    set((state) => ({
+      sounds: state.sounds.map((sound) =>
+        sound.id === soundId ? { ...sound, ...updates } : sound
+      ),
+    }));
+    get().commit();
+  },
+
+  removeSound: (soundId) => {
+    set((state) => ({
+      sounds: state.sounds.filter((sound) => sound.id !== soundId),
+      selectedSoundId: state.selectedSoundId === soundId ? null : state.selectedSoundId,
+    }));
+    get().commit();
+  },
+
+  setSelectedSoundId: (soundId) => {
+    set({ selectedSoundId: soundId });
+  },
+});
