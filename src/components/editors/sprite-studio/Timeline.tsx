@@ -177,3 +177,43 @@ export const Timeline: React.FC<TimelineProps> = ({
                   }}
                   onClick={() => onRemoveFrame(i)}
                   title="Remove frame"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            ))}
+            <button
+              className="btn-secondary"
+              style={{
+                flexShrink: 0,
+                aspectRatio: "3/4",
+                border: "2px dashed var(--border)",
+                background: "transparent",
+                borderRadius: "8px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                color: "var(--text)",
+              }}
+              onClick={onAddFrame}
+            >
+              <Plus size={24} />
+            </button>
+          </>
+        ) : (
+          <div
+            style={{
+              width: "100%",
+              textAlign: "center",
+              color: "#444",
+              fontSize: "0.9rem",
+            }}
+          >
+            Select an animation to edit timeline
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
