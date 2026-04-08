@@ -135,3 +135,36 @@ export const buildMapExport = (map: TileMap, tilesets: Tileset[]): MapExport => 
       }
       const key = chunk.join(",");
       let idx = chunkCache.get(key);
+      if (idx === undefined) {
+        idx = allChunks.length;
+        allChunks.push(chunk);
+        chunkCache.set(key, idx);
+      }
+      worldChunkIndices.push(idx);
+    }
+  }
+
+  // Flat collision bitfield
+  const collisionData: number[] = [];
+  if (map.collisionData && Object.keys(map.collisionData).length > 0) {
+    const byteCount = Math.ceil((hwW * hwH) / 8);
+    const bytes = new Array<number>(byteCount).fill(0);
+    for (let ly = 0; ly < logicalH; ly++) {
+      for (let lx = 0; lx < logicalW; lx++) {
+        const gx = minX + lx;
+        const gy = minY + ly;
+        const mcx = Math.floor(gx / CHUNK_SIZE);
+        const mcy = Math.floor(gy / CHUNK_SIZE);
+        const ch = map.collisionData[`${mcx},${mcy}`];
+        if (!ch) continue;
+        const localX = ((gx % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
+        const localY = ((gy % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
+        if (!ch[localY]?.[localX]) continue;
+        const nHwX = is16 ? 2 : 1;
+        const nHwY = is16 ? 2 : 1;
+        for (let sy = 0; sy < nHwY; sy++) {
+          for (let sx = 0; sx < nHwX; sx++) {
+            const hx = lx * nHwX + sx;
+            const hy = ly * nHwY + sy;
+            const bit = hy * hwW + hx;
+            bytes[bit >> 3] |= 1 << (bit & 7);
