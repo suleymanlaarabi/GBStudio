@@ -85,3 +85,23 @@ export const SpriteStudio: React.FC = () => {
               tilesets[activeTilesetIndex].id,
             )
           }
+        />
+      </div>
+
+      <SpriteAssetLibrary
+        tilesets={tilesets}
+        activeTilesetIndex={activeTilesetIndex}
+        tiles={tiles}
+        activeTileIndex={activeTileIndex}
+        onSelectTileset={setActiveTileset}
+        onSelectTile={setActiveTile}
+      />
+
+      <Modal
+        isOpen={spriteModalOpen}
+        onClose={() => setSpriteModalOpen(false)}
+        type="text"
+        title="Create New Sprite"
+        placeholder="Sprite name"
+        onConfirm={(value) => {
+          addSprite(value || "Player");
