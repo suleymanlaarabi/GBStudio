@@ -43,3 +43,24 @@ export const exportTemplateAsFile = (template: Template): void => {
     name: template.name,
     description: template.description,
     category: template.category,
+    author: template.author,
+    createdAt: template.createdAt,
+    tilesets: template.tilesets,
+    maps: template.maps,
+    sprites: template.sprites,
+    sounds: template.sounds,
+  };
+  const blob = new Blob([JSON.stringify(file, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${template.name.replace(/\s+/g, "_").toLowerCase()}.cartridge-template`;
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+export const parseTemplateFile = (raw: string): Template => {
+  const parsed = JSON.parse(raw) as Partial<TemplateFile>;
+  if (parsed.format !== "cartridge-template" || parsed.version !== 1) {
+    throw new Error("Invalid template format");
+  }
