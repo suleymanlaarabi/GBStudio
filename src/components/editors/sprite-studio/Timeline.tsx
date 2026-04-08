@@ -142,3 +142,38 @@ export const Timeline: React.FC<TimelineProps> = ({
                     gap: "6px",
                   }}
                 >
+                  <Clock size={16} color="#888" />
+                  <input
+                    type="number"
+                    value={f.duration}
+                    style={{
+                      width: "100%",
+                      height: "32px",
+                      background: "transparent",
+                      border: "none",
+                      color: "#fff",
+                      fontSize: "12px",
+                      fontWeight: "bold",
+                      outline: "none",
+                    }}
+                    onChange={(e) =>
+                      onUpdateDuration(i, parseInt(e.target.value, 10))
+                    }
+                  />
+                </div>
+                <button
+                  className="btn btn-secondary"
+                  style={{
+                    position: "absolute",
+                    top: 8,
+                    right: 8,
+                    padding: "4px",
+                    width: 32,
+                    height: 32,
+                    borderRadius: "4px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                  onClick={() => onRemoveFrame(i)}
+                  title="Remove frame"
