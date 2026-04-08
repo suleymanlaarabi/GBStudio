@@ -64,3 +64,19 @@ export const createSoundSlice: StateCreator<
     } else if (type === "NOISE") {
       newSound.noise = {
         length: 0,
+        initialVolume: 10,
+        envelopeDirection: "DOWN",
+        envelopeSweep: 3,
+        shiftClockFrequency: 0,
+        counterStep: 0,
+        dividingRatio: 0,
+      };
+    }
+
+    set((state) => ({
+      sounds: [...state.sounds, newSound],
+      selectedSoundId: newSoundId,
+    }));
+    get().commit();
+  },
+
