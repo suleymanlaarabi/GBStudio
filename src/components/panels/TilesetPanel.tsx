@@ -414,3 +414,85 @@ export const TilesetPanel: React.FC = () => {
                     outline:
                       index === activeTileIndex
                         ? "2px solid var(--accent)"
+                        : "1px solid #333",
+                    outlineOffset: "-2px",
+                    borderRadius: "6px",
+                    background: "#000",
+                    gridColumnStart: position.x + 1,
+                    gridRowStart: position.y + 1,
+                    opacity: dragState?.tileId === tile.id ? 0.55 : 1,
+                    zIndex: 1,
+                    cursor: dragState?.tileId === tile.id ? "grabbing" : "grab",
+                  }}
+                  title={`Tile #${index} • grid ${position.x},${position.y}`}
+                  onPointerDown={(event) => {
+                    if (event.button !== 0) return;
+                    event.preventDefault();
+                    setActiveTile(index);
+                    event.currentTarget.setPointerCapture(event.pointerId);
+                    setDragState({
+                      tileId: tile.id,
+                      pointerId: event.pointerId,
+                      originX: event.clientX,
+                      originY: event.clientY,
+                      hoverSlot: position,
+                      moved: false,
+                    });
+                  }}
+                  onPointerMove={(event) => {
+                    setDragState((current) => {
+                      if (!current || current.tileId !== tile.id || current.pointerId !== event.pointerId) {
+                        return current;
+                      }
+
+                      const hoverSlot = getSlotFromPointer(event.clientX, event.clientY);
+                      const moved =
+                        current.moved ||
+                        Math.abs(event.clientX - current.originX) > 4 ||
+                        Math.abs(event.clientY - current.originY) > 4;
+
+                      return {
+                        ...current,
+                        hoverSlot,
+                        moved,
+                      };
+                    });
+                  }}
+                  onPointerUp={(event) => {
+                    if (!dragState || dragState.tileId !== tile.id || dragState.pointerId !== event.pointerId) {
+                      return;
+                    }
+
+                    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                      event.currentTarget.releasePointerCapture(event.pointerId);
+                    }
+
+                    if (dragState.moved && dragState.hoverSlot) {
+                      moveTileInGrid(activeTilesetIndex, tile.id, dragState.hoverSlot.x, dragState.hoverSlot.y);
+                    } else {
+                      setActiveTile(index);
+                    }
+
+                    setDragState(null);
+                  }}
+                  onPointerCancel={(event) => {
+                    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                      event.currentTarget.releasePointerCapture(event.pointerId);
+                    }
+                    setDragState(null);
+                  }}
+                >
+                  <TilePreview tile={tile} />
+                </div>
+              );
+            })}
+          </div>
+        </>
+      ) : (
+        <div style={{ textAlign: "center", color: "#444", marginTop: "2rem" }}>
+          No tileset selected
+        </div>
+      )}
+    </div>
+  );
+};
