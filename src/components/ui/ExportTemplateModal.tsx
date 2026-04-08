@@ -187,3 +187,49 @@ export const ExportTemplateModal: React.FC<ExportTemplateModalProps> = ({
                   style={{
                     display: "flex",
                     alignItems: "center",
+                    gap: "0.6rem",
+                    padding: "8px 10px",
+                    background: selectedMapIds.has(map.id) ? "#1a1a2e" : "#111",
+                    border: `1px solid ${selectedMapIds.has(map.id) ? "var(--accent)" : "#222"}`,
+                    borderRadius: "7px",
+                    cursor: "pointer",
+                    transition: "all 0.1s",
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedMapIds.has(map.id)}
+                    onChange={() => toggleMap(map.id)}
+                    style={{ accentColor: "var(--accent)" }}
+                  />
+                  <span style={{ fontSize: "0.85rem", flex: 1 }}>{map.name}</span>
+                  <span style={{ fontSize: "0.72rem", color: "#555" }}>
+                    {map.width}×{map.height}
+                  </span>
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Tilesets auto-included */}
+        {includedTilesets.length > 0 && (
+          <div
+            style={{
+              background: "#0d1a0d",
+              border: "1px solid #1a3a1a",
+              borderRadius: "7px",
+              padding: "10px 12px",
+              fontSize: "0.78rem",
+              color: "#4ade80",
+            }}
+          >
+            <strong>Automatically included tilesets:</strong>{" "}
+            {includedTilesets.map((ts) => ts.name).join(", ")}
+          </div>
+        )}
+
+        {/* Sprites */}
+        {sprites.length > 0 && (
+          <div>
+            <label style={{ ...labelStyle, marginBottom: 8 }}>
