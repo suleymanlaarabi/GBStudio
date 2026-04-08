@@ -65,3 +65,23 @@ export const SpriteStudio: React.FC = () => {
           tilesets={tilesets}
           selectedAnimId={selectedAnimId}
           onSelectAnim={setSelectedAnimId}
+          onAddAnim={() => setAnimModalOpen(true)}
+        />
+
+        <Timeline
+          activeAnim={activeAnim}
+          tilesets={tilesets}
+          onUpdateDuration={(i, d) =>
+            updateFrameDuration(activeSprite!.id, activeAnim!.id, i, d)
+          }
+          onRemoveFrame={(i) =>
+            removeFrame(activeSprite!.id, activeAnim!.id, i)
+          }
+          onAddFrame={() =>
+            addFrame(
+              activeSprite!.id,
+              activeAnim!.id,
+              activeTileIndex,
+              tilesets[activeTilesetIndex].id,
+            )
+          }
