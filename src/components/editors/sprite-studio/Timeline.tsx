@@ -107,3 +107,38 @@ export const Timeline: React.FC<TimelineProps> = ({
         {activeAnim ? (
           <>
             {activeAnim.frames.map((f, i) => (
+              <div
+                key={i}
+                className="card"
+                style={{
+                  aspectRatio: "3/4",
+                  position: "relative",
+                  border: "1px solid var(--border)",
+                  display: "flex",
+                  flexDirection: "column",
+                  overflow: "hidden",
+                  cursor: "pointer",
+                  padding: 16,
+                }}
+              >
+                <div
+                  style={{
+                    flex: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <FrameCanvas 
+                    tile={tilesets.find(ts => ts.id === f.tilesetId)?.tiles[f.tileIndex]} 
+                    size={64} 
+                  />
+                </div>
+                <div
+                  style={{
+                    height: "32px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                  }}
+                >
