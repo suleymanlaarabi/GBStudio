@@ -91,3 +91,25 @@ export const flipSelectionVertical = (
 export const rotateSelectionClockwise = (
   data: PixelData,
   selection: SelectionBounds,
+): { data: PixelData; newSelection: SelectionBounds } | null => {
+  const info = extractSelectionData(data, selection);
+  if (!info) return null;
+  const rotated = rotateTileDataClockwise(info.extracted);
+  return {
+    data: applySelectionContent(data, rotated, info.startX, info.startY),
+    newSelection: { ...selection, x: info.startX, y: info.startY, width: selection.height, height: selection.width },
+  };
+};
+
+export const rotateSelectionCounterClockwise = (
+  data: PixelData,
+  selection: SelectionBounds,
+): { data: PixelData; newSelection: SelectionBounds } | null => {
+  const info = extractSelectionData(data, selection);
+  if (!info) return null;
+  const rotated = rotateTileDataCounterClockwise(info.extracted);
+  return {
+    data: applySelectionContent(data, rotated, info.startX, info.startY),
+    newSelection: { ...selection, x: info.startX, y: info.startY, width: selection.height, height: selection.width },
+  };
+};
