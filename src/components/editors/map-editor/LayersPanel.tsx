@@ -182,3 +182,48 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({ mapIndex }) => {
           className="btn btn-secondary"
           style={{ padding: "3px 7px", fontSize: "0.72rem", display: "flex", alignItems: "center", gap: 3 }}
           onClick={() => addLayer(mapIndex)}
+          title="Add layer"
+        >
+          <Plus size={11} /> Add
+        </button>
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+        {reversed.map((layer) => {
+          const realIndex = map.layers.indexOf(layer);
+          return (
+            <LayerRow
+              key={layer.id}
+              layer={layer}
+              layerIndex={realIndex}
+              mapIndex={mapIndex}
+              isActive={realIndex === activeLayerIndex}
+              isFirst={realIndex === 0}
+              isLast={realIndex === map.layers.length - 1}
+              canDelete={map.layers.length > 1}
+              onSelect={() => setActiveLayer(realIndex)}
+            />
+          );
+        })}
+      </div>
+
+      <div style={{ fontSize: "0.68rem", color: "#444", borderTop: "1px solid #1a1a1a", paddingTop: "0.5rem", marginTop: "0.25rem" }}>
+        {map.layers.length} layer{map.layers.length > 1 ? "s" : ""} · active: <span style={{ color: "#666" }}>{activeLayerIsWindow ? "Window" : (map.layers[activeLayerIndex]?.name ?? "—")}</span>
+      </div>
+
+      {/* Window Layer */}
+      <div style={{ borderTop: "1px solid #1a1a1a", paddingTop: "0.5rem", marginTop: "0.25rem", display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span style={{ fontSize: "0.72rem", color: "#888", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", display: "flex", alignItems: "center", gap: 4 }}>
+            <Monitor size={11} /> Window Layer
+          </span>
+          <label style={{ display: "flex", alignItems: "center", gap: 4, cursor: "pointer" }}>
+            <input
+              type="checkbox"
+              checked={!!map.windowLayer?.enabled}
+              onChange={(e) => setWindowLayerEnabled(mapIndex, e.target.checked)}
+              style={{ cursor: "pointer" }}
+            />
+            <span style={{ fontSize: "0.7rem", color: map.windowLayer?.enabled ? "var(--accent)" : "#555" }}>
+              {map.windowLayer?.enabled ? "ON" : "OFF"}
+            </span>
