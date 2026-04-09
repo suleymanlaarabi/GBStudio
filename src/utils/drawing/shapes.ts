@@ -74,3 +74,18 @@ export function drawRectangle(
         newData[py]![px] = color;
       }
     }
+    return newData;
+  }
+
+  for (let px = startX; px < endX; px++) {
+    if (startY >= 0 && startY < tileSize) newData[startY]![px] = color;
+    if (endY - 1 >= 0 && endY - 1 < tileSize) newData[endY - 1]![px] = color;
+  }
+
+  for (let py = startY; py < endY; py++) {
+    if (startX >= 0 && startX < tileSize) newData[py]![startX] = color;
+    if (endX - 1 >= 0 && endX - 1 < tileSize) newData[py]![endX - 1] = color;
+  }
+
+  return newData;
+}
