@@ -64,3 +64,24 @@ export const parseTemplateFile = (raw: string): Template => {
   if (parsed.format !== "cartridge-template" || parsed.version !== 1) {
     throw new Error("Invalid template format");
   }
+  if (!parsed.name || !Array.isArray(parsed.tilesets) || !Array.isArray(parsed.maps) || !Array.isArray(parsed.sprites)) {
+    throw new Error("Missing template data");
+  }
+  return {
+    id: parsed.id ?? crypto.randomUUID(),
+    name: parsed.name,
+    description: parsed.description ?? "",
+    category: (parsed.category as TemplateCategory) ?? "custom",
+    author: parsed.author,
+    createdAt: parsed.createdAt ?? new Date().toISOString(),
+    tilesets: parsed.tilesets as Tileset[],
+    maps: parsed.maps as TileMap[],
+    sprites: parsed.sprites as SpriteAsset[],
+    sounds: (parsed.sounds ?? []) as SoundAsset[],
+    isBuiltin: false,
+  };
+};
+
+export const buildTemplateFromSelection = (
+  name: string,
+  description: string,
