@@ -137,3 +137,48 @@ const LayerRow: React.FC<LayerRowProps> = ({
               onClick={() => removeLayer(mapIndex, layerIndex)}
               style={{ background: "none", border: "none", cursor: "pointer", color: "#ff4444", padding: 2, display: "flex" }}
               title="Delete"
+            >
+              <Trash2 size={11} />
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+interface LayersPanelProps {
+  mapIndex: number;
+}
+
+export const LayersPanel: React.FC<LayersPanelProps> = ({ mapIndex }) => {
+  const {
+    maps,
+    activeLayerIndex,
+    setActiveLayer,
+    addLayer,
+    activeLayerIsWindow,
+    setActiveLayerIsWindow,
+    setWindowLayerEnabled,
+    setWindowLayerConfig,
+  } = useStore();
+  const map = maps[mapIndex];
+
+  if (!map) return null;
+
+  // Display layers in reverse order (top layer first visually)
+  const reversed = [...map.layers].reverse();
+
+  return (
+    <div
+      className="card"
+      style={{ padding: "0.75rem", display: "flex", flexDirection: "column", gap: "0.5rem", minWidth: 180 }}
+    >
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.25rem" }}>
+        <span style={{ fontSize: "0.78rem", color: "#888", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+          Layers
+        </span>
+        <button
+          className="btn btn-secondary"
+          style={{ padding: "3px 7px", fontSize: "0.72rem", display: "flex", alignItems: "center", gap: 3 }}
+          onClick={() => addLayer(mapIndex)}
