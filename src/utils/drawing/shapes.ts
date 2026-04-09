@@ -44,3 +44,18 @@ export function drawCircle(
         if (dxOuter * dxOuter + dyOuter * dyOuter <= 1 &&
             dxInner * dxInner + dyInner * dyInner > 1) {
           newData[py]![px] = color;
+        }
+      }
+    }
+  }
+
+  return newData;
+}
+
+export function drawRectangle(
+  data: PixelData,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  color: GBColor,
