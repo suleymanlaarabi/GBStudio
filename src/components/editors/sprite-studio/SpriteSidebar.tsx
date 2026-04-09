@@ -52,3 +52,20 @@ export const SpriteSidebar: React.FC<SpriteSidebarProps> = ({
             </button>
             {selectedSpriteId === s.id && (
               <>
+                {confirmDeleteId === s.id ? (
+                  <>
+                    <button
+                      className="btn btn-danger"
+                      style={{ padding: "8px" }}
+                      onClick={() => handleRemoveClick(s.id)}
+                      title="Confirmer la suppression"
+                    >
+                      <Check size={14} />
+                    </button>
+                    <button
+                      className="btn btn-secondary"
+                      style={{ padding: "8px" }}
+                      onClick={() => setConfirmDeleteId(null)}
+                      title="Annuler"
+                    >
+                      <X size={14} />
