@@ -128,3 +128,35 @@ export const ExportPanel: React.FC<ExportPanelProps> = ({
       >
         Export C/H
       </h3>
+
+      {projectPath && (
+        <div
+          style={{
+            fontSize: "0.6rem",
+            color: "white",
+            wordBreak: "break-all",
+            padding: "8px",
+            background: "#1a1a1a",
+            borderRadius: "4px",
+            border: "1px solid #333",
+          }}
+          title={projectPath}
+        >
+          {projectPath}
+        </div>
+      )}
+
+      {!projectPath ? (
+        <button
+          className="btn btn-secondary"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "0.5rem",
+          }}
+          onClick={onChooseProjectFolder}
+          title="Choose the folder used for C/H export"
+        >
+          <FolderOpen size={18} />
+          Select folder
