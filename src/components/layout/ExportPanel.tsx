@@ -96,3 +96,35 @@ export const ExportPanel: React.FC<ExportPanelProps> = ({
           Save as
         </button>
       </div>
+
+      <button
+        className="btn"
+        style={{
+          background: "#2563eb",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "0.5rem",
+        }}
+        onClick={onSaveProject}
+        disabled={isSaving}
+        title="Save the current project"
+      >
+        <Save size={18} />
+        {isSaving ? "Saving project..." : "Save project"}
+      </button>
+    </div>
+
+    <div style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
+      <h3
+        style={{
+          fontSize: "0.75rem",
+          margin: 0,
+          color: "#ccc",
+          fontWeight: 600,
+          textTransform: "uppercase",
+          letterSpacing: "0.5px",
+        }}
+      >
+        Export C/H
+      </h3>
