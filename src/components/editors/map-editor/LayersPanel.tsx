@@ -227,3 +227,49 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({ mapIndex }) => {
             <span style={{ fontSize: "0.7rem", color: map.windowLayer?.enabled ? "var(--accent)" : "#555" }}>
               {map.windowLayer?.enabled ? "ON" : "OFF"}
             </span>
+          </label>
+        </div>
+
+        {map.windowLayer?.enabled && (
+          <>
+            <div
+              onClick={() => setActiveLayerIsWindow(!activeLayerIsWindow)}
+              style={{
+                padding: "5px 8px",
+                background: activeLayerIsWindow ? "#1a1a2e" : "transparent",
+                border: `1px solid ${activeLayerIsWindow ? "var(--accent)" : "#222"}`,
+                borderRadius: "6px",
+                cursor: "pointer",
+                fontSize: "0.78rem",
+                color: activeLayerIsWindow ? "#fff" : "#888",
+                userSelect: "none",
+              }}
+            >
+              HUD / Window
+            </div>
+            <div style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}>
+              <label style={{ fontSize: "0.7rem", color: "#666" }}>WX</label>
+              <input
+                type="number"
+                min={0}
+                max={20}
+                value={map.windowLayer.wx}
+                onChange={(e) => setWindowLayerConfig(mapIndex, Number(e.target.value), map.windowLayer!.wy)}
+                style={{ width: 44, background: "#111", border: "1px solid #333", color: "#ccc", borderRadius: 4, padding: "2px 4px", fontSize: "0.72rem" }}
+              />
+              <label style={{ fontSize: "0.7rem", color: "#666" }}>WY</label>
+              <input
+                type="number"
+                min={0}
+                max={18}
+                value={map.windowLayer.wy}
+                onChange={(e) => setWindowLayerConfig(mapIndex, map.windowLayer!.wx, Number(e.target.value))}
+                style={{ width: 44, background: "#111", border: "1px solid #333", color: "#ccc", borderRadius: 4, padding: "2px 4px", fontSize: "0.72rem" }}
+              />
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
