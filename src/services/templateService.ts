@@ -85,3 +85,24 @@ export const parseTemplateFile = (raw: string): Template => {
 export const buildTemplateFromSelection = (
   name: string,
   description: string,
+  category: TemplateCategory,
+  selectedMapIds: string[],
+  selectedSpriteIds: string[],
+  allMaps: TileMap[],
+  allTilesets: Tileset[],
+  allSprites: SpriteAsset[],
+  allSounds: SoundAsset[] = [],
+): Template => {
+  const maps = allMaps.filter((m) => selectedMapIds.includes(m.id));
+
+  const usedTilesetIds = new Set<string>();
+  maps.forEach((map) =>
+    map.layers.forEach((layer) =>
+      Object.values(layer.chunks).forEach((chunk) =>
+        chunk.data.forEach((row) =>
+          row.forEach((cell) => {
+            if (cell) usedTilesetIds.add(cell.tilesetId);
+          })
+        )
+      )
+    )
