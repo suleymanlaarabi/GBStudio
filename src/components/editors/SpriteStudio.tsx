@@ -105,3 +105,26 @@ export const SpriteStudio: React.FC = () => {
         placeholder="Sprite name"
         onConfirm={(value) => {
           addSprite(value || "Player");
+          setSpriteModalOpen(false);
+        }}
+        defaultValue="Player"
+        required={true}
+      />
+
+      <Modal
+        isOpen={animModalOpen}
+        onClose={() => setAnimModalOpen(false)}
+        type="text"
+        title="Create New Animation"
+        placeholder="Animation name"
+        onConfirm={(value) => {
+          if (!activeSprite) return;
+          addAnimation(activeSprite.id, value || "Idle");
+          setAnimModalOpen(false);
+        }}
+        defaultValue="Idle"
+        required={true}
+      />
+    </div>
+  );
+};
