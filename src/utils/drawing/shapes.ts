@@ -59,3 +59,18 @@ export function drawRectangle(
   width: number,
   height: number,
   color: GBColor,
+  filled = true,
+): PixelData {
+  const newData = data.map((row) => [...row]);
+  const tileSize = data.length;
+  const startX = Math.max(0, Math.min(x, tileSize - 1));
+  const startY = Math.max(0, Math.min(y, tileSize - 1));
+  const endX = Math.max(0, Math.min(x + width, tileSize));
+  const endY = Math.max(0, Math.min(y + height, tileSize));
+
+  if (filled) {
+    for (let py = startY; py < endY; py++) {
+      for (let px = startX; px < endX; px++) {
+        newData[py]![px] = color;
+      }
+    }
