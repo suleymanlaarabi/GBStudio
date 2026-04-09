@@ -106,3 +106,27 @@ export const buildTemplateFromSelection = (
         )
       )
     )
+  );
+
+  const sprites = allSprites.filter((s) => selectedSpriteIds.includes(s.id));
+  sprites.forEach((sprite) =>
+    sprite.animations.forEach((anim) =>
+      anim.frames.forEach((frame) => usedTilesetIds.add(frame.tilesetId))
+    )
+  );
+
+  const tilesets = allTilesets.filter((ts) => usedTilesetIds.has(ts.id));
+
+  return {
+    id: crypto.randomUUID(),
+    name,
+    description,
+    category,
+    createdAt: new Date().toISOString(),
+    tilesets,
+    maps,
+    sprites,
+    sounds: allSounds,
+    isBuiltin: false,
+  };
+};
