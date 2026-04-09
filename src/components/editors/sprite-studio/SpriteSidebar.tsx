@@ -69,3 +69,23 @@ export const SpriteSidebar: React.FC<SpriteSidebarProps> = ({
                       title="Annuler"
                     >
                       <X size={14} />
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    className="btn btn-danger"
+                    style={{ padding: "8px" }}
+                    onClick={() => handleRemoveClick(s.id)}
+                    title="Supprimer le sprite"
+                  >
+                    <Trash size={14} />
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
