@@ -73,3 +73,21 @@ const extractSelectionData = (
 export const flipSelectionHorizontal = (
   data: PixelData,
   selection: SelectionBounds,
+): PixelData | null => {
+  const info = extractSelectionData(data, selection);
+  if (!info) return null;
+  return applySelectionContent(data, flipHorizontal(info.extracted), info.startX, info.startY);
+};
+
+export const flipSelectionVertical = (
+  data: PixelData,
+  selection: SelectionBounds,
+): PixelData | null => {
+  const info = extractSelectionData(data, selection);
+  if (!info) return null;
+  return applySelectionContent(data, flipVertical(info.extracted), info.startX, info.startY);
+};
+
+export const rotateSelectionClockwise = (
+  data: PixelData,
+  selection: SelectionBounds,
