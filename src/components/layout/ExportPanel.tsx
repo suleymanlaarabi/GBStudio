@@ -160,3 +160,40 @@ export const ExportPanel: React.FC<ExportPanelProps> = ({
         >
           <FolderOpen size={18} />
           Select folder
+        </button>
+      ) : (
+        <button
+          className="btn"
+          style={{
+            background: "#22c55e",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "0.5rem",
+          }}
+          onClick={onExportToProject}
+          disabled={isSaving}
+          title="Export C/H files to the selected folder"
+        >
+          <Send size={18} />
+          {isSaving ? "Sauvegarde..." : "Save"}
+        </button>
+      )}
+
+      <button
+        className="btn btn-secondary"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "0.5rem",
+        }}
+        onClick={onDownload}
+        title="Download generated C/H files locally"
+      >
+        <Download size={18} />
+        Download ZIP
+      </button>
+    </div>
+  </div>
+);
