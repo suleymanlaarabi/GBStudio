@@ -168,3 +168,41 @@ export const buildMapExport = (map: TileMap, tilesets: Tileset[]): MapExport => 
             const hy = ly * nHwY + sy;
             const bit = hy * hwW + hx;
             bytes[bit >> 3] |= 1 << (bit & 7);
+          }
+        }
+      }
+    }
+    collisionData.push(...bytes);
+  }
+
+  const spawnTileX = map.cameraSpawn?.x ?? minX;
+  const spawnTileY = map.cameraSpawn?.y ?? minY;
+
+  return {
+    map,
+    safeName,
+    tilesSafeName: `${safeName}_tiles`,
+    worldSafeName: `${safeName}_world`,
+    collisionSafeName: `${safeName}_collision`,
+    tileBytes,
+    tileCount: tileBytes.length,
+    tilesBank: 0,
+    tileRomSize: tileBytes.length * 16,
+    allChunks,
+    chunkBanks: [],
+    worldChunkIndices,
+    worldRefs: [],
+    worldW,
+    worldH,
+    worldBank: 0,
+    worldRomSize: worldW * worldH * 3,
+    collisionData,
+    collisionBank: 0,
+    collisionRomSize: collisionData.length,
+    spawnX: (spawnTileX - minX) * map.tileSize,
+    spawnY: (spawnTileY - minY) * map.tileSize,
+    minX: is16 ? minX * 2 : minX,
+    minY: is16 ? minY * 2 : minY,
+    sourceTileCount,
+  };
+};
