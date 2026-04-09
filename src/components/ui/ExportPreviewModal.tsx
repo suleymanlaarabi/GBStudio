@@ -238,3 +238,50 @@ export const ExportPreviewModal: React.FC<ExportPreviewModalProps> = ({
               </div>
             ) : (
               <div style={{ fontSize: "0.8rem", marginTop: "0.55rem" }}>
+                {hardwareValidation.errors.map((error) => (
+                  <div key={error}>{error}</div>
+                ))}
+              </div>
+            )}
+          </div>
+          {renderFilePreview()}
+        </div>
+
+        <div
+          style={{
+            padding: "1rem",
+            borderTop: "1px solid #30363d",
+            display: "flex",
+            gap: "0.5rem",
+          }}
+        >
+          <button
+            type="button"
+            className="btn"
+            style={{
+              flex: 1,
+              background: hardwareValidation.isValid ? "#22c55e" : "#7f1d1d",
+              justifyContent: "center",
+              fontWeight: "500",
+            }}
+            onClick={onConfirm}
+            disabled={!hardwareValidation.isValid}
+          >
+            <Check size={18} />{" "}
+            {hardwareValidation.isValid
+              ? "Export files"
+              : "Hardware limit exceeded"}
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            style={{ flex: 1, justifyContent: "center", fontWeight: "500" }}
+            onClick={onClose}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
