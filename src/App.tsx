@@ -1,61 +1,122 @@
-import React, { useState, useEffect } from "react";
-import { useStore } from "./store/useStore";
-import { TilePixelEditor } from "./components/TilePixelEditor";
-import { TilesetPanel } from "./components/TilesetPanel";
-import { MapEditor } from "./components/MapEditor";
-import { MapGallery } from "./components/MapGallery";
-import { SpriteStudio } from "./components/SpriteStudio";
-import { Palette, Toolbox } from "./components/Toolbar";
-import { generateCFile, generateHFile } from "./utils/exportUtils";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { open } from "@tauri-apps/plugin-dialog";
-import {
-  Download,
-  Gamepad2,
-  Map as MapIcon,
-  Image as ImageIcon,
-  Send,
-  Undo2,
-  Redo2,
-  MonitorPlay,
-  Grid3X3,
-} from "lucide-react";
+import { open, save } from "@tauri-apps/plugin-dialog";
+import { TilePixelEditor } from "./components/editors/TilePixelEditor";
+import { MapEditor } from "./components/editors/MapEditor";
+import { SpriteStudio } from "./components/editors/SpriteStudio";
+import { AppLayout } from "./components/layout/AppLayout";
+import type { StatusTone } from "./components/layout/StatusBar";
+import { MapGallery } from "./components/panels/MapGallery";
+import { Palette, Toolbox } from "./components/panels/Toolbar";
+import { TilesetPanel } from "./components/panels/TilesetPanel";
+import { ShortcutsModal } from "./components/ui/ShortcutsModal";
+import { generateCFile, generateHFile } from "./services/exportService";
+import { parseProjectDocument, serializeProject } from "./services/projectService";
+import { useStore } from "./store";
+import { useKeyboardShortcuts } from "./store/hooks/useKeyboardShortcuts";
 import "./App.css";
 
+const AUTOSAVE_KEY = "cartridge.autosave.v1";
+const PROJECT_PATH_KEY = "cartridge.project-file-path";
+
 function App() {
-  const {
-    tilesets,
-    maps,
-    sprites,
-    undo,
-    redo,
-    historyIndex,
-    history,
-    view,
-    setView,
-  } = useStore();
+  const { tilesets, maps, sprites, redo, undo, view, loadProjectData } = useStore();
   const [isSaving, setIsSaving] = useState(false);
+  const [projectPath, setProjectPath] = useState<string | null>(null);
+  const [projectFilePath, setProjectFilePath] = useState<string | null>(null);
+  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("Ready");
+  const [statusTone, setStatusTone] = useState<StatusTone>("info");
+  const statusTimeoutRef = useRef<number | null>(null);
+
+  const updateStatus = useCallback((message: string, tone: StatusTone = "info", durationMs?: number) => {
+    setStatusMessage(message);
+    setStatusTone(tone);
+
+    if (statusTimeoutRef.current) {
+      window.clearTimeout(statusTimeoutRef.current);
+      statusTimeoutRef.current = null;
+    }
+
+    if (durationMs) {
+      statusTimeoutRef.current = window.setTimeout(() => {
+        setStatusMessage("Ready");
+        setStatusTone("info");
+        statusTimeoutRef.current = null;
+      }, durationMs);
+    }
+  }, []);
+
+  useKeyboardShortcuts({
+    shortcuts: [
+      {
+        matcher: (event) => (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z",
+        handler: (event) => {
+          event.preventDefault();
+          if (event.shiftKey) redo();
+          else undo();
+        },
+      },
+      {
+        matcher: (event) => (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "y",
+        handler: (event) => {
+          event.preventDefault();
+          redo();
+        },
+      },
+      {
+        matcher: (event) => event.key === "?",
+        handler: (event) => {
+          event.preventDefault();
+          setIsShortcutsOpen(true);
+        },
+      },
+    ],
+  });
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "z") {
-        e.preventDefault();
-        if (e.shiftKey) redo();
-        else undo();
-      } else if ((e.ctrlKey || e.metaKey) && e.key === "y") {
-        e.preventDefault();
-        redo();
+    const savedPath = localStorage.getItem(PROJECT_PATH_KEY);
+    if (savedPath) setProjectFilePath(savedPath);
+
+    const autosave = localStorage.getItem(AUTOSAVE_KEY);
+    if (!autosave) return;
+
+    try {
+      const project = parseProjectDocument(autosave);
+      loadProjectData(project.data);
+      updateStatus("Session autosave restored", "success", 3000);
+    } catch (error) {
+      console.error("Failed to restore autosave", error);
+      updateStatus("Autosave restore failed", "error", 4000);
+    }
+  }, [loadProjectData, updateStatus]);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      try {
+        const snapshot = serializeProject("Autosave", { tilesets, maps, sprites });
+        localStorage.setItem(AUTOSAVE_KEY, snapshot);
+      } catch (error) {
+        console.error("Autosave failed", error);
+        updateStatus("Autosave failed", "error", 4000);
       }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [undo, redo]);
+    }, 1500);
+
+    return () => window.clearTimeout(timeout);
+  }, [maps, sprites, tilesets, updateStatus]);
+
+  useEffect(() => () => {
+    if (statusTimeoutRef.current) {
+      window.clearTimeout(statusTimeoutRef.current);
+    }
+  }, []);
 
   const exportLocal = () => {
     const name = "MyGameSet";
     const cContent = generateCFile(name, tilesets, maps, sprites);
     const hContent = generateHFile(name, tilesets, maps, sprites);
-    const download = (filename: string, content: string) => {
+
+    const downloadFile = (filename: string, content: string) => {
       const blob = new Blob([content], { type: "text/plain" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -64,204 +125,218 @@ function App() {
       link.click();
       URL.revokeObjectURL(url);
     };
-    download(`${name}.c`, cContent);
-    download(`${name}.h`, hContent);
+
+    downloadFile(`${name}.c`, cContent);
+    downloadFile(`${name}.h`, hContent);
+    updateStatus("C/H export downloaded", "success", 3000);
+  };
+
+  const chooseProjectFolder = async () => {
+    try {
+      updateStatus("Selecting export folder...", "busy");
+      const selected = await open({
+        directory: true,
+        multiple: false,
+        title: "Select Project Folder",
+      });
+
+      if (!selected) {
+        updateStatus("Folder selection cancelled", "info", 2500);
+        return;
+      }
+
+      setProjectPath(selected as string);
+      updateStatus("Export folder selected", "success", 3000);
+    } catch (error) {
+      console.error(error);
+      updateStatus(`Folder selection failed: ${String(error)}`, "error", 5000);
+    }
+  };
+
+  const saveProjectToPath = async (path: string) => {
+    const projectName = path.split(/[\\/]/).pop()?.replace(/\.cartridge$/i, "") || "project";
+    const content = serializeProject(projectName, { tilesets, maps, sprites });
+
+    await invoke("save_text_file", {
+      path,
+      content,
+    });
+
+    setProjectFilePath(path);
+    localStorage.setItem(PROJECT_PATH_KEY, path);
+  };
+
+  const saveProject = async () => {
+    setIsSaving(true);
+    try {
+      updateStatus("Saving project...", "busy");
+      let path = projectFilePath;
+      if (!path) {
+        const selected = await save({
+          title: "Save project",
+          defaultPath: "project.cartridge",
+          filters: [{ name: "Cartridge Project", extensions: ["cartridge"] }],
+        });
+        if (!selected) {
+          updateStatus("Project save cancelled", "info", 2500);
+          return;
+        }
+        path = selected;
+      }
+
+      await saveProjectToPath(path);
+      updateStatus(`Project saved: ${path}`, "success", 4000);
+    } catch (error) {
+      console.error(error);
+      updateStatus(`Project save failed: ${String(error)}`, "error", 5000);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const saveProjectAs = async () => {
+    setIsSaving(true);
+    try {
+      updateStatus("Saving project as...", "busy");
+      const selected = await save({
+        title: "Save project as",
+        defaultPath: "project.cartridge",
+        filters: [{ name: "Cartridge Project", extensions: ["cartridge"] }],
+      });
+      if (!selected) {
+        updateStatus("Save as cancelled", "info", 2500);
+        return;
+      }
+
+      await saveProjectToPath(selected);
+      updateStatus(`Project saved: ${selected}`, "success", 4000);
+    } catch (error) {
+      console.error(error);
+      updateStatus(`Project save failed: ${String(error)}`, "error", 5000);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const openProject = async () => {
+    try {
+      updateStatus("Opening project...", "busy");
+      const selected = await open({
+        multiple: false,
+        directory: false,
+        title: "Open project",
+        filters: [{ name: "Cartridge Project", extensions: ["cartridge", "json"] }],
+      });
+
+      if (!selected) {
+        updateStatus("Open project cancelled", "info", 2500);
+        return;
+      }
+
+      const raw = await invoke<string>("read_text_file", { path: selected });
+      const project = parseProjectDocument(raw);
+      loadProjectData(project.data);
+      setProjectFilePath(selected);
+      localStorage.setItem(PROJECT_PATH_KEY, selected);
+      updateStatus(`Project opened: ${selected}`, "success", 4000);
+    } catch (error) {
+      console.error(error);
+      updateStatus(`Project open failed: ${String(error)}`, "error", 5000);
+    }
   };
 
   const saveToProject = async () => {
     setIsSaving(true);
-    try {
-      const selected = await open({
-        directory: true,
-        multiple: false,
-        title: "Select Export Directory",
-      });
 
-      if (!selected) {
-        setIsSaving(false);
-        return;
+    try {
+      updateStatus("Exporting C/H files...", "busy");
+      let path = projectPath;
+
+      if (!path) {
+        const selected = await open({
+          directory: true,
+          multiple: false,
+          title: "Select Export Directory (no project folder configured)",
+        });
+
+        if (!selected) {
+          setIsSaving(false);
+          updateStatus("Export cancelled", "info", 2500);
+          return;
+        }
+
+        path = selected as string;
+        setProjectPath(path);
       }
 
-      const path = selected as string;
       const name = "MyGameSet";
       const cContent = generateCFile(name, tilesets, maps, sprites);
       const hContent = generateHFile(name, tilesets, maps, sprites);
 
-      await invoke("save_file", { path, filename: `${name}.c`, content: cContent });
-      await invoke("save_file", { path, filename: `${name}.h`, content: hContent });
+      await invoke("save_file", {
+        path,
+        filename: `${name}.c`,
+        content: cContent,
+      });
+      await invoke("save_file", {
+        path,
+        filename: `${name}.h`,
+        content: hContent,
+      });
 
-      alert(`Success: Exported to ${path}`);
-    } catch (e) {
-      console.error(e);
-      alert(`Error saving files: ${e}`);
+      updateStatus(`C/H exported to ${path}`, "success", 4000);
+    } catch (error) {
+      console.error(error);
+      updateStatus(`Export failed: ${String(error)}`, "error", 5000);
     } finally {
       setIsSaving(false);
     }
   };
 
   return (
-    <div className="app-container">
-      <aside className="sidebar">
+    <AppLayout
+      isSaving={isSaving}
+      onExportToProject={saveToProject}
+      onDownload={exportLocal}
+      onChooseProjectFolder={chooseProjectFolder}
+      onOpenProject={openProject}
+      onSaveProject={saveProject}
+      onSaveProjectAs={saveProjectAs}
+      projectPath={projectPath}
+      projectFilePath={projectFilePath}
+      statusMessage={statusMessage}
+      statusTone={statusTone}
+      onOpenShortcuts={() => setIsShortcutsOpen(true)}
+    >
+      {view === "gallery" ? (
+        <MapGallery />
+      ) : view === "map_editor" ? (
+        <MapEditor />
+      ) : view === "studio" ? (
+        <SpriteStudio />
+      ) : (
         <div
           style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.8rem",
+            display: "grid",
+            gridTemplateColumns: "1fr 350px",
+            gap: "1.5rem",
+            alignItems: "start",
           }}
         >
-          <Gamepad2 size={36} color="var(--accent)" />
-          <h1
-            style={{ fontSize: "1.4rem", margin: 0, letterSpacing: "-0.5px" }}
-          >
-            GB Studio
-          </h1>
-        </div>
-
-        <nav
-          style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}
-        >
-          <button
-            className={`btn ${view === "tiles" ? "" : "btn-secondary"}`}
-            onClick={() => setView("tiles")}
-            style={{
-              textAlign: "left",
-              display: "flex",
-              alignItems: "center",
-              gap: "0.8rem",
-            }}
-          >
-            <Grid3X3 size={20} />
-            Tileset Editor
-          </button>
-          <button
-            className={`btn ${view === "gallery" || view === "map_editor" ? "" : "btn-secondary"}`}
-            onClick={() => setView("gallery")}
-            style={{
-              textAlign: "left",
-              display: "flex",
-              alignItems: "center",
-              gap: "0.8rem",
-            }}
-          >
-            <MapIcon size={20} />
-            World Maps
-          </button>
-          <button
-            className={`btn ${view === "studio" ? "" : "btn-secondary"}`}
-            onClick={() => setView("studio")}
-            style={{
-              textAlign: "left",
-              display: "flex",
-              alignItems: "center",
-              gap: "0.8rem",
-            }}
-          >
-            <MonitorPlay size={20} />
-            Sprite Studio
-          </button>
-        </nav>
-
-        <div style={{ display: "flex", gap: "0.5rem" }}>
-          <button
-            className="btn btn-secondary"
-            style={{ flex: 1, padding: "10px" }}
-            onClick={undo}
-            disabled={historyIndex <= 0}
-          >
-            <Undo2 size={18} />
-          </button>
-          <button
-            className="btn btn-secondary"
-            style={{ flex: 1, padding: "10px" }}
-            onClick={redo}
-            disabled={historyIndex >= history.length - 1}
-          >
-            <Redo2 size={18} />
-          </button>
-        </div>
-
-        <div
-          style={{
-            marginTop: "auto",
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.8rem",
-          }}
-        >
-          <button
-            className="btn"
-            style={{
-              background: "#22c55e",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "0.5rem",
-            }}
-            onClick={saveToProject}
-            disabled={isSaving}
-          >
-            <Send size={18} />
-            {isSaving ? "Exporting..." : "Export to GBDK"}
-          </button>
-          <button
-            className="btn btn-secondary"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "0.5rem",
-            }}
-            onClick={exportLocal}
-          >
-            <Download size={18} />
-            Download ZIP
-          </button>
-        </div>
-      </aside>
-
-      <main className="main-content">
-        {view === "gallery" ? (
-          <MapGallery />
-        ) : view === "map_editor" ? (
-          <MapEditor />
-        ) : view === "studio" ? (
-          <SpriteStudio />
-        ) : (
           <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 350px",
-              gap: "1.5rem",
-              alignItems: "start",
-            }}
+            style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}
           >
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "1.5rem",
-              }}
-            >
-              <div style={{ display: "flex", gap: "1.5rem" }}>
-                <TilePixelEditor />
-                <div
-                  style={{
-                    flex: 1,
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "1rem",
-                  }}
-                >
-                  <Palette />
-                  <Toolbox />
-                </div>
-              </div>
+            <div style={{ display: "flex", gap: "1.5rem" }}>
+              <Palette />
+              <Toolbox />
             </div>
-            <TilesetPanel />
+            <TilePixelEditor />
           </div>
-        )}
-      </main>
-    </div>
+          <TilesetPanel />
+        </div>
+      )}
+      <ShortcutsModal isOpen={isShortcutsOpen} onClose={() => setIsShortcutsOpen(false)} />
+    </AppLayout>
   );
 }
 
