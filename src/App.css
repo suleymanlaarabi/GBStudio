@@ -1,0 +1,190 @@
+:root {
+  /* Game Boy DMG Palette */
+  --gb-0: #e0f8cf;
+  --gb-1: #8bac0f;
+  --gb-2: #306230;
+  --gb-3: #0f380f;
+  
+  --bg-main: #0a0a0a;
+  --bg-sidebar: #151515;
+  --bg-card: #1e1e1e;
+  --border: #333;
+  --text: #eee;
+  --accent: #863bff;
+  --accent-hover: #a066ff;
+}
+
+body {
+  background-color: var(--bg-main);
+  color: var(--text);
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  overflow: hidden;
+}
+
+.app-container {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  height: 100vh;
+}
+
+.sidebar {
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  z-index: 10;
+}
+
+.main-content {
+  padding: 1.5rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  background-image: radial-gradient(var(--border) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+h1, h2, h3, h4 {
+  margin: 0;
+}
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0 0 1rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #fff;
+  border-left: 4px solid var(--accent);
+  padding-left: 0.75rem;
+}
+
+/* Palette */
+.palette {
+  display: flex;
+  gap: 10px;
+}
+
+.palette-color {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 3px solid rgba(255,255,255,0.1);
+  transition: transform 0.1s;
+}
+
+.palette-color:hover { transform: scale(1.1); }
+.palette-color.selected { border-color: var(--accent); transform: scale(1.1); }
+
+.color-0 { background-color: var(--gb-0) !important; }
+.color-1 { background-color: var(--gb-1) !important; }
+.color-2 { background-color: var(--gb-2) !important; }
+.color-3 { background-color: var(--gb-3) !important; }
+
+/* Tileset */
+.tileset-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
+  gap: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding-right: 5px;
+}
+
+.tileset-item {
+  width: 48px;
+  height: 48px;
+  background: #000;
+  border: 2px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex; /* Centering */
+  align-items: center;
+  justify-content: center;
+  image-rendering: pixelated;
+}
+
+.tileset-item:hover { border-color: #555; }
+.tileset-item.active { border-color: var(--accent); }
+
+.map-editor-container {
+  overflow: auto;
+  min-height: 500px;
+  background: #000;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  padding: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Buttons */
+.btn {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+}
+
+.btn:hover:not(:disabled) { background: var(--accent-hover); transform: translateY(-1px); }
+.btn:active:not(:disabled) { transform: translateY(0); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-secondary {
+  background: #2a2a2a;
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover:not(:disabled) { background: #353535; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-main); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #444; }
+
+.map-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.map-card {
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.map-card:hover { border-color: var(--accent); transform: translateY(-3px); }
+.map-preview {
+  aspect-ratio: 160/144;
+  background: #000;
+  margin-bottom: 0.75rem;
+  border-radius: 4px;
+  overflow: hidden;
+}
