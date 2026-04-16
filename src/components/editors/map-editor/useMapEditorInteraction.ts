@@ -42,9 +42,33 @@ export const useMapEditorInteraction = ({
   }, [activeTileIndex, activeTileset]);
 
   const handlePaint = (coords: CellCoords) => {
-    if (!map || !activeTileset || !activeCell) return;
+    if (!map || !activeTileset) return;
 
-    if (mapTool === "pencil") {
+    const { tileSelection } = useStore.getState();
+
+    if (tileSelection.hasSelection && tileSelection.width > 0 && tileSelection.height > 0) {
+      // Use tile brush for multiple tile selection
+      // Paint the tile pattern starting at the clicked position
+      const { activeMapIndex } = useStore.getState();
+      for (let dy = 0; dy < tileSelection.height; dy++) {
+        for (let dx = 0; dx < tileSelection.width; dx++) {
+          const targetX = coords.x + dx;
+          const targetY = coords.y + dy;
+          if (targetX >= 0 && targetX < map.width && targetY >= 0 && targetY < map.height) {
+            const selectedTile = tileSelection.tileData[dy]?.[dx];
+            if (selectedTile) {
+              updateMapCell(
+                activeMapIndex,
+                targetX,
+                targetY,
+                selectedTile.tilesetId,
+                selectedTile.tileIndex,
+              );
+            }
+          }
+        }
+      }
+    } else if (mapTool === "pencil" && activeCell) {
       updateMapCell(
         activeMapIndex,
         coords.x,

@@ -14,3 +14,8 @@ export interface SelectionBounds {
   width: number;
   height: number;
 }
+
+export interface TileSelection extends SelectionState {
+  // Contains the actual tile data for the selected area
+  tileData: Array<Array<{ tilesetId: string; tileIndex: number } | null>>;
+}

@@ -4,3 +4,4 @@ export * from "./project";
 export * from "./selection";
 export * from "./sprite";
 export * from "./tile";
+export type { TileSelection } from "./selection";

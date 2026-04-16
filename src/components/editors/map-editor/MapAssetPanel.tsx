@@ -1,8 +1,9 @@
-import React from "react";
-import { Database } from "lucide-react";
+import React, { useState } from "react";
+import { Database, MousePointer, Crop } from "lucide-react";
 import type { Tileset, MapTool, MapSelectionState } from "../../../types";
 import { CustomSelect } from "../../ui/CustomSelect";
-import { GB_COLORS } from "../../../constants/colors";
+import { TilesetGrid } from "./TilesetGrid";
+import { useStore } from "../../../store";
 
 interface MapAssetPanelProps {
   tilesets: Tileset[];
@@ -15,6 +16,8 @@ interface MapAssetPanelProps {
   mapSelection: MapSelectionState;
 }
 
+type SelectionMode = "single" | "multiple";
+
 export const MapAssetPanel: React.FC<MapAssetPanelProps> = ({
   tilesets,
   activeTilesetIndex,
@@ -26,6 +29,34 @@ export const MapAssetPanel: React.FC<MapAssetPanelProps> = ({
   mapSelection,
 }) => {
   const activeTileset = tilesets[activeTilesetIndex];
+  const { tileSelection, beginTileSelection, updateTileSelection, endTileSelection, clearTileSelection } = useStore();
+  const [selectionMode, setSelectionMode] = useState<SelectionMode>("single");
+
+  const handleTileSelect = (tileIndex: number) => {
+    clearTileSelection();
+    setActiveTile(tileIndex);
+  };
+
+  const handleTileSelectionStart = (x: number, y: number) => {
+    if (selectionMode === "single") {
+      const tileIndex = y * (tileSize === 8 ? 4 : 3) + x;
+      if (tileIndex >= 0 && tileIndex < (activeTileset?.tiles.length || 0)) {
+        handleTileSelect(tileIndex);
+      }
+    } else {
+      beginTileSelection(x, y);
+    }
+  };
+
+  const handleTileSelectionUpdate = (x: number, y: number) => {
+    if (selectionMode === "multiple") {
+      updateTileSelection(x, y);
+    }
+  };
+
+  const handleTileSelectionEnd = () => {
+    endTileSelection();
+  };
 
   return (
     <div
@@ -43,13 +74,55 @@ export const MapAssetPanel: React.FC<MapAssetPanelProps> = ({
 
       <CustomSelect
         value={activeTilesetIndex}
-        onChange={(value) => setActiveTileset(Number(value))}
+        onChange={(value) => {
+          setActiveTileset(Number(value));
+          clearTileSelection();
+        }}
         options={tilesets.map((ts, i) => ({
           value: i,
           label: `${ts.name} (${ts.tileSize}x${ts.tileSize})${ts.tileSize !== tileSize ? " (Incompatible)" : ""}`,
           disabled: ts.tileSize !== tileSize,
         }))}
       />
+
+      <div
+        style={{
+          display: "flex",
+          gap: "0.5rem",
+          justifyContent: "space-between",
+          alignItems: "center",
+          fontSize: "0.75rem",
+        }}
+      >
+        <div style={{ display: "flex", gap: "0.5rem" }}>
+          <button
+            onClick={() => {
+              setSelectionMode("single");
+              clearTileSelection();
+            }}
+            className={`btn ${selectionMode === "single" ? "" : "btn-secondary"}`}
+            style={{ padding: "4px 8px", display: "flex", alignItems: "center", gap: "4px" }}
+          >
+            <MousePointer size={14} /> Single
+          </button>
+          <button
+            onClick={() => {
+              setSelectionMode("multiple");
+              clearTileSelection();
+            }}
+            className={`btn ${selectionMode === "multiple" ? "" : "btn-secondary"}`}
+            style={{ padding: "4px 8px", display: "flex", alignItems: "center", gap: "4px" }}
+          >
+            <Crop size={14} /> Multi
+          </button>
+        </div>
+
+        {selectionMode === "multiple" && tileSelection.hasSelection && tileSelection.width > 0 && (
+          <div style={{ color: "#999" }}>
+            {tileSelection.width}x{tileSelection.height} tiles
+          </div>
+        )}
+      </div>
 
       <div style={{ fontSize: "0.75rem", color: "#999" }}>
         Active tool: <strong style={{ color: "#fff" }}>{mapTool}</strong>
@@ -58,45 +131,20 @@ export const MapAssetPanel: React.FC<MapAssetPanelProps> = ({
       </div>
 
       <div style={{ flex: 1, overflowY: "auto" }}>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: `repeat(${activeTileset?.tileSize === 8 ? 4 : 2}, 1fr)`,
-          }}
-        >
-          {activeTileset?.tiles.map((tile, i) => (
-            <div
-              key={tile.id}
-              className={`tileset-item ${activeTileIndex === i ? "active" : ""}`}
-              style={{
-                height: "auto",
-                aspectRatio: "1",
-                border:
-                  activeTileIndex === i
-                    ? "2px solid var(--accent)"
-                    : "1px solid #222",
-              }}
-              onClick={() => setActiveTile(i)}
-            >
-              <canvas
-                width={32}
-                height={32}
-                ref={(el) => {
-                  if (!el) return;
-                  const ctx = el.getContext("2d");
-                  if (!ctx) return;
-                  const p = 32 / (activeTileset?.tileSize || 8);
-                  tile.data.forEach((r, y) =>
-                    r.forEach((c, x) => {
-                      ctx.fillStyle = GB_COLORS[c];
-                      ctx.fillRect(x * p, y * p, p, p);
-                    }),
-                  );
-                }}
-              />
-            </div>
-          ))}
-        </div>
+        {activeTileset ? (
+          <TilesetGrid
+            tileset={activeTileset}
+            tileSize={tileSize}
+            selectedTiles={[]}
+            onTileSelectionStart={handleTileSelectionStart}
+            onTileSelectionUpdate={handleTileSelectionUpdate}
+            onTileSelectionEnd={handleTileSelectionEnd}
+          />
+        ) : (
+          <div style={{ textAlign: "center", color: "#444", marginTop: "2rem" }}>
+            No tileset selected
+          </div>
+        )}
       </div>
     </div>
   );

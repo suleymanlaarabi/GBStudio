@@ -4,6 +4,7 @@ import type {
   SelectionBounds,
   TileCell,
   TileMap,
+  TileSelection,
 } from "../types";
 
 const cloneCell = (cell: TileCell | null): TileCell | null =>
@@ -182,6 +183,40 @@ export const drawMapRectangle = (
       const isBorder = y === startY || y === endY - 1 || x === startX || x === endX - 1;
       if (filled || isBorder) {
         data[y]![x] = cloneCell(cell);
+      }
+    }
+  }
+
+  return { ...map, data };
+};
+
+export const paintTileBrush = (
+  map: TileMap,
+  startX: number,
+  startY: number,
+  tileSelection: TileSelection,
+): TileMap => {
+  if (!tileSelection.hasSelection || tileSelection.width === 0 || tileSelection.height === 0) {
+    return map;
+  }
+
+  const data = withClonedData(map);
+  const patternWidth = tileSelection.width;
+  const patternHeight = tileSelection.height;
+
+  // Calculate the bounds to paint (limit to map boundaries)
+  const endX = Math.min(map.width, startX + patternWidth);
+  const endY = Math.min(map.height, startY + patternHeight);
+
+  // Apply the tile pattern with tiling/repetition
+  for (let y = startY; y < endY; y++) {
+    for (let x = startX; x < endX; x++) {
+      const patternX = (x - startX) % patternWidth;
+      const patternY = (y - startY) % patternHeight;
+      const selectedTile = tileSelection.tileData[patternY]?.[patternX];
+
+      if (selectedTile && x >= 0 && x < map.width && y >= 0 && y < map.height) {
+        data[y]![x] = cloneCell(selectedTile);
       }
     }
   }

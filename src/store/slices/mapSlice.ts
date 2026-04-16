@@ -5,6 +5,7 @@ import type {
   SelectionBounds,
   TileCell,
   TileMap,
+  TileSelection,
   TileSize,
 } from "../../types";
 import {
@@ -17,12 +18,18 @@ import {
   normalizeMapSelection,
   pasteMapSelection as pasteMapSelectionData,
   setMapCellValue,
+  paintTileBrush as paintTileBrushData,
 } from "../../services/mapService";
 
 export interface MapSlice {
   maps: TileMap[];
   mapSelection: MapSelectionState;
   mapClipboard: MapClipboard | null;
+  tileSelection: TileSelection;
+  beginTileSelection: (x: number, y: number) => void;
+  updateTileSelection: (x: number, y: number) => void;
+  endTileSelection: () => void;
+  clearTileSelection: () => void;
   updateMapCell: (
     mapIndex: number,
     x: number,
@@ -37,6 +44,11 @@ export interface MapSlice {
     y: number,
     tilesetId: string,
     tileIndex: number,
+  ) => void;
+  paintTileBrush: (
+    mapIndex: number,
+    x: number,
+    y: number,
   ) => void;
   drawMapLine: (
     mapIndex: number,
@@ -86,7 +98,7 @@ type MapState = MapSlice & {
   activeTileIndex: number;
   activeTilesetIndex: number;
   commit: () => void;
-  tilesets: { id: string }[];
+  tilesets: Tileset[];
   view: "tiles" | "gallery" | "map_editor" | "studio";
 };
 
@@ -98,10 +110,91 @@ const emptyMapSelection: MapSelectionState = {
   height: 0,
 };
 
+const emptyTileSelection: TileSelection = {
+  hasSelection: false,
+  x: 0,
+  y: 0,
+  width: 0,
+  height: 0,
+  tileData: [],
+};
+
 export const createMapSlice: StateCreator<MapState, [], [], MapSlice> = (set, get) => ({
   maps: [],
   mapSelection: emptyMapSelection,
   mapClipboard: null,
+  tileSelection: emptyTileSelection,
+
+  beginTileSelection: (x, y) => {
+    set({
+      tileSelection: {
+        hasSelection: true,
+        startX: x,
+        startY: y,
+        x,
+        y,
+        width: 0,
+        height: 0,
+        tileData: [],
+      },
+    });
+  },
+
+  updateTileSelection: (x, y) => {
+    const { tileSelection } = get();
+    if (!tileSelection.hasSelection || tileSelection.startX === undefined || tileSelection.startY === undefined) return;
+
+    // Calculate bounds
+    const startX = tileSelection.startX;
+    const startY = tileSelection.startY;
+    const minX = Math.min(startX, x);
+    const minY = Math.min(startY, y);
+    const width = Math.abs(x - startX) + 1;
+    const height = Math.abs(y - startY) + 1;
+
+    // Extract tile data from the active tileset
+    const { tilesets, activeTilesetIndex } = get();
+    const activeTileset = tilesets[activeTilesetIndex];
+    const tileData: Array<Array<{ tilesetId: string; tileIndex: number } | null>> = [];
+
+    for (let ty = 0; ty < height; ty++) {
+      const row: Array<{ tilesetId: string; tileIndex: number } | null> = [];
+      for (let tx = 0; tx < width; tx++) {
+        const tileX = minX + tx;
+        const tileY = minY + ty;
+        if (activeTileset && tileY < activeTileset.tiles.length) {
+          row.push({ tilesetId: activeTileset.id, tileIndex: tileX });
+        } else {
+          row.push(null);
+        }
+      }
+      tileData.push(row);
+    }
+
+    set({
+      tileSelection: {
+        hasSelection: true,
+        startX,
+        startY,
+        x: minX,
+        y: minY,
+        width,
+        height,
+        tileData,
+      },
+    });
+  },
+
+  endTileSelection: () => {
+    const { tileSelection } = get();
+    // Keep selection if it has area
+    if (tileSelection.width > 0 && tileSelection.height > 0) return;
+    set({ tileSelection: emptyTileSelection });
+  },
+
+  clearTileSelection: () => {
+    set({ tileSelection: emptyTileSelection });
+  },
 
   updateMapCell: (mapIndex, x, y, tilesetId, tileIndex) => {
     set((state) => ({
@@ -130,6 +223,19 @@ export const createMapSlice: StateCreator<MapState, [], [], MapSlice> = (set, ge
       ),
     }));
     get().commit();
+  },
+
+  paintTileBrush: (mapIndex, x, y) => {
+    const { tileSelection } = get();
+    if (!tileSelection.hasSelection || tileSelection.width === 0 || tileSelection.height === 0) return;
+
+    set((state) => ({
+      maps: state.maps.map((map, currentIndex) =>
+        currentIndex === mapIndex
+          ? paintTileBrushData(map, x, y, tileSelection)
+          : map,
+      ),
+    }));
   },
 
   drawMapLine: (mapIndex, startX, startY, endX, endY, cell) => {
