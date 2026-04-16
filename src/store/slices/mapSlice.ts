@@ -20,6 +20,7 @@ import {
   setMapCellValue,
   paintTileBrush as paintTileBrushData,
 } from "../../services/mapService";
+import { getTileAtTilesetPosition, normalizeTilesetLayout } from "../../services/tileService";
 
 export interface MapSlice {
   maps: TileMap[];
@@ -154,7 +155,9 @@ export const createMapSlice: StateCreator<MapState, [], [], MapSlice> = (set, ge
 
     // Extract tile data from the active tileset
     const { tilesets, activeTilesetIndex } = get();
-    const activeTileset = tilesets[activeTilesetIndex];
+    const activeTileset = tilesets[activeTilesetIndex]
+      ? normalizeTilesetLayout(tilesets[activeTilesetIndex]!)
+      : undefined;
     const tileData: Array<Array<{ tilesetId: string; tileIndex: number } | null>> = [];
 
     for (let ty = 0; ty < height; ty++) {
@@ -162,8 +165,13 @@ export const createMapSlice: StateCreator<MapState, [], [], MapSlice> = (set, ge
       for (let tx = 0; tx < width; tx++) {
         const tileX = minX + tx;
         const tileY = minY + ty;
-        if (activeTileset && tileY < activeTileset.tiles.length) {
-          row.push({ tilesetId: activeTileset.id, tileIndex: tileX });
+        if (activeTileset) {
+          const gridTile = getTileAtTilesetPosition(activeTileset, tileX, tileY);
+          if (gridTile) {
+            row.push({ tilesetId: activeTileset.id, tileIndex: gridTile.tileIndex });
+          } else {
+            row.push(null);
+          }
         } else {
           row.push(null);
         }

@@ -7,6 +7,7 @@ import type {
   TileMap,
   Tileset,
 } from "../../types";
+import { normalizeTilesetLayout } from "../../services/tileService";
 
 export interface ProjectSlice {
   loadProjectData: (data: ProjectData) => void;
@@ -57,10 +58,11 @@ export const createProjectSlice: StateCreator<
   ProjectSlice
 > = (set) => ({
   loadProjectData: (data) => {
-    const history = [createHistorySnapshot(data.tilesets, data.maps, data.sprites)];
+    const tilesets = data.tilesets.map(normalizeTilesetLayout);
+    const history = [createHistorySnapshot(tilesets, data.maps, data.sprites)];
 
     set({
-      tilesets: data.tilesets,
+      tilesets,
       maps: data.maps,
       sprites: data.sprites,
       activeTilesetIndex: 0,

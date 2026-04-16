@@ -41,11 +41,16 @@ interface ExpandedTileset {
 interface MapExport {
   map: TileMap;
   safeName: string;
-  atlasBytes: number[][];
-  atlasTileCount: number;
   mapData: number[];
   width: number;
   height: number;
+}
+
+interface ProjectAtlas {
+  safeName: string;
+  tileCount: number;
+  tileBytes: number[][];
+  tilesetOffsets: Map<string, number>;
 }
 
 const expandTileset = (tileset: Tileset): ExpandedTileset => {
@@ -83,30 +88,28 @@ const expandTileset = (tileset: Tileset): ExpandedTileset => {
   };
 };
 
-const buildMapExport = (map: TileMap, tilesets: Tileset[]): MapExport => {
-  const is16 = map.tileSize === 16;
-  const usedTilesetIds = Array.from(
-    new Set(
-      map.data
-        .flat()
-        .filter((cell): cell is NonNullable<(typeof map.data)[number][number]> => cell !== null)
-        .map((cell) => cell.tilesetId),
-    ),
-  );
-
-  const atlasBytes: number[][] = [new Array(16).fill(0)];
+const buildProjectAtlas = (projectName: string, tilesets: Tileset[]): ProjectAtlas => {
+  const tileBytes: number[][] = [new Array(16).fill(0)];
   const tilesetOffsets = new Map<string, number>();
   let currentOffset = 1;
 
-  usedTilesetIds.forEach((tilesetId) => {
-    const tileset = tilesets.find((item) => item.id === tilesetId);
-    if (!tileset) return;
-
-    tilesetOffsets.set(tilesetId, currentOffset);
+  tilesets.forEach((tileset) => {
     const expanded = expandTileset(tileset);
-    expanded.tileBytes.forEach((bytes) => atlasBytes.push(bytes));
+    tilesetOffsets.set(tileset.id, currentOffset);
+    expanded.tileBytes.forEach((bytes) => tileBytes.push(bytes));
     currentOffset += expanded.tileCount;
   });
+
+  return {
+    safeName: `${sanitizeName(projectName)}_project`,
+    tileCount: tileBytes.length,
+    tileBytes,
+    tilesetOffsets,
+  };
+};
+
+const buildMapExport = (map: TileMap, atlas: ProjectAtlas): MapExport => {
+  const is16 = map.tileSize === 16;
 
   const hardwareWidth = is16 ? map.width * 2 : map.width;
   const hardwareHeight = is16 ? map.height * 2 : map.height;
@@ -116,7 +119,7 @@ const buildMapExport = (map: TileMap, tilesets: Tileset[]): MapExport => {
     row.forEach((cell, logicalX) => {
       if (!cell) return;
 
-      const offset = tilesetOffsets.get(cell.tilesetId) || 0;
+      const offset = atlas.tilesetOffsets.get(cell.tilesetId) || 0;
       if (is16) {
         const base = offset + cell.tileIndex * 4;
         for (let segment = 0; segment < 4; segment++) {
@@ -134,8 +137,6 @@ const buildMapExport = (map: TileMap, tilesets: Tileset[]): MapExport => {
   return {
     map,
     safeName: sanitizeName(map.name),
-    atlasBytes,
-    atlasTileCount: atlasBytes.length,
     mapData: hardwareData,
     width: hardwareWidth,
     height: hardwareHeight,
@@ -144,6 +145,7 @@ const buildMapExport = (map: TileMap, tilesets: Tileset[]): MapExport => {
 
 const buildHeader = (
   projectName: string,
+  atlas: ProjectAtlas,
   expandedTilesets: ExpandedTileset[],
   mapExports: MapExport[],
   sprites: SpriteAsset[],
@@ -165,13 +167,15 @@ const buildHeader = (
   content += "void gbt_switch_map(const GBT_MAP *next_map, gbt_dir_t dir);\n";
   content += "void gbt_update_sprite(UINT8 hardware_sprite_id, GBT_SPRITE_STATE *state);\n\n";
 
+  content += `extern const unsigned char ${atlas.safeName}_tiles[];\n`;
+  content += `extern const GBT_TILESET ${atlas.safeName}_tileset;\n\n`;
+
   expandedTilesets.forEach((tileset) => {
     content += `extern const unsigned char ${tileset.safeName}_tiles[];\n`;
     content += `extern const GBT_TILESET ${tileset.safeName}_tileset;\n`;
   });
 
   mapExports.forEach((mapExport) => {
-    content += `extern const unsigned char ${mapExport.safeName}_tiles[];\n`;
     content += `extern const unsigned char ${mapExport.safeName}_map[];\n`;
     content += `extern const GBT_MAP ${mapExport.safeName};\n`;
   });
@@ -191,6 +195,7 @@ const buildHeader = (
 
 const buildSource = (
   projectName: string,
+  atlas: ProjectAtlas,
   expandedTilesets: ExpandedTileset[],
   mapExports: MapExport[],
   sprites: SpriteAsset[],
@@ -198,8 +203,43 @@ const buildSource = (
   let content = `#include "${projectName}.h"\n\n`;
 
   content += `// Engine Implementation
+static const unsigned char *gbt_loaded_tiles = 0;
+
+static UINT8 gbt_min_u8(UINT8 left, UINT8 right) {
+    return left < right ? left : right;
+}
+
+static void gbt_set_bkg_submap_wrap_x(UINT8 x, UINT8 y, UINT8 width, UINT8 height, const unsigned char *data, UINT8 map_width) {
+    UINT8 remaining_width = width;
+    UINT8 src_offset = 0;
+
+    while (remaining_width != 0) {
+        UINT8 chunk_width = gbt_min_u8(remaining_width, (UINT8)(32u - x));
+        set_bkg_submap(x, y, chunk_width, height, data + src_offset, map_width);
+        remaining_width -= chunk_width;
+        src_offset += chunk_width;
+        x = 0;
+    }
+}
+
+static void gbt_set_bkg_submap_wrap(UINT8 x, UINT8 y, UINT8 width, UINT8 height, const unsigned char *data, UINT8 map_width) {
+    UINT8 remaining_height = height;
+    UINT8 src_row = 0;
+
+    while (remaining_height != 0) {
+        UINT8 chunk_height = gbt_min_u8(remaining_height, (UINT8)(32u - y));
+        gbt_set_bkg_submap_wrap_x(x, y, width, chunk_height, data + ((UINT16)src_row * map_width), map_width);
+        remaining_height -= chunk_height;
+        src_row += chunk_height;
+        y = 0;
+    }
+}
+
 void gbt_load_map(const GBT_MAP *map) {
-    set_bkg_data(0, map->tile_count, map->tiles);
+    if (gbt_loaded_tiles != map->tiles) {
+        set_bkg_data(0, map->tile_count, map->tiles);
+        gbt_loaded_tiles = map->tiles;
+    }
 }
 
 void gbt_draw_map(const GBT_MAP *map) {
@@ -207,34 +247,48 @@ void gbt_draw_map(const GBT_MAP *map) {
 }
 
 void gbt_switch_map(const GBT_MAP *next_map, gbt_dir_t dir) {
-    UINT8 i, x, y;
+    UINT8 i;
+    UINT8 visible_width;
+    UINT8 visible_height;
     gbt_load_map(next_map);
-    
+
+    visible_width = gbt_min_u8((UINT8)next_map->width, 20u);
+    visible_height = gbt_min_u8((UINT8)next_map->height, 18u);
+
     if (dir == GBT_DIR_RIGHT) {
-        for (i = 0; i < 20; i++) {
-            SCX_REG += 8;
-            set_bkg_submap((SCX_REG + 152) / 8, 0, 1, 18, next_map->data, next_map->width);
+        for (i = 0; i < visible_width; i++) {
             wait_vbl_done();
+            gbt_set_bkg_submap_wrap((UINT8)((((SCX_REG + 8u) >> 3) + 19u) & 31u), 0u, 1u, visible_height, next_map->data + i, (UINT8)next_map->width);
+            SCX_REG += 8u;
         }
     } else if (dir == GBT_DIR_LEFT) {
-        for (i = 0; i < 20; i++) {
-            SCX_REG -= 8;
-            set_bkg_submap(SCX_REG / 8, 0, 1, 18, next_map->data, next_map->width);
+        for (i = 0; i < visible_width; i++) {
+            UINT8 next_scx;
             wait_vbl_done();
+            next_scx = (UINT8)(SCX_REG - 8u);
+            gbt_set_bkg_submap_wrap((UINT8)((next_scx >> 3) & 31u), 0u, 1u, visible_height, next_map->data + (UINT8)(visible_width - 1u - i), (UINT8)next_map->width);
+            SCX_REG = next_scx;
         }
     } else if (dir == GBT_DIR_DOWN) {
-        for (i = 0; i < 18; i++) {
-            SCY_REG += 8;
-            set_bkg_submap(0, (SCY_REG + 136) / 8, 20, 1, next_map->data, next_map->width);
+        for (i = 0; i < visible_height; i++) {
             wait_vbl_done();
+            gbt_set_bkg_submap_wrap(0u, (UINT8)((((SCY_REG + 8u) >> 3) + 17u) & 31u), visible_width, 1u, next_map->data + ((UINT16)i * next_map->width), (UINT8)next_map->width);
+            SCY_REG += 8u;
         }
     } else if (dir == GBT_DIR_UP) {
-        for (i = 0; i < 18; i++) {
-            SCY_REG -= 8;
-            set_bkg_submap(0, SCY_REG / 8, 20, 1, next_map->data, next_map->width);
+        for (i = 0; i < visible_height; i++) {
+            UINT8 next_scy;
             wait_vbl_done();
+            next_scy = (UINT8)(SCY_REG - 8u);
+            gbt_set_bkg_submap_wrap(0u, (UINT8)((next_scy >> 3) & 31u), visible_width, 1u, next_map->data + ((UINT16)(visible_height - 1u - i) * next_map->width), (UINT8)next_map->width);
+            SCY_REG = next_scy;
         }
     }
+
+    wait_vbl_done();
+    SCX_REG = 0u;
+    SCY_REG = 0u;
+    gbt_draw_map(next_map);
 }
 
 void gbt_update_sprite(UINT8 id, GBT_SPRITE_STATE *state) {
@@ -250,15 +304,17 @@ void gbt_update_sprite(UINT8 id, GBT_SPRITE_STATE *state) {
     move_sprite(id, state->x, state->y);
 }\n\n`;
 
+  content += `const unsigned char ${atlas.safeName}_tiles[] = {\n${formatFlatByteArray(atlas.tileBytes.flat())}};\n`;
+  content += `const GBT_TILESET ${atlas.safeName}_tileset = { ${atlas.safeName}_tiles, ${atlas.tileCount} };\n\n`;
+
   expandedTilesets.forEach((tileset) => {
     content += `const unsigned char ${tileset.safeName}_tiles[] = {\n${formatFlatByteArray(tileset.tileBytes.flat())}};\n`;
     content += `const GBT_TILESET ${tileset.safeName}_tileset = { ${tileset.safeName}_tiles, ${tileset.tileCount} };\n\n`;
   });
 
   mapExports.forEach((mapExport) => {
-    content += `const unsigned char ${mapExport.safeName}_tiles[] = {\n${formatFlatByteArray(mapExport.atlasBytes.flat())}};\n`;
     content += `const unsigned char ${mapExport.safeName}_map[] = {\n${formatMapRows(mapExport.mapData, mapExport.width)}};\n`;
-    content += `const GBT_MAP ${mapExport.safeName} = { "${mapExport.map.name}", ${mapExport.safeName}_tiles, ${mapExport.atlasTileCount}, ${mapExport.safeName}_map, ${mapExport.width}, ${mapExport.height} };\n\n`;
+    content += `const GBT_MAP ${mapExport.safeName} = { "${mapExport.map.name}", ${atlas.safeName}_tiles, ${atlas.tileCount}, ${mapExport.safeName}_map, ${mapExport.width}, ${mapExport.height} };\n\n`;
   });
 
   content += "// Sprites & Animations Data\n";
@@ -284,23 +340,29 @@ export const generateCFile = (
   tilesets: Tileset[],
   maps: TileMap[],
   sprites: SpriteAsset[],
-) =>
-  buildSource(
+) => {
+  const atlas = buildProjectAtlas(projectName, tilesets);
+  return buildSource(
     projectName,
+    atlas,
     tilesets.map(expandTileset),
-    maps.map((map) => buildMapExport(map, tilesets)),
+    maps.map((map) => buildMapExport(map, atlas)),
     sprites,
   );
+};
 
 export const generateHFile = (
   projectName: string,
   tilesets: Tileset[],
   maps: TileMap[],
   sprites: SpriteAsset[],
-) =>
-  buildHeader(
+) => {
+  const atlas = buildProjectAtlas(projectName, tilesets);
+  return buildHeader(
     projectName,
+    atlas,
     tilesets.map(expandTileset),
-    maps.map((map) => buildMapExport(map, tilesets)),
+    maps.map((map) => buildMapExport(map, atlas)),
     sprites,
   );
+};

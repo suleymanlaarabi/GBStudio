@@ -9,6 +9,8 @@ import {
   updateTilePixel,
   removeTileFromTileset,
   cloneTileInTileset,
+  moveTileInTilesetLayout,
+  normalizeTilesetLayout,
 } from "../../services/tileService";
 
 export interface TileSlice {
@@ -18,6 +20,7 @@ export interface TileSlice {
   addTile: (tilesetIndex: number) => void;
   removeTile: (tilesetIndex: number, tileIndex: number) => void;
   cloneTile: (tilesetIndex: number, tileIndex: number) => void;
+  moveTileInGrid: (tilesetIndex: number, tileId: string, x: number, y: number) => void;
   updatePixel: (
     tilesetIndex: number,
     tileIndex: number,
@@ -78,7 +81,9 @@ export const createTileSlice: StateCreator<TileState, [], [], TileSlice> = (set,
       const tilesetId = state.tilesets[index]?.id;
       if (!tilesetId) return state;
 
-      const newTilesets = state.tilesets.filter((_, i) => i !== index);
+      const newTilesets = state.tilesets
+        .filter((_, i) => i !== index)
+        .map(normalizeTilesetLayout);
       const newMaps = state.maps.map((map) => ({
         ...map,
         data: map.data.map((row) =>
@@ -161,6 +166,13 @@ export const createTileSlice: StateCreator<TileState, [], [], TileSlice> = (set,
         activeTileIndex: tileCount - 1,
       };
     });
+    get().commit();
+  },
+
+  moveTileInGrid: (tilesetIndex, tileId, x, y) => {
+    set((state) => ({
+      tilesets: moveTileInTilesetLayout(state.tilesets, tilesetIndex, tileId, x, y),
+    }));
     get().commit();
   },
 

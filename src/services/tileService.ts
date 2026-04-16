@@ -1,4 +1,12 @@
-import type { GBColor, SelectionBounds, Tile, Tileset, TileSize } from "../types";
+import type {
+  GBColor,
+  SelectionBounds,
+  Tile,
+  Tileset,
+  TileSize,
+  TilesetLayout,
+  TilesetLayoutPosition,
+} from "../types";
 import {
   clearArea,
   drawCircle,
@@ -15,12 +23,110 @@ export const createEmptyTile = (size: TileSize): Tile => ({
   size,
 });
 
-export const createEmptyTileset = (name: string, size: TileSize): Tileset => ({
-  id: crypto.randomUUID(),
-  name,
-  tileSize: size,
-  tiles: [createEmptyTile(size)],
-});
+export const getDefaultTilesetColumns = (tileSize: TileSize): number => (tileSize === 8 ? 4 : 3);
+
+const getNextAvailablePosition = (
+  usedKeys: Set<string>,
+  columns: number,
+): TilesetLayoutPosition => {
+  let slot = 0;
+  while (usedKeys.has(`${slot % columns},${Math.floor(slot / columns)}`)) {
+    slot += 1;
+  }
+
+  return {
+    x: slot % columns,
+    y: Math.floor(slot / columns),
+  };
+};
+
+export const createTilesetLayout = (tiles: Tile[], tileSize: TileSize): TilesetLayout => {
+  const columns = getDefaultTilesetColumns(tileSize);
+  const positions: Record<string, TilesetLayoutPosition> = {};
+
+  tiles.forEach((tile, index) => {
+    positions[tile.id] = {
+      x: index % columns,
+      y: Math.floor(index / columns),
+    };
+  });
+
+  return { columns, positions };
+};
+
+export const normalizeTilesetLayout = (tileset: Tileset): Tileset => {
+  const columns = tileset.layout?.columns ?? getDefaultTilesetColumns(tileset.tileSize);
+  const declaredPositions = tileset.layout?.positions ?? {};
+  const usedKeys = new Set<string>();
+  const normalizedPositions: Record<string, TilesetLayoutPosition> = {};
+
+  tileset.tiles.forEach((tile) => {
+    const position = declaredPositions[tile.id];
+    if (
+      position &&
+      Number.isInteger(position.x) &&
+      Number.isInteger(position.y) &&
+      position.x >= 0 &&
+      position.y >= 0
+    ) {
+      const key = `${position.x},${position.y}`;
+      if (!usedKeys.has(key)) {
+        usedKeys.add(key);
+        normalizedPositions[tile.id] = position;
+        return;
+      }
+    }
+
+    const nextPosition = getNextAvailablePosition(usedKeys, columns);
+    usedKeys.add(`${nextPosition.x},${nextPosition.y}`);
+    normalizedPositions[tile.id] = nextPosition;
+  });
+
+  return {
+    ...tileset,
+    layout: {
+      columns,
+      positions: normalizedPositions,
+    },
+  };
+};
+
+export const getTilesetPositionForTile = (
+  tileset: Tileset,
+  tileId: string,
+): TilesetLayoutPosition | null =>
+  normalizeTilesetLayout(tileset).layout?.positions[tileId] ?? null;
+
+export const getTileAtTilesetPosition = (
+  tileset: Tileset,
+  x: number,
+  y: number,
+): { tile: Tile; tileIndex: number } | null => {
+  const normalized = normalizeTilesetLayout(tileset);
+  const tileIndex = normalized.tiles.findIndex((tile) => {
+    const position = normalized.layout?.positions[tile.id];
+    return position?.x === x && position?.y === y;
+  });
+
+  if (tileIndex < 0) return null;
+
+  return {
+    tile: normalized.tiles[tileIndex],
+    tileIndex,
+  };
+};
+
+export const createEmptyTileset = (name: string, size: TileSize): Tileset => {
+  const tile = createEmptyTile(size);
+
+  return {
+    id: crypto.randomUUID(),
+    name,
+    tileSize: size,
+    tiles: [tile],
+    layout: createTilesetLayout([tile], size),
+  };
+};
 
 const updateTile = (
   tilesets: Tileset[],
@@ -40,11 +146,30 @@ const updateTile = (
   });
 
 export const appendTile = (tilesets: Tileset[], tsIdx: number): Tileset[] =>
-  tilesets.map((tileset, currentTsIdx) =>
-    currentTsIdx === tsIdx
-      ? { ...tileset, tiles: [...tileset.tiles, createEmptyTile(tileset.tileSize)] }
-      : tileset,
-  );
+  tilesets.map((tileset, currentTsIdx) => {
+    if (currentTsIdx !== tsIdx) return tileset;
+
+    const normalized = normalizeTilesetLayout(tileset);
+    const tile = createEmptyTile(tileset.tileSize);
+    const tiles = [...normalized.tiles, tile];
+    const positions = { ...(normalized.layout?.positions ?? {}) };
+    const usedKeys = new Set(
+      Object.values(positions).map((position) => `${position.x},${position.y}`),
+    );
+    positions[tile.id] = getNextAvailablePosition(
+      usedKeys,
+      normalized.layout?.columns ?? getDefaultTilesetColumns(normalized.tileSize),
+    );
+
+    return {
+      ...normalized,
+      tiles,
+      layout: {
+        columns: normalized.layout?.columns ?? getDefaultTilesetColumns(normalized.tileSize),
+        positions,
+      },
+    };
+  });
 
 export const updateTilePixel = (
   tilesets: Tileset[],
@@ -210,12 +335,25 @@ export const cloneTileInTileset = (tilesets: Tileset[], tsIdx: number, tIdx: num
   return tilesets.map((tileset, currentTsIdx) => {
     if (currentTsIdx !== tsIdx) return tileset;
 
-    const newTiles = [...tileset.tiles];
+    const normalized = normalizeTilesetLayout(tileset);
+    const newTiles = [...normalized.tiles];
     newTiles.splice(tIdx + 1, 0, clonedTile);
+    const positions = { ...(normalized.layout?.positions ?? {}) };
+    const usedKeys = new Set(
+      Object.values(positions).map((position) => `${position.x},${position.y}`),
+    );
+    positions[clonedTile.id] = getNextAvailablePosition(
+      usedKeys,
+      normalized.layout?.columns ?? getDefaultTilesetColumns(normalized.tileSize),
+    );
 
     return {
-      ...tileset,
+      ...normalized,
       tiles: newTiles,
+      layout: {
+        columns: normalized.layout?.columns ?? getDefaultTilesetColumns(normalized.tileSize),
+        positions,
+      },
     };
   });
 };
@@ -224,9 +362,55 @@ export const removeTileFromTileset = (tilesets: Tileset[], tsIdx: number, tIdx: 
   return tilesets.map((tileset, currentTsIdx) => {
     if (currentTsIdx !== tsIdx) return tileset;
 
+    const normalized = normalizeTilesetLayout(tileset);
+    const removedTile = normalized.tiles[tIdx];
+    const nextPositions = { ...(normalized.layout?.positions ?? {}) };
+    if (removedTile) {
+      delete nextPositions[removedTile.id];
+    }
+
     return {
-      ...tileset,
-      tiles: tileset.tiles.filter((_, idx) => idx !== tIdx),
+      ...normalized,
+      tiles: normalized.tiles.filter((_, idx) => idx !== tIdx),
+      layout: {
+        columns: normalized.layout?.columns ?? getDefaultTilesetColumns(normalized.tileSize),
+        positions: nextPositions,
+      },
     };
   });
 };
+
+export const moveTileInTilesetLayout = (
+  tilesets: Tileset[],
+  tsIdx: number,
+  tileId: string,
+  x: number,
+  y: number,
+): Tileset[] =>
+  tilesets.map((tileset, currentTsIdx) => {
+    if (currentTsIdx !== tsIdx) return tileset;
+
+    const normalized = normalizeTilesetLayout(tileset);
+    const currentPosition = normalized.layout?.positions[tileId];
+    if (!currentPosition) return normalized;
+
+    const targetTile = normalized.tiles.find((tile) => {
+      const position = normalized.layout?.positions[tile.id];
+      return position?.x === x && position?.y === y;
+    });
+
+    const nextPositions = { ...(normalized.layout?.positions ?? {}) };
+    nextPositions[tileId] = { x, y };
+
+    if (targetTile && targetTile.id !== tileId) {
+      nextPositions[targetTile.id] = currentPosition;
+    }
+
+    return {
+      ...normalized,
+      layout: {
+        columns: normalized.layout?.columns ?? getDefaultTilesetColumns(normalized.tileSize),
+        positions: nextPositions,
+      },
+    };
+  });

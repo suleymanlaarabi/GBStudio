@@ -4,6 +4,7 @@ import type { Tileset, MapTool, MapSelectionState } from "../../../types";
 import { CustomSelect } from "../../ui/CustomSelect";
 import { TilesetGrid } from "./TilesetGrid";
 import { useStore } from "../../../store";
+import { getTileAtTilesetPosition } from "../../../services/tileService";
 
 interface MapAssetPanelProps {
   tilesets: Tileset[];
@@ -39,9 +40,11 @@ export const MapAssetPanel: React.FC<MapAssetPanelProps> = ({
 
   const handleTileSelectionStart = (x: number, y: number) => {
     if (selectionMode === "single") {
-      const tileIndex = y * (tileSize === 8 ? 4 : 3) + x;
-      if (tileIndex >= 0 && tileIndex < (activeTileset?.tiles.length || 0)) {
-        handleTileSelect(tileIndex);
+      const gridTile = activeTileset
+        ? getTileAtTilesetPosition(activeTileset, x, y)
+        : null;
+      if (gridTile) {
+        handleTileSelect(gridTile.tileIndex);
       }
     } else {
       beginTileSelection(x, y);
@@ -96,6 +99,7 @@ export const MapAssetPanel: React.FC<MapAssetPanelProps> = ({
       >
         <div style={{ display: "flex", gap: "0.5rem" }}>
           <button
+            type="button"
             onClick={() => {
               setSelectionMode("single");
               clearTileSelection();
@@ -106,6 +110,7 @@ export const MapAssetPanel: React.FC<MapAssetPanelProps> = ({
             <MousePointer size={14} /> Single
           </button>
           <button
+            type="button"
             onClick={() => {
               setSelectionMode("multiple");
               clearTileSelection();
@@ -135,7 +140,8 @@ export const MapAssetPanel: React.FC<MapAssetPanelProps> = ({
           <TilesetGrid
             tileset={activeTileset}
             tileSize={tileSize}
-            selectedTiles={[]}
+            selectedTileIndex={activeTileIndex}
+            showSingleSelection={selectionMode === "single"}
             onTileSelectionStart={handleTileSelectionStart}
             onTileSelectionUpdate={handleTileSelectionUpdate}
             onTileSelectionEnd={handleTileSelectionEnd}
