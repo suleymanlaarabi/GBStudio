@@ -66,3 +66,5 @@ export type {
   TileSize,
   Tileset,
 };
+
+export type { Template, TemplateCategory } from "../types/template";

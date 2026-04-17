@@ -43,6 +43,7 @@ export const AnimationPreview: React.FC<AnimationPreviewProps> = ({ anim, tilese
     ctx.fillRect(0, 0, size, size);
 
     tile.data.forEach((row, y) => row.forEach((color, x) => {
+      if (color === null || color === undefined) return;
       ctx.fillStyle = GB_COLORS[color];
       ctx.fillRect(
         Math.floor(offset + x * scale), 

@@ -86,7 +86,7 @@ export const TilesetGridOptimized: React.FC<TilesetGridProps> = ({
       // Draw tile pixels (scaled up)
       for (let y = 0; y < tileSize; y++) {
         for (let x = 0; x < tileSize; x++) {
-          ctx.fillStyle = GB_COLORS[tile.data[y][x]];
+          ctx.fillStyle = GB_COLORS[tile.data[y]![x] ?? 0];
           ctx.fillRect(
             startX + x * SCALE_FACTOR,
             startY + y * SCALE_FACTOR,

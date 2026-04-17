@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Edit3, Map as MapIcon, Plus, Trash2 } from "lucide-react";
+import { Edit3, Map as MapIcon, Plus, Trash2, Package } from "lucide-react";
 import { GB_COLORS } from "../../constants/colors";
 import { useStore } from "../../store";
 import type { TileMap, Tileset, TileSize } from "../../types";
 import { Modal } from "../ui/Modal";
+import { ExportTemplateModal } from "../ui/ExportTemplateModal";
 
 const validatePositiveNumber = (max: number) => (val: any) => {
   const num = parseInt(val, 10);
@@ -30,28 +31,32 @@ const MapPreview: React.FC<{ map: TileMap; tilesets: Tileset[] }> = ({
     const pW = cellW / tileSize;
     const pH = cellH / tileSize;
 
-    ctx.fillStyle = "#000";
+    ctx.fillStyle = GB_COLORS[0];
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    map.data.forEach((row, my) =>
-      row.forEach((cell, mx) => {
-        if (!cell) return;
-        const ts = tilesets.find((t) => t.id === cell.tilesetId);
-        const tile = ts?.tiles[cell.tileIndex];
-        if (!tile) return;
-        tile.data.forEach((tRow, ty) =>
-          tRow.forEach((color, tx) => {
-            ctx.fillStyle = GB_COLORS[color];
-            ctx.fillRect(
-              mx * cellW + tx * pW,
-              my * cellH + ty * pH,
-              pW,
-              pH
-            );
-          })
-        );
-      })
-    );
+    for (const layer of map.layers) {
+      if (!layer.visible) continue;
+      layer.data.forEach((row, my) =>
+        row.forEach((cell, mx) => {
+          if (!cell) return;
+          const ts = tilesets.find((t) => t.id === cell.tilesetId);
+          const tile = ts?.tiles[cell.tileIndex];
+          if (!tile) return;
+          tile.data.forEach((tRow, ty) =>
+            tRow.forEach((color, tx) => {
+              if (color === null || color === undefined) return;
+              ctx.fillStyle = GB_COLORS[color];
+              ctx.fillRect(
+                mx * cellW + tx * pW,
+                my * cellH + ty * pH,
+                pW,
+                pH
+              );
+            })
+          );
+        })
+      );
+    }
   }, [map, tilesets]);
 
   return (
@@ -65,8 +70,9 @@ const MapPreview: React.FC<{ map: TileMap; tilesets: Tileset[] }> = ({
 };
 
 export const MapGallery: React.FC = () => {
-  const { maps, tilesets, setActiveMap, addMap, removeMap } = useStore();
+  const { maps, tilesets, sprites, setActiveMap, addMap, removeMap } = useStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isExportTemplateOpen, setIsExportTemplateOpen] = useState(false);
 
   return (
     <>
@@ -78,9 +84,19 @@ export const MapGallery: React.FC = () => {
             <MapIcon size={24} color="var(--accent)" />
             Map Collection
           </div>
-          <button className="btn" onClick={() => setIsModalOpen(true)}>
-            <Plus size={18} /> New Map
-          </button>
+          <div style={{ display: "flex", gap: "0.5rem" }}>
+            <button
+              className="btn btn-secondary"
+              onClick={() => setIsExportTemplateOpen(true)}
+              disabled={maps.length === 0}
+              title="Exporter des maps comme template"
+            >
+              <Package size={16} /> Export Template
+            </button>
+            <button className="btn" onClick={() => setIsModalOpen(true)}>
+              <Plus size={18} /> New Map
+            </button>
+          </div>
         </div>
 
         <div className="map-gallery-grid">
@@ -132,6 +148,14 @@ export const MapGallery: React.FC = () => {
           ))}
         </div>
       </div>
+
+      <ExportTemplateModal
+        isOpen={isExportTemplateOpen}
+        onClose={() => setIsExportTemplateOpen(false)}
+        maps={maps}
+        tilesets={tilesets}
+        sprites={sprites}
+      />
 
       <Modal
         isOpen={isModalOpen}

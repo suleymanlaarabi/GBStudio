@@ -28,6 +28,7 @@ const TilePreview: React.FC<{ tile: Tile }> = ({ tile }) => {
 
     tile.data.forEach((row, y) =>
       row.forEach((colorIndex, x) => {
+        if (colorIndex === null || colorIndex === undefined) return;
         ctx.fillStyle = GB_COLORS[colorIndex];
         ctx.fillRect(
           Math.floor(offset + x * scale), 
@@ -110,8 +111,10 @@ export const TilesetPanel: React.FC = () => {
 
   const getTilesetUsageCount = (tilesetId: string) => {
     return maps.filter((map) =>
-      map.data.some((row) =>
-        row.some((cell) => cell && cell.tilesetId === tilesetId),
+      map.layers.some((layer) =>
+        layer.data.some((row) =>
+          row.some((cell) => cell && cell.tilesetId === tilesetId),
+        ),
       ),
     ).length;
   };
@@ -140,12 +143,14 @@ export const TilesetPanel: React.FC = () => {
   const isTileUsedInMaps = (tileIndex: number) => {
     if (!activeTileset) return [];
     return maps.filter((map) =>
-      map.data.some((row) =>
-        row.some(
-          (cell) =>
-            cell &&
-            cell.tileIndex === tileIndex &&
-            cell.tilesetId === activeTileset.id,
+      map.layers.some((layer) =>
+        layer.data.some((row) =>
+          row.some(
+            (cell) =>
+              cell &&
+              cell.tileIndex === tileIndex &&
+              cell.tilesetId === activeTileset.id,
+          ),
         ),
       ),
     );

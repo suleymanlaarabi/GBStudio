@@ -2,7 +2,7 @@ import type { GBColor, SpriteAsset, TileMap, Tileset } from "../types";
 import { formatFlatByteArray, formatMapRows } from "../utils";
 
 export const convertTileDataTo2BPP = (
-  data: GBColor[][],
+  data: (GBColor | null)[][],
   size: number,
 ): string[] => {
   const bytes: number[] = [];
@@ -12,7 +12,7 @@ export const convertTileDataTo2BPP = (
     let highByte = 0;
 
     for (let x = 0; x < size; x++) {
-      const color = data[y]![x] as GBColor;
+      const color = (data[y]![x] ?? 0) as GBColor; // null = transparent → color 0
       const lowBit = color & 1;
       const highBit = (color >> 1) & 1;
       lowByte |= lowBit << (7 - x);
@@ -115,9 +115,16 @@ const buildMapExport = (map: TileMap, atlas: ProjectAtlas): MapExport => {
   const hardwareHeight = is16 ? map.height * 2 : map.height;
   const hardwareData: number[] = new Array(hardwareWidth * hardwareHeight).fill(0);
 
-  map.data.forEach((row, logicalY) => {
-    row.forEach((cell, logicalX) => {
-      if (!cell) return;
+  const visibleLayers = map.layers.filter((l) => l.visible);
+
+  for (let logicalY = 0; logicalY < map.height; logicalY++) {
+    for (let logicalX = 0; logicalX < map.width; logicalX++) {
+      let cell = null;
+      for (let li = visibleLayers.length - 1; li >= 0; li--) {
+        const candidate = visibleLayers[li]!.data[logicalY]?.[logicalX];
+        if (candidate) { cell = candidate; break; }
+      }
+      if (!cell) continue;
 
       const offset = atlas.tilesetOffsets.get(cell.tilesetId) || 0;
       if (is16) {
@@ -127,12 +134,12 @@ const buildMapExport = (map: TileMap, atlas: ProjectAtlas): MapExport => {
           const hardwareY = logicalY * 2 + Math.floor(segment / 2);
           hardwareData[hardwareY * hardwareWidth + hardwareX] = base + segment;
         }
-        return;
+        continue;
       }
 
       hardwareData[logicalY * hardwareWidth + logicalX] = offset + cell.tileIndex;
-    });
-  });
+    }
+  }
 
   return {
     map,
@@ -209,32 +216,6 @@ static UINT8 gbt_min_u8(UINT8 left, UINT8 right) {
     return left < right ? left : right;
 }
 
-static void gbt_set_bkg_submap_wrap_x(UINT8 x, UINT8 y, UINT8 width, UINT8 height, const unsigned char *data, UINT8 map_width) {
-    UINT8 remaining_width = width;
-    UINT8 src_offset = 0;
-
-    while (remaining_width != 0) {
-        UINT8 chunk_width = gbt_min_u8(remaining_width, (UINT8)(32u - x));
-        set_bkg_submap(x, y, chunk_width, height, data + src_offset, map_width);
-        remaining_width -= chunk_width;
-        src_offset += chunk_width;
-        x = 0;
-    }
-}
-
-static void gbt_set_bkg_submap_wrap(UINT8 x, UINT8 y, UINT8 width, UINT8 height, const unsigned char *data, UINT8 map_width) {
-    UINT8 remaining_height = height;
-    UINT8 src_row = 0;
-
-    while (remaining_height != 0) {
-        UINT8 chunk_height = gbt_min_u8(remaining_height, (UINT8)(32u - y));
-        gbt_set_bkg_submap_wrap_x(x, y, width, chunk_height, data + ((UINT16)src_row * map_width), map_width);
-        remaining_height -= chunk_height;
-        src_row += chunk_height;
-        y = 0;
-    }
-}
-
 void gbt_load_map(const GBT_MAP *map) {
     if (gbt_loaded_tiles != map->tiles) {
         set_bkg_data(0, map->tile_count, map->tiles);
@@ -247,9 +228,10 @@ void gbt_draw_map(const GBT_MAP *map) {
 }
 
 void gbt_switch_map(const GBT_MAP *next_map, gbt_dir_t dir) {
-    UINT8 i;
-    UINT8 visible_width;
-    UINT8 visible_height;
+    UINT8 i, j;
+    UINT8 visible_width, visible_height;
+    unsigned char buf[32];
+
     gbt_load_map(next_map);
 
     visible_width = gbt_min_u8((UINT8)next_map->width, 20u);
@@ -257,38 +239,59 @@ void gbt_switch_map(const GBT_MAP *next_map, gbt_dir_t dir) {
 
     if (dir == GBT_DIR_RIGHT) {
         for (i = 0; i < visible_width; i++) {
+            const unsigned char *src = next_map->data + i;
+            for (j = 0; j < visible_height; j++) { buf[j] = *src; src += next_map->width; }
             wait_vbl_done();
-            gbt_set_bkg_submap_wrap((UINT8)((((SCX_REG + 8u) >> 3) + 19u) & 31u), 0u, 1u, visible_height, next_map->data + i, (UINT8)next_map->width);
             SCX_REG += 8u;
+            UINT8 tx_scroll = (UINT8)(((SCX_REG >> 3) + 19u) & 31u);
+            set_bkg_tiles(tx_scroll, 0, 1, visible_height, buf);
+            set_bkg_tiles(i, 0, 1, visible_height, buf);
         }
+        wait_vbl_done();
+        SCX_REG = 0u;
+        set_bkg_submap(0, 0, 8, visible_height, next_map->data, next_map->width);
     } else if (dir == GBT_DIR_LEFT) {
         for (i = 0; i < visible_width; i++) {
-            UINT8 next_scx;
+            UINT8 col_idx = (UINT8)(visible_width - 1u - i);
+            const unsigned char *src = next_map->data + col_idx;
+            for (j = 0; j < visible_height; j++) { buf[j] = *src; src += next_map->width; }
             wait_vbl_done();
-            next_scx = (UINT8)(SCX_REG - 8u);
-            gbt_set_bkg_submap_wrap((UINT8)((next_scx >> 3) & 31u), 0u, 1u, visible_height, next_map->data + (UINT8)(visible_width - 1u - i), (UINT8)next_map->width);
-            SCX_REG = next_scx;
+            SCX_REG -= 8u;
+            UINT8 tx_scroll = (UINT8)(SCX_REG >> 3);
+            set_bkg_tiles(tx_scroll, 0, 1, visible_height, buf);
+            set_bkg_tiles(col_idx, 0, 1, visible_height, buf);
         }
+        wait_vbl_done();
+        SCX_REG = 0u;
+        set_bkg_submap(visible_width - 8, 0, 8, visible_height, next_map->data + (visible_width - 8), next_map->width);
     } else if (dir == GBT_DIR_DOWN) {
         for (i = 0; i < visible_height; i++) {
+            const unsigned char *src = next_map->data + ((UINT16)i * next_map->width);
+            for (j = 0; j < visible_width; j++) buf[j] = src[j];
             wait_vbl_done();
-            gbt_set_bkg_submap_wrap(0u, (UINT8)((((SCY_REG + 8u) >> 3) + 17u) & 31u), visible_width, 1u, next_map->data + ((UINT16)i * next_map->width), (UINT8)next_map->width);
             SCY_REG += 8u;
+            UINT8 ty_scroll = (UINT8)(((SCY_REG >> 3) + 17u) & 31u);
+            set_bkg_tiles(0, ty_scroll, visible_width, 1, buf);
+            set_bkg_tiles(0, i, visible_width, 1, buf);
         }
+        wait_vbl_done();
+        SCY_REG = 0u;
+        set_bkg_submap(0, 0, visible_width, 4, next_map->data, next_map->width);
     } else if (dir == GBT_DIR_UP) {
         for (i = 0; i < visible_height; i++) {
-            UINT8 next_scy;
+            UINT8 row_idx = (UINT8)(visible_height - 1u - i);
+            const unsigned char *src = next_map->data + ((UINT16)row_idx * next_map->width);
+            for (j = 0; j < visible_width; j++) buf[j] = src[j];
             wait_vbl_done();
-            next_scy = (UINT8)(SCY_REG - 8u);
-            gbt_set_bkg_submap_wrap(0u, (UINT8)((next_scy >> 3) & 31u), visible_width, 1u, next_map->data + ((UINT16)(visible_height - 1u - i) * next_map->width), (UINT8)next_map->width);
-            SCY_REG = next_scy;
+            SCY_REG -= 8u;
+            UINT8 ty_scroll = (UINT8)(SCY_REG >> 3);
+            set_bkg_tiles(0, ty_scroll, visible_width, 1, buf);
+            set_bkg_tiles(0, row_idx, visible_width, 1, buf);
         }
+        wait_vbl_done();
+        SCY_REG = 0u;
+        set_bkg_submap(0, visible_height - 4, visible_width, 4, next_map->data + ((UINT16)(visible_height - 4) * next_map->width), next_map->width);
     }
-
-    wait_vbl_done();
-    SCX_REG = 0u;
-    SCY_REG = 0u;
-    gbt_draw_map(next_map);
 }
 
 void gbt_update_sprite(UINT8 id, GBT_SPRITE_STATE *state) {

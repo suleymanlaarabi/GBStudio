@@ -5,6 +5,7 @@ import {
   MonitorPlay,
   Redo2,
   Undo2,
+  LayoutTemplate,
 } from "lucide-react";
 import { useStore } from "../../store";
 import { ExportPanel } from "./ExportPanel";
@@ -19,6 +20,7 @@ interface SidebarProps {
   onSaveProjectAs: () => void;
   projectPath: string | null;
   projectFilePath: string | null;
+  onOpenTemplates: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -31,6 +33,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onSaveProjectAs,
   projectPath,
   projectFilePath,
+  onOpenTemplates,
 }) => {
   const { history, historyIndex, redo, undo, view, setView } = useStore();
 
@@ -84,28 +87,42 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <MonitorPlay size={20} />
           Sprite Studio
         </button>
-      </nav>
 
-      <div style={{ display: "flex", gap: "0.5rem" }}>
         <button
           className="btn btn-secondary"
-          style={{ flex: 1, padding: "10px" }}
-          onClick={undo}
-          disabled={historyIndex <= 0}
-          title="Undo"
+          onClick={onOpenTemplates}
+          title="Browse and import templates"
+          style={{
+            textAlign: "left",
+            display: "flex",
+            alignItems: "center",
+            gap: "0.8rem",
+          }}
         >
-          <Undo2 size={18} />
+          <LayoutTemplate size={20} />
+          Templates
         </button>
-        <button
-          className="btn btn-secondary"
-          style={{ flex: 1, padding: "10px" }}
-          onClick={redo}
-          disabled={historyIndex >= history.length - 1}
-          title="Redo"
-        >
-          <Redo2 size={18} />
-        </button>
-      </div>
+        <div style={{ display: "flex", gap: "0.5rem" }}>
+          <button
+            className="btn btn-secondary"
+            style={{ flex: 1, padding: "10px" }}
+            onClick={undo}
+            disabled={historyIndex <= 0}
+            title="Undo"
+          >
+            <Undo2 size={18} />
+          </button>
+          <button
+            className="btn btn-secondary"
+            style={{ flex: 1, padding: "10px" }}
+            onClick={redo}
+            disabled={historyIndex >= history.length - 1}
+            title="Redo"
+          >
+            <Redo2 size={18} />
+          </button>
+        </div>
+      </nav>
 
       <ExportPanel
         isSaving={isSaving}

@@ -1,26 +1,34 @@
 import type { StateCreator } from "zustand";
 import type {
   MapClipboard,
+  MapLayer,
   MapSelectionState,
   SelectionBounds,
   TileCell,
   TileMap,
   TileSelection,
+  Tileset,
   TileSize,
 } from "../../types";
 import {
-  clearMapArea,
+  applyToActiveLayer,
+  clearLayerArea,
+  createEmptyLayer,
   createMapSelectionState,
-  drawMapLine as drawMapLineData,
-  drawMapRectangle as drawMapRectangleData,
-  extractMapSelection,
-  floodFillMap,
+  drawLineOnLayer,
+  drawRectangleOnLayer,
+  extractLayerSelection,
+  floodFillLayer,
+  getActiveLayerData,
   normalizeMapSelection,
-  pasteMapSelection as pasteMapSelectionData,
-  setMapCellValue,
-  paintTileBrush as paintTileBrushData,
+  paintBrushOnLayer,
+  pasteLayerSelection,
+  setLayerCell,
 } from "../../services/mapService";
-import { getTileAtTilesetPosition, normalizeTilesetLayout } from "../../services/tileService";
+import {
+  getTileAtTilesetPosition,
+  normalizeTilesetLayout,
+} from "../../services/tileService";
 
 export interface MapSlice {
   maps: TileMap[];
@@ -31,40 +39,12 @@ export interface MapSlice {
   updateTileSelection: (x: number, y: number) => void;
   endTileSelection: () => void;
   clearTileSelection: () => void;
-  updateMapCell: (
-    mapIndex: number,
-    x: number,
-    y: number,
-    tilesetId: string,
-    tileIndex: number,
-  ) => void;
+  updateMapCell: (mapIndex: number, x: number, y: number, tilesetId: string, tileIndex: number) => void;
   clearMapCell: (mapIndex: number, x: number, y: number) => void;
-  fillMap: (
-    mapIndex: number,
-    x: number,
-    y: number,
-    tilesetId: string,
-    tileIndex: number,
-  ) => void;
-  paintTileBrush: (
-    mapIndex: number,
-    x: number,
-    y: number,
-  ) => void;
-  drawMapLine: (
-    mapIndex: number,
-    startX: number,
-    startY: number,
-    endX: number,
-    endY: number,
-    cell: TileCell | null,
-  ) => void;
-  drawMapRectangle: (
-    mapIndex: number,
-    selection: SelectionBounds,
-    cell: TileCell | null,
-    filled: boolean,
-  ) => void;
+  fillMap: (mapIndex: number, x: number, y: number, tilesetId: string, tileIndex: number) => void;
+  paintTileBrush: (mapIndex: number, x: number, y: number) => void;
+  drawMapLine: (mapIndex: number, startX: number, startY: number, endX: number, endY: number, cell: TileCell | null) => void;
+  drawMapRectangle: (mapIndex: number, selection: SelectionBounds, cell: TileCell | null, filled: boolean) => void;
   beginMapSelection: (x: number, y: number) => void;
   updateMapSelection: (x: number, y: number) => void;
   endMapSelection: () => void;
@@ -76,26 +56,28 @@ export interface MapSlice {
   pickMapCell: (mapIndex: number, x: number, y: number) => void;
   addMap: (name: string, width: number, height: number, tileSize: TileSize) => void;
   removeMap: (index: number) => void;
+  // Layer operations
+  addLayer: (mapIndex: number) => void;
+  removeLayer: (mapIndex: number, layerIndex: number) => void;
+  moveLayerUp: (mapIndex: number, layerIndex: number) => void;
+  moveLayerDown: (mapIndex: number, layerIndex: number) => void;
+  toggleLayerVisibility: (mapIndex: number, layerIndex: number) => void;
+  renameLayer: (mapIndex: number, layerIndex: number, name: string) => void;
+  duplicateLayer: (mapIndex: number, layerIndex: number) => void;
 }
 
-const createEmptyMap = (
-  name: string,
-  width: number,
-  height: number,
-  tileSize: TileSize,
-): TileMap => ({
+const createEmptyMap = (name: string, width: number, height: number, tileSize: TileSize): TileMap => ({
   id: crypto.randomUUID(),
   name,
   width,
   height,
   tileSize,
-  data: Array(height)
-    .fill(null)
-    .map(() => Array(width).fill(null)),
+  layers: [createEmptyLayer("Layer 1", width, height)],
 });
 
 type MapState = MapSlice & {
   activeMapIndex: number;
+  activeLayerIndex: number;
   activeTileIndex: number;
   activeTilesetIndex: number;
   commit: () => void;
@@ -103,22 +85,11 @@ type MapState = MapSlice & {
   view: "tiles" | "gallery" | "map_editor" | "studio";
 };
 
-const emptyMapSelection: MapSelectionState = {
-  hasSelection: false,
-  x: 0,
-  y: 0,
-  width: 0,
-  height: 0,
-};
+const emptyMapSelection: MapSelectionState = { hasSelection: false, x: 0, y: 0, width: 0, height: 0 };
+const emptyTileSelection: TileSelection = { hasSelection: false, x: 0, y: 0, width: 0, height: 0, tileData: [] };
 
-const emptyTileSelection: TileSelection = {
-  hasSelection: false,
-  x: 0,
-  y: 0,
-  width: 0,
-  height: 0,
-  tileData: [],
-};
+const updateMap = (maps: TileMap[], mapIndex: number, updater: (map: TileMap) => TileMap): TileMap[] =>
+  maps.map((map, i) => (i === mapIndex ? updater(map) : map));
 
 export const createMapSlice: StateCreator<MapState, [], [], MapSlice> = (set, get) => ({
   maps: [],
@@ -127,25 +98,13 @@ export const createMapSlice: StateCreator<MapState, [], [], MapSlice> = (set, ge
   tileSelection: emptyTileSelection,
 
   beginTileSelection: (x, y) => {
-    set({
-      tileSelection: {
-        hasSelection: true,
-        startX: x,
-        startY: y,
-        x,
-        y,
-        width: 0,
-        height: 0,
-        tileData: [],
-      },
-    });
+    set({ tileSelection: { hasSelection: true, startX: x, startY: y, x, y, width: 0, height: 0, tileData: [] } });
   },
 
   updateTileSelection: (x, y) => {
     const { tileSelection } = get();
     if (!tileSelection.hasSelection || tileSelection.startX === undefined || tileSelection.startY === undefined) return;
 
-    // Calculate bounds
     const startX = tileSelection.startX;
     const startY = tileSelection.startY;
     const minX = Math.min(startX, x);
@@ -153,25 +112,18 @@ export const createMapSlice: StateCreator<MapState, [], [], MapSlice> = (set, ge
     const width = Math.abs(x - startX) + 1;
     const height = Math.abs(y - startY) + 1;
 
-    // Extract tile data from the active tileset
     const { tilesets, activeTilesetIndex } = get();
     const activeTileset = tilesets[activeTilesetIndex]
       ? normalizeTilesetLayout(tilesets[activeTilesetIndex]!)
       : undefined;
-    const tileData: Array<Array<{ tilesetId: string; tileIndex: number } | null>> = [];
 
+    const tileData: Array<Array<{ tilesetId: string; tileIndex: number } | null>> = [];
     for (let ty = 0; ty < height; ty++) {
       const row: Array<{ tilesetId: string; tileIndex: number } | null> = [];
       for (let tx = 0; tx < width; tx++) {
-        const tileX = minX + tx;
-        const tileY = minY + ty;
         if (activeTileset) {
-          const gridTile = getTileAtTilesetPosition(activeTileset, tileX, tileY);
-          if (gridTile) {
-            row.push({ tilesetId: activeTileset.id, tileIndex: gridTile.tileIndex });
-          } else {
-            row.push(null);
-          }
+          const gridTile = getTileAtTilesetPosition(activeTileset, minX + tx, minY + ty);
+          row.push(gridTile ? { tilesetId: activeTileset.id, tileIndex: gridTile.tileIndex } : null);
         } else {
           row.push(null);
         }
@@ -179,111 +131,94 @@ export const createMapSlice: StateCreator<MapState, [], [], MapSlice> = (set, ge
       tileData.push(row);
     }
 
-    set({
-      tileSelection: {
-        hasSelection: true,
-        startX,
-        startY,
-        x: minX,
-        y: minY,
-        width,
-        height,
-        tileData,
-      },
-    });
+    set({ tileSelection: { hasSelection: true, startX, startY, x: minX, y: minY, width, height, tileData } });
   },
 
   endTileSelection: () => {
     const { tileSelection } = get();
-    // Keep selection if it has area
     if (tileSelection.width > 0 && tileSelection.height > 0) return;
     set({ tileSelection: emptyTileSelection });
   },
 
-  clearTileSelection: () => {
-    set({ tileSelection: emptyTileSelection });
-  },
+  clearTileSelection: () => set({ tileSelection: emptyTileSelection }),
 
   updateMapCell: (mapIndex, x, y, tilesetId, tileIndex) => {
+    const { activeLayerIndex } = get();
     set((state) => ({
-      maps: state.maps.map((map, currentIndex) =>
-        currentIndex === mapIndex
-          ? setMapCellValue(map, x, y, { tilesetId, tileIndex })
-          : map,
+      maps: updateMap(state.maps, mapIndex, (map) =>
+        applyToActiveLayer(map, activeLayerIndex, (data) =>
+          setLayerCell(data, x, y, { tilesetId, tileIndex }, map.width, map.height)
+        )
       ),
     }));
   },
 
   clearMapCell: (mapIndex, x, y) => {
+    const { activeLayerIndex } = get();
     set((state) => ({
-      maps: state.maps.map((map, currentIndex) =>
-        currentIndex === mapIndex ? setMapCellValue(map, x, y, null) : map,
+      maps: updateMap(state.maps, mapIndex, (map) =>
+        applyToActiveLayer(map, activeLayerIndex, (data) =>
+          setLayerCell(data, x, y, null, map.width, map.height)
+        )
       ),
     }));
   },
 
   fillMap: (mapIndex, x, y, tilesetId, tileIndex) => {
+    const { activeLayerIndex } = get();
     set((state) => ({
-      maps: state.maps.map((map, currentIndex) =>
-        currentIndex === mapIndex
-          ? floodFillMap(map, x, y, { tilesetId, tileIndex })
-          : map,
+      maps: updateMap(state.maps, mapIndex, (map) =>
+        applyToActiveLayer(map, activeLayerIndex, (data) =>
+          floodFillLayer(data, x, y, { tilesetId, tileIndex }, map.width, map.height)
+        )
       ),
     }));
     get().commit();
   },
 
   paintTileBrush: (mapIndex, x, y) => {
-    const { tileSelection } = get();
+    const { tileSelection, activeLayerIndex } = get();
     if (!tileSelection.hasSelection || tileSelection.width === 0 || tileSelection.height === 0) return;
-
     set((state) => ({
-      maps: state.maps.map((map, currentIndex) =>
-        currentIndex === mapIndex
-          ? paintTileBrushData(map, x, y, tileSelection)
-          : map,
+      maps: updateMap(state.maps, mapIndex, (map) =>
+        applyToActiveLayer(map, activeLayerIndex, (data) =>
+          paintBrushOnLayer(data, x, y, tileSelection, map.width, map.height)
+        )
       ),
     }));
   },
 
   drawMapLine: (mapIndex, startX, startY, endX, endY, cell) => {
+    const { activeLayerIndex } = get();
     set((state) => ({
-      maps: state.maps.map((map, currentIndex) =>
-        currentIndex === mapIndex
-          ? drawMapLineData(map, startX, startY, endX, endY, cell)
-          : map,
+      maps: updateMap(state.maps, mapIndex, (map) =>
+        applyToActiveLayer(map, activeLayerIndex, (data) =>
+          drawLineOnLayer(data, startX, startY, endX, endY, cell, map.width, map.height)
+        )
       ),
     }));
     get().commit();
   },
 
   drawMapRectangle: (mapIndex, selection, cell, filled) => {
+    const { activeLayerIndex } = get();
     set((state) => ({
-      maps: state.maps.map((map, currentIndex) =>
-        currentIndex === mapIndex
-          ? drawMapRectangleData(map, selection, cell, filled)
-          : map,
+      maps: updateMap(state.maps, mapIndex, (map) =>
+        applyToActiveLayer(map, activeLayerIndex, (data) =>
+          drawRectangleOnLayer(data, selection, cell, filled, map.width, map.height)
+        )
       ),
     }));
     get().commit();
   },
 
-  beginMapSelection: (x, y) => {
-    set({ mapSelection: createMapSelectionState(x, y) });
-  },
+  beginMapSelection: (x, y) => set({ mapSelection: createMapSelectionState(x, y) }),
 
   updateMapSelection: (x, y) => {
     const { mapSelection } = get();
     const startX = mapSelection.startX ?? mapSelection.x;
     const startY = mapSelection.startY ?? mapSelection.y;
-    set({
-      mapSelection: {
-        hasSelection: true,
-        startX,
-        startY,
-        ...normalizeMapSelection(startX, startY, x, y),
-      },
-    });
+    set({ mapSelection: { hasSelection: true, startX, startY, ...normalizeMapSelection(startX, startY, x, y) } });
   },
 
   endMapSelection: () => {
@@ -292,38 +227,40 @@ export const createMapSlice: StateCreator<MapState, [], [], MapSlice> = (set, ge
     set({ mapSelection: emptyMapSelection });
   },
 
-  clearMapSelection: () => {
-    set({ mapSelection: emptyMapSelection });
-  },
+  clearMapSelection: () => set({ mapSelection: emptyMapSelection }),
 
   copyMapSelection: () => {
-    const { maps, activeMapIndex, mapSelection } = get();
+    const { maps, activeMapIndex, mapSelection, activeLayerIndex } = get();
     const map = maps[activeMapIndex];
     if (!map || !mapSelection.hasSelection) return;
-    set({ mapClipboard: extractMapSelection(map, mapSelection) });
+    const data = getActiveLayerData(map, activeLayerIndex);
+    set({ mapClipboard: extractLayerSelection(data, mapSelection) });
   },
 
   cutMapSelection: () => {
-    const { maps, activeMapIndex, mapSelection } = get();
+    const { maps, activeMapIndex, mapSelection, activeLayerIndex } = get();
     const map = maps[activeMapIndex];
     if (!map || !mapSelection.hasSelection) return;
+    const data = getActiveLayerData(map, activeLayerIndex);
     set((state) => ({
-      mapClipboard: extractMapSelection(map, mapSelection),
-      maps: state.maps.map((currentMap, currentIndex) =>
-        currentIndex === activeMapIndex ? clearMapArea(currentMap, mapSelection) : currentMap,
+      mapClipboard: extractLayerSelection(data, mapSelection),
+      maps: updateMap(state.maps, activeMapIndex, (m) =>
+        applyToActiveLayer(m, activeLayerIndex, (d) =>
+          clearLayerArea(d, mapSelection, m.width, m.height)
+        )
       ),
     }));
     get().commit();
   },
 
   pasteMapSelection: (targetX, targetY) => {
-    const { activeMapIndex, mapClipboard } = get();
+    const { activeMapIndex, mapClipboard, activeLayerIndex } = get();
     if (!mapClipboard) return;
     set((state) => ({
-      maps: state.maps.map((map, currentIndex) =>
-        currentIndex === activeMapIndex
-          ? pasteMapSelectionData(map, mapClipboard, targetX, targetY)
-          : map,
+      maps: updateMap(state.maps, activeMapIndex, (map) =>
+        applyToActiveLayer(map, activeLayerIndex, (data) =>
+          pasteLayerSelection(data, mapClipboard, targetX, targetY, map.width, map.height)
+        )
       ),
       mapSelection: {
         hasSelection: true,
@@ -337,11 +274,13 @@ export const createMapSlice: StateCreator<MapState, [], [], MapSlice> = (set, ge
   },
 
   deleteMapSelection: () => {
-    const { activeMapIndex, mapSelection } = get();
+    const { activeMapIndex, mapSelection, activeLayerIndex } = get();
     if (!mapSelection.hasSelection) return;
     set((state) => ({
-      maps: state.maps.map((map, currentIndex) =>
-        currentIndex === activeMapIndex ? clearMapArea(map, mapSelection) : map,
+      maps: updateMap(state.maps, activeMapIndex, (map) =>
+        applyToActiveLayer(map, activeLayerIndex, (data) =>
+          clearLayerArea(data, mapSelection, map.width, map.height)
+        )
       ),
       mapSelection: emptyMapSelection,
     }));
@@ -349,21 +288,22 @@ export const createMapSlice: StateCreator<MapState, [], [], MapSlice> = (set, ge
   },
 
   pickMapCell: (mapIndex, x, y) => {
-    const { maps, tilesets } = get();
-    const cell = maps[mapIndex]?.data[y]?.[x] ?? null;
+    const { maps, tilesets, activeLayerIndex } = get();
+    const map = maps[mapIndex];
+    if (!map) return;
+    const data = getActiveLayerData(map, activeLayerIndex);
+    const cell = data[y]?.[x] ?? null;
     if (!cell) return;
-    const tilesetIndex = tilesets.findIndex((tileset) => tileset.id === cell.tilesetId);
+    const tilesetIndex = tilesets.findIndex((ts) => ts.id === cell.tilesetId);
     if (tilesetIndex < 0) return;
-    set({
-      activeTilesetIndex: tilesetIndex,
-      activeTileIndex: cell.tileIndex,
-    });
+    set({ activeTilesetIndex: tilesetIndex, activeTileIndex: cell.tileIndex });
   },
 
   addMap: (name, width, height, tileSize) => {
     set((state) => ({
       maps: [...state.maps, createEmptyMap(name, width, height, tileSize)],
       activeMapIndex: state.maps.length,
+      activeLayerIndex: 0,
       view: "map_editor",
     }));
     get().commit();
@@ -371,9 +311,111 @@ export const createMapSlice: StateCreator<MapState, [], [], MapSlice> = (set, ge
 
   removeMap: (index) => {
     set((state) => ({
-      maps: state.maps.filter((_, currentIndex) => currentIndex !== index),
+      maps: state.maps.filter((_, i) => i !== index),
       activeMapIndex: -1,
     }));
     get().commit();
   },
+
+  // --- Layer operations ---
+
+  addLayer: (mapIndex) => {
+    set((state) => {
+      const map = state.maps[mapIndex];
+      if (!map) return state;
+      const newLayer = createEmptyLayer(`Layer ${map.layers.length + 1}`, map.width, map.height);
+      const newLayers = [...map.layers, newLayer];
+      return {
+        maps: updateMap(state.maps, mapIndex, (m) => ({ ...m, layers: newLayers })),
+        activeLayerIndex: newLayers.length - 1,
+      };
+    });
+    get().commit();
+  },
+
+  removeLayer: (mapIndex, layerIndex) => {
+    set((state) => {
+      const map = state.maps[mapIndex];
+      if (!map || map.layers.length <= 1) return state;
+      const newLayers = map.layers.filter((_, i) => i !== layerIndex);
+      const newActiveLayer = Math.min(state.activeLayerIndex, newLayers.length - 1);
+      return {
+        maps: updateMap(state.maps, mapIndex, (m) => ({ ...m, layers: newLayers })),
+        activeLayerIndex: newActiveLayer,
+      };
+    });
+    get().commit();
+  },
+
+  moveLayerUp: (mapIndex, layerIndex) => {
+    set((state) => {
+      const map = state.maps[mapIndex];
+      if (!map || layerIndex >= map.layers.length - 1) return state;
+      const newLayers = [...map.layers];
+      [newLayers[layerIndex], newLayers[layerIndex + 1]] = [newLayers[layerIndex + 1]!, newLayers[layerIndex]!];
+      return {
+        maps: updateMap(state.maps, mapIndex, (m) => ({ ...m, layers: newLayers })),
+        activeLayerIndex: layerIndex + 1,
+      };
+    });
+    get().commit();
+  },
+
+  moveLayerDown: (mapIndex, layerIndex) => {
+    set((state) => {
+      const map = state.maps[mapIndex];
+      if (!map || layerIndex <= 0) return state;
+      const newLayers = [...map.layers];
+      [newLayers[layerIndex], newLayers[layerIndex - 1]] = [newLayers[layerIndex - 1]!, newLayers[layerIndex]!];
+      return {
+        maps: updateMap(state.maps, mapIndex, (m) => ({ ...m, layers: newLayers })),
+        activeLayerIndex: layerIndex - 1,
+      };
+    });
+    get().commit();
+  },
+
+  toggleLayerVisibility: (mapIndex, layerIndex) => {
+    set((state) => ({
+      maps: updateMap(state.maps, mapIndex, (map) => ({
+        ...map,
+        layers: map.layers.map((layer, i) =>
+          i === layerIndex ? { ...layer, visible: !layer.visible } : layer
+        ),
+      })),
+    }));
+  },
+
+  renameLayer: (mapIndex, layerIndex, name) => {
+    set((state) => ({
+      maps: updateMap(state.maps, mapIndex, (map) => ({
+        ...map,
+        layers: map.layers.map((layer, i) =>
+          i === layerIndex ? { ...layer, name } : layer
+        ),
+      })),
+    }));
+  },
+
+  duplicateLayer: (mapIndex, layerIndex) => {
+    set((state) => {
+      const map = state.maps[mapIndex];
+      if (!map) return state;
+      const source = map.layers[layerIndex];
+      if (!source) return state;
+      const newLayer: MapLayer = {
+        id: crypto.randomUUID(),
+        name: `${source.name} (copie)`,
+        visible: true,
+        data: source.data.map((row) => row.map((cell) => (cell ? { ...cell } : null))),
+      };
+      const newLayers = [...map.layers.slice(0, layerIndex + 1), newLayer, ...map.layers.slice(layerIndex + 1)];
+      return {
+        maps: updateMap(state.maps, mapIndex, (m) => ({ ...m, layers: newLayers })),
+        activeLayerIndex: layerIndex + 1,
+      };
+    });
+    get().commit();
+  },
 });
+

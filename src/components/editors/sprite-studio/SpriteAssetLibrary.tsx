@@ -36,6 +36,7 @@ const TileThumbnail: React.FC<{
 
     tile.data.forEach((r, y) =>
       r.forEach((c, x) => {
+        if (c === null || c === undefined) return;
         ctx.fillStyle = GB_COLORS[c];
         ctx.fillRect(
           Math.floor(offset + x * scale),

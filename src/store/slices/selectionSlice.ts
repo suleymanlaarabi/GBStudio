@@ -16,7 +16,7 @@ import { normalizeSelection, selectAll } from "../../utils";
 
 export interface SelectionSlice {
   selection: SelectionState;
-  clipboard: GBColor[][] | null;
+  clipboard: (GBColor | null)[][] | null;
   beginSelection: (x: number, y: number) => void;
   updateSelection: (x: number, y: number) => void;
   endSelection: () => void;
@@ -60,7 +60,7 @@ const updateActiveTileData = (
   tilesets: Tileset[],
   activeTilesetIndex: number,
   activeTileIndex: number,
-  data: GBColor[][],
+  data: (GBColor | null)[][],
 ): Tileset[] =>
   tilesets.map((tileset, tilesetIndex) =>
     tilesetIndex === activeTilesetIndex

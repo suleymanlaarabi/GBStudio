@@ -1,44 +1,36 @@
 import type { GBColor, SelectionBounds } from "../../types";
 import { drawRectangle } from "./shapes";
 
+type PixelData = (GBColor | null)[][];
+
 export function floodFillData(
-  data: GBColor[][],
+  data: PixelData,
   startX: number,
   startY: number,
   targetColor: GBColor,
-): GBColor[][] {
+): PixelData {
   const newData = data.map((row) => [...row]);
   const tileSize = data.length;
-  const startColor = newData[startY]?.[startX];
+  const startColor = newData[startY]?.[startX] ?? null;
 
-  if (startColor === undefined || startColor === targetColor) {
-    return newData;
-  }
+  if (startColor === targetColor) return newData;
 
-  const fill = (x: number, y: number) => {
-    if (
-      x < 0 ||
-      x >= tileSize ||
-      y < 0 ||
-      y >= tileSize ||
-      newData[y]![x] !== startColor
-    ) {
-      return;
-    }
+  const stack: Array<[number, number]> = [[startX, startY]];
+
+  while (stack.length > 0) {
+    const [x, y] = stack.pop()!;
+    if (x < 0 || x >= tileSize || y < 0 || y >= tileSize) continue;
+    if ((newData[y]![x] ?? null) !== startColor) continue;
 
     newData[y]![x] = targetColor;
-    fill(x + 1, y);
-    fill(x - 1, y);
-    fill(x, y + 1);
-    fill(x, y - 1);
-  };
+    stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+  }
 
-  fill(startX, startY);
   return newData;
 }
 
 export const fillArea = (
-  data: GBColor[][],
+  data: PixelData,
   selection: SelectionBounds,
   color: GBColor,
 ) =>

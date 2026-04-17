@@ -4,6 +4,7 @@ import { MapCanvas } from "./map-editor/MapCanvas";
 import { MapEditorHeader } from "./map-editor/MapEditorHeader";
 import { MapToolBar } from "./map-editor/MapToolBar";
 import { MapAssetPanel } from "./map-editor/MapAssetPanel";
+import { LayersPanel } from "./map-editor/LayersPanel";
 import { useMapEditorShortcuts } from "./map-editor/useMapEditorShortcuts";
 import { useMapEditorInteraction } from "./map-editor/useMapEditorInteraction";
 
@@ -128,16 +129,19 @@ export const MapEditor = () => {
         />
       </div>
 
-      <MapAssetPanel
-        tilesets={tilesets}
-        activeTilesetIndex={activeTilesetIndex}
-        setActiveTileset={setActiveTileset}
-        activeTileIndex={activeTileIndex}
-        setActiveTile={setActiveTile}
-        tileSize={tileSize}
-        mapTool={mapTool}
-        mapSelection={mapSelection}
-      />
+      <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+        <LayersPanel mapIndex={activeMapIndex} />
+        <MapAssetPanel
+          tilesets={tilesets}
+          activeTilesetIndex={activeTilesetIndex}
+          setActiveTileset={setActiveTileset}
+          activeTileIndex={activeTileIndex}
+          setActiveTile={setActiveTile}
+          tileSize={tileSize}
+          mapTool={mapTool}
+          mapSelection={mapSelection}
+        />
+      </div>
     </div>
   );
 };

@@ -177,7 +177,7 @@ export const updateTilePixel = (
   tIdx: number,
   x: number,
   y: number,
-  color: GBColor,
+  color: GBColor | null,
 ) =>
   updateTile(tilesets, tsIdx, tIdx, (tile) => ({
     ...tile,
@@ -254,64 +254,39 @@ export const clearTileArea = (
     data: clearArea(tile.data, selection),
   }));
 
-// Helpers de transformation de matrice
-export const flipTileDataHorizontal = (data: GBColor[][]): GBColor[][] => {
+type PixelData = (GBColor | null)[][];
+
+export const flipTileDataHorizontal = (data: PixelData): PixelData => {
   const size = data.length;
-  const flipped = Array(size)
-    .fill(0)
-    .map(() => Array(size).fill(0) as GBColor[]);
-
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      flipped[y]![size - 1 - x] = data[y]![x]!;
-    }
-  }
-
-  return flipped;
+  return data.map((row) => {
+    const newRow = [...row];
+    for (let x = 0; x < size; x++) newRow[size - 1 - x] = row[x] ?? null;
+    return newRow;
+  });
 };
 
-export const flipTileDataVertical = (data: GBColor[][]): GBColor[][] => {
-  const size = data.length;
-  const flipped = Array(size)
-    .fill(0)
-    .map(() => Array(size).fill(0) as GBColor[]);
+export const flipTileDataVertical = (data: PixelData): PixelData =>
+  [...data].reverse().map((row) => [...row]);
 
+export const rotateTileDataClockwise = (data: PixelData): PixelData => {
+  const size = data.length;
+  const rotated: PixelData = Array.from({ length: size }, () => Array(size).fill(null));
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
-      flipped[size - 1 - y]![x] = data[y]![x]!;
+      rotated[x]![size - 1 - y] = data[y]![x] ?? null;
     }
   }
-
-  return flipped;
-};
-
-export const rotateTileDataClockwise = (data: GBColor[][]): GBColor[][] => {
-  const size = data.length;
-  const rotated = Array(size)
-    .fill(0)
-    .map(() => Array(size).fill(0) as GBColor[]);
-
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      rotated[x]![size - 1 - y] = data[y]![x]!;
-    }
-  }
-
   return rotated;
 };
 
-export const rotateTileDataCounterClockwise = (data: GBColor[][]): GBColor[][] => {
+export const rotateTileDataCounterClockwise = (data: PixelData): PixelData => {
   const size = data.length;
-  const rotated = Array(size)
-    .fill(0)
-    .map(() => Array(size).fill(0) as GBColor[]);
-
+  const rotated: PixelData = Array.from({ length: size }, () => Array(size).fill(null));
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
-      rotated[size - 1 - x]![y] = data[y]![x]!;
+      rotated[size - 1 - x]![y] = data[y]![x] ?? null;
     }
   }
-
   return rotated;
 };
 

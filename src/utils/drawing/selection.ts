@@ -1,5 +1,7 @@
 import type { GBColor, SelectionBounds } from "../../types";
 
+type PixelData = (GBColor | null)[][];
+
 export const normalizeSelection = (
   startX: number,
   startY: number,
@@ -13,20 +15,20 @@ export const normalizeSelection = (
 });
 
 export function extractSelection(
-  data: GBColor[][],
+  data: PixelData,
   selection: SelectionBounds,
-): GBColor[][] {
+): PixelData {
   const tileSize = data.length;
   const startX = Math.max(0, Math.min(selection.x, tileSize));
   const startY = Math.max(0, Math.min(selection.y, tileSize));
   const endX = Math.max(0, Math.min(selection.x + selection.width, tileSize));
   const endY = Math.max(0, Math.min(selection.y + selection.height, tileSize));
 
-  const extracted: GBColor[][] = [];
+  const extracted: PixelData = [];
   for (let y = startY; y < endY; y++) {
-    const row: GBColor[] = [];
+    const row: (GBColor | null)[] = [];
     for (let x = startX; x < endX; x++) {
-      row.push(data[y]![x]!);
+      row.push(data[y]![x] ?? null);
     }
     extracted.push(row);
   }
@@ -35,12 +37,11 @@ export function extractSelection(
 }
 
 export function applySelectionContent(
-  data: GBColor[][],
-  content: GBColor[][],
+  data: PixelData,
+  content: PixelData,
   targetX: number,
   targetY: number,
-  blendMode: "replace" | "add" = "replace",
-): GBColor[][] {
+): PixelData {
   const newData = data.map((row) => [...row]);
   const tileSize = data.length;
 
@@ -50,9 +51,7 @@ export function applySelectionContent(
       const destY = targetY + y;
 
       if (destX >= 0 && destX < tileSize && destY >= 0 && destY < tileSize) {
-        if (blendMode === "replace" || content[y]![x] !== 0) {
-          newData[destY]![destX] = content[y]![x]!;
-        }
+        newData[destY]![destX] = content[y]![x] ?? null;
       }
     }
   }
@@ -61,9 +60,9 @@ export function applySelectionContent(
 }
 
 export function clearArea(
-  data: GBColor[][],
+  data: PixelData,
   selection: SelectionBounds,
-): GBColor[][] {
+): PixelData {
   const newData = data.map((row) => [...row]);
   const tileSize = data.length;
   const startX = Math.max(0, Math.min(selection.x, tileSize));
@@ -73,7 +72,7 @@ export function clearArea(
 
   for (let y = startY; y < endY; y++) {
     for (let x = startX; x < endX; x++) {
-      newData[y]![x] = 0;
+      newData[y]![x] = null;
     }
   }
 
@@ -81,11 +80,11 @@ export function clearArea(
 }
 
 export function moveArea(
-  data: GBColor[][],
+  data: PixelData,
   selection: SelectionBounds,
   deltaX: number,
   deltaY: number,
-): { data: GBColor[][]; newSelection: SelectionBounds } | null {
+): { data: PixelData; newSelection: SelectionBounds } | null {
   const tileSize = data.length;
   const newX = selection.x + deltaX;
   const newY = selection.y + deltaY;

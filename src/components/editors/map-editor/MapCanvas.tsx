@@ -56,6 +56,14 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
   onMouseLeave,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.scrollLeft = 0;
+      containerRef.current.scrollTop = 0;
+    }
+  }, [map.id]);
 
   const getMapCoords = (event: React.MouseEvent): CellCoords | null => {
     const canvas = canvasRef.current;
@@ -74,29 +82,35 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    ctx.fillStyle = "#050505";
+    ctx.fillStyle = GB_COLORS[0];
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    map.data.forEach((row, my) => {
-      row.forEach((cell, mx) => {
-        if (!cell) return;
-        const ts = tilesets.find((t) => t.id === cell.tilesetId);
-        const tile = ts?.tiles[cell.tileIndex];
-        if (!tile) return;
+    // Render layers bottom to top; transparent tile pixels let lower layers show through
+    for (const layer of map.layers) {
+      if (!layer.visible) continue;
+      layer.data.forEach((row, my) => {
+        row.forEach((cell, mx) => {
+          if (!cell) return;
+          const ts = tilesets.find((t) => t.id === cell.tilesetId);
+          const tile = ts?.tiles[cell.tileIndex];
+          if (!tile) return;
 
-        for (let y = 0; y < tileSize; y++) {
-          for (let x = 0; x < tileSize; x++) {
-            ctx.fillStyle = GB_COLORS[tile.data[y]![x]!];
-            ctx.fillRect(
-              mx * unitSize + x * zoom,
-              my * unitSize + y * zoom,
-              zoom,
-              zoom,
-            );
+          for (let y = 0; y < tileSize; y++) {
+            for (let x = 0; x < tileSize; x++) {
+              const pixel = tile.data[y]![x];
+              if (pixel === null || pixel === undefined) continue; // transparent
+              ctx.fillStyle = GB_COLORS[pixel];
+              ctx.fillRect(
+                mx * unitSize + x * zoom,
+                my * unitSize + y * zoom,
+                zoom,
+                zoom,
+              );
+            }
           }
-        }
+        });
       });
-    });
+    }
 
     if (isDrawing && dragStart && hoverCell) {
       if (mapTool === "rectangle") {
@@ -160,6 +174,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({
 
   return (
     <div
+      ref={containerRef}
       className="map-editor-container"
       style={{
         flex: 1,

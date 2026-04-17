@@ -11,8 +11,12 @@ import { Palette, Toolbox } from "./components/panels/Toolbar";
 import { TilesetPanel } from "./components/panels/TilesetPanel";
 import { ShortcutsModal } from "./components/ui/ShortcutsModal";
 import { ExportPreviewModal } from "./components/ui/ExportPreviewModal";
+import { TemplateGallery } from "./components/ui/TemplateGallery";
 import { generateCFile, generateHFile } from "./services/exportService";
-import { parseProjectDocument, serializeProject } from "./services/projectService";
+import {
+  parseProjectDocument,
+  serializeProject,
+} from "./services/projectService";
 import { useStore } from "./store";
 import { useKeyboardShortcuts } from "./store/hooks/useKeyboardShortcuts";
 import "./App.css";
@@ -22,39 +26,47 @@ const PROJECT_PATH_KEY = "cartridge.project-file-path";
 const PROJECT_FOLDER_KEY = "cartridge.project-folder-path";
 
 function App() {
-  const { tilesets, maps, sprites, redo, undo, view, loadProjectData } = useStore();
+  const { tilesets, maps, sprites, redo, undo, view, loadProjectData } =
+    useStore();
   const [isSaving, setIsSaving] = useState(false);
   const [projectPath, setProjectPath] = useState<string | null>(null);
   const [projectFilePath, setProjectFilePath] = useState<string | null>(null);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
+  const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  const [confirmExportAction, setConfirmExportAction] = useState<null | "download" | "project">(null);
+  const [confirmExportAction, setConfirmExportAction] = useState<
+    null | "download" | "project"
+  >(null);
   const [statusMessage, setStatusMessage] = useState("Ready");
   const [statusTone, setStatusTone] = useState<StatusTone>("info");
   const statusTimeoutRef = useRef<number | null>(null);
 
-  const updateStatus = useCallback((message: string, tone: StatusTone = "info", durationMs?: number) => {
-    setStatusMessage(message);
-    setStatusTone(tone);
+  const updateStatus = useCallback(
+    (message: string, tone: StatusTone = "info", durationMs?: number) => {
+      setStatusMessage(message);
+      setStatusTone(tone);
 
-    if (statusTimeoutRef.current) {
-      window.clearTimeout(statusTimeoutRef.current);
-      statusTimeoutRef.current = null;
-    }
-
-    if (durationMs) {
-      statusTimeoutRef.current = window.setTimeout(() => {
-        setStatusMessage("Ready");
-        setStatusTone("info");
+      if (statusTimeoutRef.current) {
+        window.clearTimeout(statusTimeoutRef.current);
         statusTimeoutRef.current = null;
-      }, durationMs);
-    }
-  }, []);
+      }
+
+      if (durationMs) {
+        statusTimeoutRef.current = window.setTimeout(() => {
+          setStatusMessage("Ready");
+          setStatusTone("info");
+          statusTimeoutRef.current = null;
+        }, durationMs);
+      }
+    },
+    [],
+  );
 
   useKeyboardShortcuts({
     shortcuts: [
       {
-        matcher: (event) => (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z",
+        matcher: (event) =>
+          (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z",
         handler: (event) => {
           event.preventDefault();
           if (event.shiftKey) redo();
@@ -62,7 +74,8 @@ function App() {
         },
       },
       {
-        matcher: (event) => (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "y",
+        matcher: (event) =>
+          (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "y",
         handler: (event) => {
           event.preventDefault();
           redo();
@@ -78,30 +91,34 @@ function App() {
     ],
   });
 
-useEffect(() => {
-  const savedFilePath = localStorage.getItem(PROJECT_PATH_KEY);
-  if (savedFilePath) setProjectFilePath(savedFilePath);
-  
-  const savedFolderPath = localStorage.getItem(PROJECT_FOLDER_KEY);
-  if (savedFolderPath) setProjectPath(savedFolderPath);
+  useEffect(() => {
+    const savedFilePath = localStorage.getItem(PROJECT_PATH_KEY);
+    if (savedFilePath) setProjectFilePath(savedFilePath);
 
-  const autosave = localStorage.getItem(AUTOSAVE_KEY);
-  if (!autosave) return;
+    const savedFolderPath = localStorage.getItem(PROJECT_FOLDER_KEY);
+    if (savedFolderPath) setProjectPath(savedFolderPath);
 
-  try {
-    const project = parseProjectDocument(autosave);
-    loadProjectData(project.data);
-    updateStatus("Session autosave restored", "success", 3000);
-  } catch (error) {
-    console.error("Failed to restore autosave", error);
-    updateStatus("Autosave restore failed", "error", 4000);
-  }
-}, [loadProjectData, updateStatus]);
+    const autosave = localStorage.getItem(AUTOSAVE_KEY);
+    if (!autosave) return;
+
+    try {
+      const project = parseProjectDocument(autosave);
+      loadProjectData(project.data);
+      updateStatus("Session autosave restored", "success", 3000);
+    } catch (error) {
+      console.error("Failed to restore autosave", error);
+      updateStatus("Autosave restore failed", "error", 4000);
+    }
+  }, [loadProjectData, updateStatus]);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
       try {
-        const snapshot = serializeProject("Autosave", { tilesets, maps, sprites });
+        const snapshot = serializeProject("Autosave", {
+          tilesets,
+          maps,
+          sprites,
+        });
         localStorage.setItem(AUTOSAVE_KEY, snapshot);
       } catch (error) {
         console.error("Autosave failed", error);
@@ -112,44 +129,51 @@ useEffect(() => {
     return () => window.clearTimeout(timeout);
   }, [maps, sprites, tilesets, updateStatus]);
 
-  useEffect(() => () => {
-    if (statusTimeoutRef.current) {
-      window.clearTimeout(statusTimeoutRef.current);
-    }
-  }, []);
+  useEffect(
+    () => () => {
+      if (statusTimeoutRef.current) {
+        window.clearTimeout(statusTimeoutRef.current);
+      }
+    },
+    [],
+  );
 
   const exportLocal = () => {
     setConfirmExportAction("download");
     setIsPreviewOpen(true);
   };
 
-const chooseProjectFolder = async () => {
-  try {
-    updateStatus("Selecting export folder...", "busy");
-    const selected = await open({
-      directory: true,
-      multiple: false,
-      title: "Select Project Folder",
-    });
+  const chooseProjectFolder = async () => {
+    try {
+      updateStatus("Selecting export folder...", "busy");
+      const selected = await open({
+        directory: true,
+        multiple: false,
+        title: "Select Project Folder",
+      });
 
-    if (!selected) {
-      updateStatus("Folder selection cancelled", "info", 2500);
+      if (!selected) {
+        updateStatus("Folder selection cancelled", "info", 2500);
+        return false;
+      }
+
+      setProjectPath(selected as string);
+      localStorage.setItem(PROJECT_FOLDER_KEY, selected as string);
+      updateStatus("Export folder selected", "success", 3000);
+      return true;
+    } catch (error) {
+      console.error(error);
+      updateStatus(`Folder selection failed: ${String(error)}`, "error", 5000);
       return false;
     }
-
-    setProjectPath(selected as string);
-    localStorage.setItem(PROJECT_FOLDER_KEY, selected as string);
-    updateStatus("Export folder selected", "success", 3000);
-    return true;
-  } catch (error) {
-    console.error(error);
-    updateStatus(`Folder selection failed: ${String(error)}`, "error", 5000);
-    return false;
-  }
-};
+  };
 
   const saveProjectToPath = async (path: string) => {
-    const projectName = path.split(/[\\/]/).pop()?.replace(/\.cartridge$/i, "") || "project";
+    const projectName =
+      path
+        .split(/[\\/]/)
+        .pop()
+        ?.replace(/\.cartridge$/i, "") || "project";
     const content = serializeProject(projectName, { tilesets, maps, sprites });
 
     await invoke("save_text_file", {
@@ -220,7 +244,9 @@ const chooseProjectFolder = async () => {
         multiple: false,
         directory: false,
         title: "Open project",
-        filters: [{ name: "Cartridge Project", extensions: ["cartridge", "json"] }],
+        filters: [
+          { name: "Cartridge Project", extensions: ["cartridge", "json"] },
+        ],
       });
 
       if (!selected) {
@@ -245,60 +271,68 @@ const chooseProjectFolder = async () => {
       const didChoose = await chooseProjectFolder();
       if (!didChoose) return;
     }
-    
+
     setConfirmExportAction("project");
     setIsPreviewOpen(true);
   };
 
-const confirmExport = async () => {
-  if (!confirmExportAction) return;
-  const name = "MyGameSet";
-  
-  if (confirmExportAction === "download") {
-    const cContent = generateCFile(name, tilesets, maps, sprites);
-    const hContent = generateHFile(name, tilesets, maps, sprites);
-    const downloadFile = (filename: string, content: string) => {
-      const blob = new Blob([content], { type: "text/plain" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = filename;
-      link.click();
-      URL.revokeObjectURL(url);
-    };
-    downloadFile(`${name}.c`, cContent);
-    downloadFile(`${name}.h`, hContent);
-    updateStatus("C/H export downloaded", "success", 3000);
-  } else if (confirmExportAction === "project") {
-    if (!projectPath) {
-      updateStatus("No project path selected", "error", 4000);
-      return;
-    }
-    setIsSaving(true);
-    try {
-      updateStatus("Exporting C/H files...", "busy");
+  const confirmExport = async () => {
+    if (!confirmExportAction) return;
+    const name = "MyGameSet";
+
+    if (confirmExportAction === "download") {
       const cContent = generateCFile(name, tilesets, maps, sprites);
       const hContent = generateHFile(name, tilesets, maps, sprites);
-      await invoke("save_file", { path: projectPath, filename: `${name}.c`, content: cContent });
-      await invoke("save_file", { path: projectPath, filename: `${name}.h`, content: hContent });
-      updateStatus(`C/H exported to ${projectPath}`, "success", 4000);
-    } catch (error) {
-      console.error(error);
-      updateStatus(`Export failed: ${String(error)}`, "error", 5000);
-    } finally {
-      setIsSaving(false);
+      const downloadFile = (filename: string, content: string) => {
+        const blob = new Blob([content], { type: "text/plain" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        link.click();
+        URL.revokeObjectURL(url);
+      };
+      downloadFile(`${name}.c`, cContent);
+      downloadFile(`${name}.h`, hContent);
+      updateStatus("C/H export downloaded", "success", 3000);
+    } else if (confirmExportAction === "project") {
+      if (!projectPath) {
+        updateStatus("No project path selected", "error", 4000);
+        return;
+      }
+      setIsSaving(true);
+      try {
+        updateStatus("Exporting C/H files...", "busy");
+        const cContent = generateCFile(name, tilesets, maps, sprites);
+        const hContent = generateHFile(name, tilesets, maps, sprites);
+        await invoke("save_file", {
+          path: projectPath,
+          filename: `${name}.c`,
+          content: cContent,
+        });
+        await invoke("save_file", {
+          path: projectPath,
+          filename: `${name}.h`,
+          content: hContent,
+        });
+        updateStatus(`C/H exported to ${projectPath}`, "success", 4000);
+      } catch (error) {
+        console.error(error);
+        updateStatus(`Export failed: ${String(error)}`, "error", 5000);
+      } finally {
+        setIsSaving(false);
+      }
     }
-  }
-  setIsPreviewOpen(false);
-  setConfirmExportAction(null);
-};
+    setIsPreviewOpen(false);
+    setConfirmExportAction(null);
+  };
 
-const handleCancelExport = () => {
-  setIsPreviewOpen(false);
-  setConfirmExportAction(null);
-};
+  const handleCancelExport = () => {
+    setIsPreviewOpen(false);
+    setConfirmExportAction(null);
+  };
 
-return (
+  return (
     <AppLayout
       isSaving={isSaving}
       onExportToProject={saveToProject}
@@ -312,6 +346,7 @@ return (
       statusMessage={statusMessage}
       statusTone={statusTone}
       onOpenShortcuts={() => setIsShortcutsOpen(true)}
+      onOpenTemplates={() => setIsTemplatesOpen(true)}
     >
       {view === "gallery" ? (
         <MapGallery />
@@ -340,16 +375,23 @@ return (
           <TilesetPanel />
         </div>
       )}
-      <ExportPreviewModal 
-          isOpen={isPreviewOpen} 
-          onClose={handleCancelExport}
-          onConfirm={confirmExport}
-          projectName="MyGameSet"
-          tilesets={tilesets}
-          maps={maps}
-          sprites={sprites}
-        />
-        <ShortcutsModal isOpen={isShortcutsOpen} onClose={() => setIsShortcutsOpen(false)} />
+      <ExportPreviewModal
+        isOpen={isPreviewOpen}
+        onClose={handleCancelExport}
+        onConfirm={confirmExport}
+        projectName="MyGameSet"
+        tilesets={tilesets}
+        maps={maps}
+        sprites={sprites}
+      />
+      <TemplateGallery
+        isOpen={isTemplatesOpen}
+        onClose={() => setIsTemplatesOpen(false)}
+      />
+      <ShortcutsModal
+        isOpen={isShortcutsOpen}
+        onClose={() => setIsShortcutsOpen(false)}
+      />
     </AppLayout>
   );
 }

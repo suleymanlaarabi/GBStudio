@@ -21,7 +21,7 @@ export const TilePixelEditor: React.FC = () => {
   const [isSelecting, setIsSelecting] = useState(false);
   const [startPos, setStartPos] = useState<{ x: number; y: number } | null>(null);
   const [lastPrecisePos, setLastPrecisePos] = useState<{ x: number; y: number } | null>(null);
-  const [previewData, setPreviewData] = useState<GBColor[][] | null>(null);
+  const [previewData, setPreviewData] = useState<(GBColor | null)[][] | null>(null);
   const [isMovingSelection, setIsMovingSelection] = useState(false);
   const [moveOffset, setMoveOffset] = useState({ x: 0, y: 0 });
   const [originalSelectionPos, setOriginalSelectionPos] = useState<{ x: number; y: number } | null>(null);
@@ -127,7 +127,7 @@ export const TilePixelEditor: React.FC = () => {
       return;
     }
 
-    const colorToApply = tool === "eraser" ? 0 : selectedColor;
+    const colorToApply: GBColor | null = tool === "eraser" ? null : selectedColor;
     if (x >= 0 && x < tile.size && y >= 0 && y < tile.size && tile.data[y]![x] !== colorToApply) {
       updatePixel(activeTilesetIndex, activeTileIndex, x, y, colorToApply);
     }
@@ -155,7 +155,7 @@ export const TilePixelEditor: React.FC = () => {
       const maxY = Math.max(Math.floor(startPos.y), Math.floor(preciseCoords.y));
       const width = maxX - minX + 1;
       const height = maxY - minY + 1;
-      let previewDataTemp: GBColor[][] = tile.data.map((row) => [...row]);
+      let previewDataTemp: (GBColor | null)[][] = tile.data.map((row) => [...row]);
 
       if (tool === "square") {
         previewDataTemp = drawRectangle(previewDataTemp, minX, minY, width, height, selectedColor, true);
@@ -166,7 +166,7 @@ export const TilePixelEditor: React.FC = () => {
 
       setPreviewData(previewDataTemp);
     } else if (tool === "pencil" || tool === "eraser") {
-      const colorToApply = tool === "eraser" ? 0 : selectedColor;
+      const colorToApply: GBColor | null = tool === "eraser" ? null : selectedColor;
       if (x >= 0 && x < tile.size && y >= 0 && y < tile.size && tile.data[y]![x] !== colorToApply) {
         updatePixel(activeTilesetIndex, activeTileIndex, x, y, colorToApply);
       }
@@ -231,11 +231,27 @@ export const TilePixelEditor: React.FC = () => {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     const renderData = previewData || tile.data;
+    const checkerA = "#aaaaaa";
+    const checkerB = "#888888";
+    const half = pixelSize / 2;
+
     renderData.forEach((row, y) => row.forEach((colorIndex, x) => {
-      ctx.fillStyle = GB_COLORS[colorIndex];
-      ctx.fillRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize);
-      
-      // Grille d'édition
+      if (colorIndex === null) {
+        // Checkerboard for transparent pixels
+        const isEvenCell = (x + y) % 2 === 0;
+        ctx.fillStyle = isEvenCell ? checkerA : checkerB;
+        ctx.fillRect(x * pixelSize, y * pixelSize, half, half);
+        ctx.fillStyle = isEvenCell ? checkerB : checkerA;
+        ctx.fillRect(x * pixelSize + half, y * pixelSize, half, half);
+        ctx.fillStyle = isEvenCell ? checkerB : checkerA;
+        ctx.fillRect(x * pixelSize, y * pixelSize + half, half, half);
+        ctx.fillStyle = isEvenCell ? checkerA : checkerB;
+        ctx.fillRect(x * pixelSize + half, y * pixelSize + half, half, half);
+      } else {
+        ctx.fillStyle = GB_COLORS[colorIndex];
+        ctx.fillRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize);
+      }
+
       ctx.strokeStyle = "rgba(0,0,0,0.15)";
       ctx.lineWidth = 0.5;
       ctx.strokeRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize);

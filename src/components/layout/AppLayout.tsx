@@ -17,6 +17,7 @@ interface AppLayoutProps {
   statusMessage: string;
   statusTone: StatusTone;
   onOpenShortcuts: () => void;
+  onOpenTemplates: () => void;
 }
 
 export const AppLayout: React.FC<AppLayoutProps> = ({
@@ -33,6 +34,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   statusMessage,
   statusTone,
   onOpenShortcuts,
+  onOpenTemplates,
 }) => (
   <div className="app-container">
     <TitleBar />
@@ -46,6 +48,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
       onSaveProjectAs={onSaveProjectAs}
       projectPath={projectPath}
       projectFilePath={projectFilePath}
+      onOpenTemplates={onOpenTemplates}
     />
     <main className="main-content">{children}</main>
     <StatusBar message={statusMessage} tone={statusTone} onOpenShortcuts={onOpenShortcuts} />

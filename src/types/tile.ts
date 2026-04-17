@@ -2,7 +2,7 @@ import type { GBColor, TileSize } from "./core";
 
 export interface Tile {
   id: string;
-  data: GBColor[][];
+  data: (GBColor | null)[][];
   size: TileSize;
 }
 

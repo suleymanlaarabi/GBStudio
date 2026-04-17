@@ -1,5 +1,5 @@
 import type { StateCreator } from "zustand";
-import type { GBColor, TileSize, Tileset, TileCell } from "../../types";
+import type { GBColor, TileSize, Tileset, TileMap } from "../../types";
 import {
   appendTile,
   createEmptyTileset,
@@ -26,7 +26,7 @@ export interface TileSlice {
     tileIndex: number,
     x: number,
     y: number,
-    color: GBColor,
+    color: GBColor | null,
   ) => void;
   floodFill: (
     tilesetIndex: number,
@@ -61,7 +61,7 @@ type TileState = TileSlice & {
   activeTileIndex: number;
   activeTilesetIndex: number;
   commit: () => void;
-  maps: { id: string; data: (TileCell | null)[][] }[];
+  maps: TileMap[];
 };
 
 export const createTileSlice: StateCreator<TileState, [], [], TileSlice> = (set, get) => ({
@@ -86,9 +86,12 @@ export const createTileSlice: StateCreator<TileState, [], [], TileSlice> = (set,
         .map(normalizeTilesetLayout);
       const newMaps = state.maps.map((map) => ({
         ...map,
-        data: map.data.map((row) =>
-          row.map((cell) => (cell && cell.tilesetId === tilesetId ? null : cell)),
-        ),
+        layers: map.layers.map((layer) => ({
+          ...layer,
+          data: layer.data.map((row) =>
+            row.map((cell) => (cell && cell.tilesetId === tilesetId ? null : cell)),
+          ),
+        })),
       }));
 
       let newActiveIndex = state.activeTilesetIndex;
@@ -131,19 +134,18 @@ export const createTileSlice: StateCreator<TileState, [], [], TileSlice> = (set,
       if (tilesetId) {
         const newMaps = state.maps.map((map) => ({
           ...map,
-          data: map.data.map((row) =>
-            row.map((cell) => {
-              if (cell && cell.tilesetId === tilesetId) {
-                if (cell.tileIndex === tileIndex) {
-                  return null;
+          layers: map.layers.map((layer) => ({
+            ...layer,
+            data: layer.data.map((row) =>
+              row.map((cell) => {
+                if (cell && cell.tilesetId === tilesetId) {
+                  if (cell.tileIndex === tileIndex) return null;
+                  if (cell.tileIndex > tileIndex) return { ...cell, tileIndex: cell.tileIndex - 1 };
                 }
-                if (cell.tileIndex > tileIndex) {
-                  return { ...cell, tileIndex: cell.tileIndex - 1 };
-                }
-              }
-              return cell;
-            }),
-          ),
+                return cell;
+              }),
+            ),
+          })),
         }));
 
         return {
