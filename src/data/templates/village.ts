@@ -7,113 +7,152 @@ const CTS = "builtin-village-chars";
 const d = (rows: (GBColor | null)[][]): (GBColor | null)[][] => rows;
 
 const TILES = {
-  grass: { id: "bv-t0", size: 8 as const, data: d([
-    [1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 2, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 2, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 2, 1, 1, 1, 1, 2, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 2, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1],
-  ]) },
-  path: { id: "bv-t1", size: 8 as const, data: d([
-    [2, 2, 2, 2, 2, 2, 2, 2],
-    [2, 2, 1, 2, 2, 2, 2, 2],
-    [2, 2, 2, 2, 2, 1, 2, 2],
-    [2, 2, 2, 2, 2, 2, 2, 2],
-    [2, 1, 2, 2, 2, 2, 1, 2],
-    [2, 2, 2, 2, 2, 2, 2, 2],
-    [2, 2, 1, 2, 2, 2, 2, 2],
-    [2, 2, 2, 2, 2, 2, 2, 2],
-  ]) },
-  fence: { id: "bv-t2", size: 8 as const, data: d([
-    [null, null, null, null, null, null, null, null],
-    [null, null, null, null, null, null, null, null],
-    [3, 3, 3, 3, 3, 3, 3, 3],
-    [2, 2, 2, 2, 2, 2, 2, 2],
-    [3, 3, 3, 3, 3, 3, 3, 3],
-    [3, 2, 3, 3, 3, 3, 2, 3],
-    [3, 2, 3, 3, 3, 3, 2, 3],
-    [3, 2, 3, 3, 3, 3, 2, 3],
-  ]) },
-  flower: { id: "bv-t3", size: 8 as const, data: d([
-    [null, null, null, null, null, null, null, null],
-    [null, null, 1, 1, null, null, null, null],
-    [null, 1, 0, 0, 1, null, null, null],
-    [null, 1, 0, 0, 1, null, null, null],
-    [null, null, 1, 1, null, null, null, null],
-    [null, null, 3, null, null, null, null, null],
-    [null, 3, 3, 3, null, null, null, null],
-    [null, null, 3, null, null, null, null, null],
-  ]) },
-  wall: { id: "bv-t4", size: 8 as const, data: d([
-    [3, 2, 2, 2, 2, 2, 2, 3],
-    [2, 2, 2, 2, 2, 2, 2, 2],
-    [2, 2, 2, 2, 2, 2, 2, 2],
-    [3, 3, 3, 3, 3, 3, 3, 3],
-    [2, 2, 2, 2, 2, 2, 2, 2],
-    [2, 2, 2, 2, 2, 2, 2, 2],
-    [2, 2, 2, 2, 2, 2, 2, 2],
-    [3, 3, 3, 3, 3, 3, 3, 3],
-  ]) },
-  roof: { id: "bv-t5", size: 8 as const, data: d([
-    [null, null, null, 3, 3, null, null, null],
-    [null, null, 3, 2, 2, 3, null, null],
-    [null, 3, 2, 2, 2, 2, 3, null],
-    [3, 2, 2, 2, 2, 2, 2, 3],
-    [3, 3, 3, 3, 3, 3, 3, 3],
-    [3, 2, 2, 2, 2, 2, 2, 3],
-    [3, 2, 2, 2, 2, 2, 2, 3],
-    [3, 3, 3, 3, 3, 3, 3, 3],
-  ]) },
-  window: { id: "bv-t6", size: 8 as const, data: d([
-    [3, 3, 3, 3, 3, 3, 3, 3],
-    [3, 1, 1, 3, 1, 1, 3, 3],
-    [3, 1, 0, 3, 0, 1, 3, 3],
-    [3, 3, 3, 3, 3, 3, 3, 3],
-    [3, 1, 0, 3, 0, 1, 3, 3],
-    [3, 1, 1, 3, 1, 1, 3, 3],
-    [3, 3, 3, 3, 3, 3, 3, 3],
-    [3, 3, 3, 3, 3, 3, 3, 3],
-  ]) },
-  door: { id: "bv-t7", size: 8 as const, data: d([
-    [3, 3, 3, 3, 3, 3, 3, 3],
-    [3, 2, 2, 2, 2, 2, 2, 3],
-    [3, 2, 1, 1, 1, 1, 2, 3],
-    [3, 2, 1, 1, 1, 1, 2, 3],
-    [3, 2, 1, 0, 1, 1, 2, 3],
-    [3, 2, 1, 1, 1, 1, 2, 3],
-    [3, 2, 1, 1, 1, 1, 2, 3],
-    [3, 2, 2, 2, 2, 2, 2, 3],
-  ]) },
-  villager1: { id: "bv-c0", size: 8 as const, data: d([
-    [null, null, 3, 3, 3, 3, null, null],
-    [null, 3, 2, 2, 2, 2, 3, null],
-    [3, 2, 3, 2, 2, 3, 2, 3],
-    [3, 2, 2, 2, 2, 2, 2, 3],
-    [null, 3, 1, 1, 1, 1, 3, null],
-    [null, 3, 1, 1, 1, 1, 3, null],
-    [null, 3, 2, 2, 2, 2, 3, null],
-    [null, 3, null, 3, 3, null, 3, null],
-  ]) },
-  villager2: { id: "bv-c1", size: 8 as const, data: d([
-    [null, null, 3, 3, 3, 3, null, null],
-    [null, 3, 2, 2, 2, 2, 3, null],
-    [3, 2, 3, 2, 2, 3, 2, 3],
-    [3, 2, 2, 2, 2, 2, 2, 3],
-    [null, 3, 1, 1, 1, 1, 3, null],
-    [null, 3, 1, 1, 1, 1, 3, null],
-    [null, 3, 2, 2, 2, 2, 3, null],
-    [null, null, 3, 3, null, 3, 3, null],
-  ]) },
+  grass: {
+    id: "bv-t0",
+    size: 8 as const,
+    data: d([
+      [1, 1, 1, 1, 1, 1, 1, 1],
+      [1, 1, 2, 1, 1, 1, 1, 1],
+      [1, 1, 1, 1, 2, 1, 1, 1],
+      [1, 1, 1, 1, 1, 1, 1, 1],
+      [1, 2, 1, 1, 1, 1, 2, 1],
+      [1, 1, 1, 1, 1, 1, 1, 1],
+      [1, 1, 1, 2, 1, 1, 1, 1],
+      [1, 1, 1, 1, 1, 1, 1, 1],
+    ]),
+  },
+  path: {
+    id: "bv-t1",
+    size: 8 as const,
+    data: d([
+      [2, 2, 2, 2, 2, 2, 2, 2],
+      [2, 2, 1, 2, 2, 2, 2, 2],
+      [2, 2, 2, 2, 2, 1, 2, 2],
+      [2, 2, 2, 2, 2, 2, 2, 2],
+      [2, 1, 2, 2, 2, 2, 1, 2],
+      [2, 2, 2, 2, 2, 2, 2, 2],
+      [2, 2, 1, 2, 2, 2, 2, 2],
+      [2, 2, 2, 2, 2, 2, 2, 2],
+    ]),
+  },
+  fence: {
+    id: "bv-t2",
+    size: 8 as const,
+    data: d([
+      [null, null, null, null, null, null, null, null],
+      [null, null, null, null, null, null, null, null],
+      [3, 3, 3, 3, 3, 3, 3, 3],
+      [2, 2, 2, 2, 2, 2, 2, 2],
+      [3, 3, 3, 3, 3, 3, 3, 3],
+      [3, 2, 3, 3, 3, 3, 2, 3],
+      [3, 2, 3, 3, 3, 3, 2, 3],
+      [3, 2, 3, 3, 3, 3, 2, 3],
+    ]),
+  },
+  flower: {
+    id: "bv-t3",
+    size: 8 as const,
+    data: d([
+      [null, null, null, null, null, null, null, null],
+      [null, null, 1, 1, null, null, null, null],
+      [null, 1, 0, 0, 1, null, null, null],
+      [null, 1, 0, 0, 1, null, null, null],
+      [null, null, 1, 1, null, null, null, null],
+      [null, null, 3, null, null, null, null, null],
+      [null, 3, 3, 3, null, null, null, null],
+      [null, null, 3, null, null, null, null, null],
+    ]),
+  },
+  wall: {
+    id: "bv-t4",
+    size: 8 as const,
+    data: d([
+      [3, 2, 2, 2, 2, 2, 2, 3],
+      [2, 2, 2, 2, 2, 2, 2, 2],
+      [2, 2, 2, 2, 2, 2, 2, 2],
+      [3, 3, 3, 3, 3, 3, 3, 3],
+      [2, 2, 2, 2, 2, 2, 2, 2],
+      [2, 2, 2, 2, 2, 2, 2, 2],
+      [2, 2, 2, 2, 2, 2, 2, 2],
+      [3, 3, 3, 3, 3, 3, 3, 3],
+    ]),
+  },
+  roof: {
+    id: "bv-t5",
+    size: 8 as const,
+    data: d([
+      [null, null, null, 3, 3, null, null, null],
+      [null, null, 3, 2, 2, 3, null, null],
+      [null, 3, 2, 2, 2, 2, 3, null],
+      [3, 2, 2, 2, 2, 2, 2, 3],
+      [3, 3, 3, 3, 3, 3, 3, 3],
+      [3, 2, 2, 2, 2, 2, 2, 3],
+      [3, 2, 2, 2, 2, 2, 2, 3],
+      [3, 3, 3, 3, 3, 3, 3, 3],
+    ]),
+  },
+  window: {
+    id: "bv-t6",
+    size: 8 as const,
+    data: d([
+      [3, 3, 3, 3, 3, 3, 3, 3],
+      [3, 1, 1, 3, 1, 1, 3, 3],
+      [3, 1, 0, 3, 0, 1, 3, 3],
+      [3, 3, 3, 3, 3, 3, 3, 3],
+      [3, 1, 0, 3, 0, 1, 3, 3],
+      [3, 1, 1, 3, 1, 1, 3, 3],
+      [3, 3, 3, 3, 3, 3, 3, 3],
+      [3, 3, 3, 3, 3, 3, 3, 3],
+    ]),
+  },
+  door: {
+    id: "bv-t7",
+    size: 8 as const,
+    data: d([
+      [3, 3, 3, 3, 3, 3, 3, 3],
+      [3, 2, 2, 2, 2, 2, 2, 3],
+      [3, 2, 1, 1, 1, 1, 2, 3],
+      [3, 2, 1, 1, 1, 1, 2, 3],
+      [3, 2, 1, 0, 1, 1, 2, 3],
+      [3, 2, 1, 1, 1, 1, 2, 3],
+      [3, 2, 1, 1, 1, 1, 2, 3],
+      [3, 2, 2, 2, 2, 2, 2, 3],
+    ]),
+  },
+  villager1: {
+    id: "bv-c0",
+    size: 8 as const,
+    data: d([
+      [null, null, 3, 3, 3, 3, null, null],
+      [null, 3, 2, 2, 2, 2, 3, null],
+      [3, 2, 3, 2, 2, 3, 2, 3],
+      [3, 2, 2, 2, 2, 2, 2, 3],
+      [null, 3, 1, 1, 1, 1, 3, null],
+      [null, 3, 1, 1, 1, 1, 3, null],
+      [null, 3, 2, 2, 2, 2, 3, null],
+      [null, 3, null, 3, 3, null, 3, null],
+    ]),
+  },
+  villager2: {
+    id: "bv-c1",
+    size: 8 as const,
+    data: d([
+      [null, null, 3, 3, 3, 3, null, null],
+      [null, 3, 2, 2, 2, 2, 3, null],
+      [3, 2, 3, 2, 2, 3, 2, 3],
+      [3, 2, 2, 2, 2, 2, 2, 3],
+      [null, 3, 1, 1, 1, 1, 3, null],
+      [null, 3, 1, 1, 1, 1, 3, null],
+      [null, 3, 2, 2, 2, 2, 3, null],
+      [null, null, 3, 3, null, 3, 3, null],
+    ]),
+  },
 };
 
 const G = { tilesetId: TS, tileIndex: 0 };
 const P = { tilesetId: TS, tileIndex: 1 };
 const Fn = { tilesetId: TS, tileIndex: 2 };
 const Fl = { tilesetId: TS, tileIndex: 3 };
-const W = { tilesetId: TS, tileIndex: 4 };
 const R = { tilesetId: TS, tileIndex: 5 };
 const Wi = { tilesetId: TS, tileIndex: 6 };
 const D = { tilesetId: TS, tileIndex: 7 };
@@ -122,7 +161,8 @@ const n = null;
 export const VILLAGE_TEMPLATE: Template = {
   id: "builtin-village",
   name: "RPG Village",
-  description: "Cozy village with houses, paths, and NPCs. Perfect for starting an RPG.",
+  description:
+    "Cozy village with houses, paths, and NPCs. Perfect for starting an RPG.",
   category: "overworld",
   isBuiltin: true,
   createdAt: "2024-01-01T00:00:00.000Z",
@@ -132,8 +172,14 @@ export const VILLAGE_TEMPLATE: Template = {
       name: "Village Assets",
       tileSize: 8,
       tiles: [
-        TILES.grass, TILES.path, TILES.fence, TILES.flower,
-        TILES.wall, TILES.roof, TILES.window, TILES.door
+        TILES.grass,
+        TILES.path,
+        TILES.fence,
+        TILES.flower,
+        TILES.wall,
+        TILES.roof,
+        TILES.window,
+        TILES.door,
       ],
       layout: {
         columns: 4,
@@ -163,57 +209,67 @@ export const VILLAGE_TEMPLATE: Template = {
       },
     },
   ],
-  maps: [{
-    id: "builtin-village-map",
-    name: "Quiet Town",
-    width: 20,
-    height: 15,
-    tileSize: 8,
-    layers: [
-      {
-        id: "bv-layer1",
-        name: "Ground",
-        visible: true,
-        data: Array(15).fill(null).map((_, y) => 
-          Array(20).fill(null).map((_, x) => {
-            if (y > 6 && y < 10) return P;
-            if (x > 8 && x < 12) return P;
-            return G;
-          })
-        ),
-      },
-      {
-        id: "bv-layer2",
-        name: "Buildings & Props",
-        visible: true,
-        data: Array(15).fill(null).map((_, y) => 
-          Array(20).fill(null).map((_, x) => {
-            // House 1
-            if (y === 2 && x >= 3 && x <= 5) return R;
-            if (y === 3 && x === 3) return Wi;
-            if (y === 3 && x === 4) return D;
-            if (y === 3 && x === 5) return Wi;
-            
-            // House 2
-            if (y === 2 && x >= 14 && x <= 16) return R;
-            if (y === 3 && x === 14) return Wi;
-            if (y === 3 && x === 15) return D;
-            if (y === 3 && x === 16) return Wi;
+  maps: [
+    {
+      id: "builtin-village-map",
+      name: "Quiet Town",
+      width: 20,
+      height: 15,
+      tileSize: 8,
+      layers: [
+        {
+          id: "bv-layer1",
+          name: "Ground",
+          visible: true,
+          data: Array(15)
+            .fill(null)
+            .map((_, y) =>
+              Array(20)
+                .fill(null)
+                .map((_, x) => {
+                  if (y > 6 && y < 10) return P;
+                  if (x > 8 && x < 12) return P;
+                  return G;
+                }),
+            ),
+        },
+        {
+          id: "bv-layer2",
+          name: "Buildings & Props",
+          visible: true,
+          data: Array(15)
+            .fill(null)
+            .map((_, y) =>
+              Array(20)
+                .fill(null)
+                .map((_, x) => {
+                  // House 1
+                  if (y === 2 && x >= 3 && x <= 5) return R;
+                  if (y === 3 && x === 3) return Wi;
+                  if (y === 3 && x === 4) return D;
+                  if (y === 3 && x === 5) return Wi;
 
-            // Fences
-            if (y === 12 && x >= 2 && x <= 17) return Fn;
-            
-            // Flowers
-            if (y === 5 && x === 2) return Fl;
-            if (y === 11 && x === 18) return Fl;
-            if (y === 1 && x === 10) return Fl;
+                  // House 2
+                  if (y === 2 && x >= 14 && x <= 16) return R;
+                  if (y === 3 && x === 14) return Wi;
+                  if (y === 3 && x === 15) return D;
+                  if (y === 3 && x === 16) return Wi;
 
-            return n;
-          })
-        ),
-      },
-    ],
-  }],
+                  // Fences
+                  if (y === 12 && x >= 2 && x <= 17) return Fn;
+
+                  // Flowers
+                  if (y === 5 && x === 2) return Fl;
+                  if (y === 11 && x === 18) return Fl;
+                  if (y === 1 && x === 10) return Fl;
+
+                  return n;
+                }),
+            ),
+        },
+      ],
+    },
+  ],
   sprites: [
     {
       id: "villager-sprite",
