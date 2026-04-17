@@ -16,12 +16,14 @@ import { createMapSlice, type MapSlice } from "./slices/mapSlice";
 import { createProjectSlice, type ProjectSlice } from "./slices/projectSlice";
 import { createSelectionSlice, type SelectionSlice } from "./slices/selectionSlice";
 import { createSpriteSlice, type SpriteSlice } from "./slices/spriteSlice";
+import { createSoundSlice, type SoundSlice } from "./slices/soundSlice";
 import { createTileSlice, type TileSlice } from "./slices/tileSlice";
 import { createUISlice, type UISlice } from "./slices/uiSlice";
 
 export type EditorState = TileSlice &
   MapSlice &
   SpriteSlice &
+  SoundSlice &
   HistorySlice &
   SelectionSlice &
   ProjectSlice &
@@ -33,6 +35,7 @@ export const useStore = create<EditorState>()((...args) => {
     ...createTileSlice(...args),
     ...createMapSlice(...args),
     ...createSpriteSlice(...args),
+    ...createSoundSlice(...args),
     ...createSelectionSlice(...args),
     ...createProjectSlice(...args),
     ...createHistorySlice(...args),
@@ -43,6 +46,7 @@ export const useStore = create<EditorState>()((...args) => {
     tilesets: slices.tilesets,
     maps: slices.maps,
     sprites: slices.sprites,
+    sounds: slices.sounds,
     selection: slices.selection,
     mapSelection: slices.mapSelection,
   };

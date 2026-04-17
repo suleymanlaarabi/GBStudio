@@ -36,7 +36,7 @@ export const MapToolBar: React.FC<MapToolBarProps> = ({
   return (
     <div
       className="card"
-      style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}
+      style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}
     >
       <div className="section-title" style={{ fontSize: "0.9rem" }}>
         Map Tools

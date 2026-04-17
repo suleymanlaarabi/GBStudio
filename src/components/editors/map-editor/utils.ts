@@ -74,5 +74,7 @@ export const getMapCursor = (tool: MapTool, isDrawing: boolean) => {
   if (tool === "fill") return "cell";
   if (tool === "eraser") return "not-allowed";
   if (tool === "line" || tool === "rectangle") return "crosshair";
+  if (tool === "camera_spawn") return "crosshair";
+  if (tool === "collision") return "cell";
   return "cell";
 };

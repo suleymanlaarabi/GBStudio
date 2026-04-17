@@ -13,7 +13,9 @@ export const MapEditor = () => {
     maps,
     activeMapIndex,
     tilesets,
+    sprites,
     activeTileIndex,
+    activeSpriteIndex,
     setActiveTile,
     zoom,
     setZoom,
@@ -31,6 +33,7 @@ export const MapEditor = () => {
     cutMapSelection,
     pasteMapSelection,
     deleteMapSelection,
+    activeLayerIsWindow,
   } = useStore();
 
   const map = maps[activeMapIndex];
@@ -113,7 +116,11 @@ export const MapEditor = () => {
         <MapCanvas
           map={map}
           tilesets={tilesets}
+          sprites={sprites}
+          activeSpriteIndex={activeSpriteIndex}
+          activeLayerIsWindow={activeLayerIsWindow}
           zoom={zoom}
+          setZoom={setZoom}
           tileSize={tileSize}
           unitSize={unitSize}
           isDrawing={isDrawing}
@@ -122,7 +129,7 @@ export const MapEditor = () => {
           mapTool={mapTool}
           mapSelection={mapSelection}
           mapShapeFilled={mapShapeFilled}
-          onMouseDown={(_, coords) => handleMouseDown(coords)}
+          onMouseDown={(e, coords) => handleMouseDown(coords, e.button)}
           onMouseMove={(_, coords) => handleMouseMove(coords)}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseLeave}

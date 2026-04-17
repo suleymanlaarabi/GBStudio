@@ -29,5 +29,10 @@ export const parseProjectDocument = (raw: string): ProjectDocument => {
     throw new Error("Invalid project payload");
   }
 
+  // Ensure sounds array exists
+  if (!parsed.data.sounds) {
+    parsed.data.sounds = [];
+  }
+
   return parsed as ProjectDocument;
 };

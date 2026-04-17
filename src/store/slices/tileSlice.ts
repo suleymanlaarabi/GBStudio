@@ -88,8 +88,16 @@ export const createTileSlice: StateCreator<TileState, [], [], TileSlice> = (set,
         ...map,
         layers: map.layers.map((layer) => ({
           ...layer,
-          data: layer.data.map((row) =>
-            row.map((cell) => (cell && cell.tilesetId === tilesetId ? null : cell)),
+          chunks: Object.fromEntries(
+            Object.entries(layer.chunks).map(([key, chunk]) => [
+              key,
+              {
+                ...chunk,
+                data: chunk.data.map((row) =>
+                  row.map((cell) => (cell && cell.tilesetId === tilesetId ? null : cell)),
+                ),
+              },
+            ])
           ),
         })),
       }));
@@ -136,14 +144,22 @@ export const createTileSlice: StateCreator<TileState, [], [], TileSlice> = (set,
           ...map,
           layers: map.layers.map((layer) => ({
             ...layer,
-            data: layer.data.map((row) =>
-              row.map((cell) => {
-                if (cell && cell.tilesetId === tilesetId) {
-                  if (cell.tileIndex === tileIndex) return null;
-                  if (cell.tileIndex > tileIndex) return { ...cell, tileIndex: cell.tileIndex - 1 };
-                }
-                return cell;
-              }),
+            chunks: Object.fromEntries(
+              Object.entries(layer.chunks).map(([key, chunk]) => [
+                key,
+                {
+                  ...chunk,
+                  data: chunk.data.map((row) =>
+                    row.map((cell) => {
+                      if (cell && cell.tilesetId === tilesetId) {
+                        if (cell.tileIndex === tileIndex) return null;
+                        if (cell.tileIndex > tileIndex) return { ...cell, tileIndex: cell.tileIndex - 1 };
+                      }
+                      return cell;
+                    }),
+                  ),
+                },
+              ])
             ),
           })),
         }));

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Eye, EyeOff, Plus, Trash2, ChevronUp, ChevronDown, Copy, Pencil } from "lucide-react";
+import { Eye, EyeOff, Plus, Trash2, ChevronUp, ChevronDown, Copy, Pencil, Monitor } from "lucide-react";
 import { useStore } from "../../../store";
 import type { MapLayer } from "../../../types";
 
@@ -152,7 +152,16 @@ interface LayersPanelProps {
 }
 
 export const LayersPanel: React.FC<LayersPanelProps> = ({ mapIndex }) => {
-  const { maps, activeLayerIndex, setActiveLayer, addLayer } = useStore();
+  const {
+    maps,
+    activeLayerIndex,
+    setActiveLayer,
+    addLayer,
+    activeLayerIsWindow,
+    setActiveLayerIsWindow,
+    setWindowLayerEnabled,
+    setWindowLayerConfig,
+  } = useStore();
   const map = maps[mapIndex];
 
   if (!map) return null;
@@ -199,7 +208,67 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({ mapIndex }) => {
       </div>
 
       <div style={{ fontSize: "0.68rem", color: "#444", borderTop: "1px solid #1a1a1a", paddingTop: "0.5rem", marginTop: "0.25rem" }}>
-        {map.layers.length} layer{map.layers.length > 1 ? "s" : ""} · active layer: <span style={{ color: "#666" }}>{map.layers[activeLayerIndex]?.name ?? "—"}</span>
+        {map.layers.length} layer{map.layers.length > 1 ? "s" : ""} · active: <span style={{ color: "#666" }}>{activeLayerIsWindow ? "Window" : (map.layers[activeLayerIndex]?.name ?? "—")}</span>
+      </div>
+
+      {/* Window Layer */}
+      <div style={{ borderTop: "1px solid #1a1a1a", paddingTop: "0.5rem", marginTop: "0.25rem", display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span style={{ fontSize: "0.72rem", color: "#888", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", display: "flex", alignItems: "center", gap: 4 }}>
+            <Monitor size={11} /> Window Layer
+          </span>
+          <label style={{ display: "flex", alignItems: "center", gap: 4, cursor: "pointer" }}>
+            <input
+              type="checkbox"
+              checked={!!map.windowLayer?.enabled}
+              onChange={(e) => setWindowLayerEnabled(mapIndex, e.target.checked)}
+              style={{ cursor: "pointer" }}
+            />
+            <span style={{ fontSize: "0.7rem", color: map.windowLayer?.enabled ? "var(--accent)" : "#555" }}>
+              {map.windowLayer?.enabled ? "ON" : "OFF"}
+            </span>
+          </label>
+        </div>
+
+        {map.windowLayer?.enabled && (
+          <>
+            <div
+              onClick={() => setActiveLayerIsWindow(!activeLayerIsWindow)}
+              style={{
+                padding: "5px 8px",
+                background: activeLayerIsWindow ? "#1a1a2e" : "transparent",
+                border: `1px solid ${activeLayerIsWindow ? "var(--accent)" : "#222"}`,
+                borderRadius: "6px",
+                cursor: "pointer",
+                fontSize: "0.78rem",
+                color: activeLayerIsWindow ? "#fff" : "#888",
+                userSelect: "none",
+              }}
+            >
+              HUD / Window
+            </div>
+            <div style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}>
+              <label style={{ fontSize: "0.7rem", color: "#666" }}>WX</label>
+              <input
+                type="number"
+                min={0}
+                max={20}
+                value={map.windowLayer.wx}
+                onChange={(e) => setWindowLayerConfig(mapIndex, Number(e.target.value), map.windowLayer!.wy)}
+                style={{ width: 44, background: "#111", border: "1px solid #333", color: "#ccc", borderRadius: 4, padding: "2px 4px", fontSize: "0.72rem" }}
+              />
+              <label style={{ fontSize: "0.7rem", color: "#666" }}>WY</label>
+              <input
+                type="number"
+                min={0}
+                max={18}
+                value={map.windowLayer.wy}
+                onChange={(e) => setWindowLayerConfig(mapIndex, map.windowLayer!.wx, Number(e.target.value))}
+                style={{ width: 44, background: "#111", border: "1px solid #333", color: "#ccc", borderRadius: 4, padding: "2px 4px", fontSize: "0.72rem" }}
+              />
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

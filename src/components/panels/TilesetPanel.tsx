@@ -112,8 +112,10 @@ export const TilesetPanel: React.FC = () => {
   const getTilesetUsageCount = (tilesetId: string) => {
     return maps.filter((map) =>
       map.layers.some((layer) =>
-        layer.data.some((row) =>
-          row.some((cell) => cell && cell.tilesetId === tilesetId),
+        Object.values(layer.chunks).some((chunk) =>
+          chunk.data.some((row) =>
+            row.some((cell) => cell && cell.tilesetId === tilesetId),
+          ),
         ),
       ),
     ).length;
@@ -144,12 +146,14 @@ export const TilesetPanel: React.FC = () => {
     if (!activeTileset) return [];
     return maps.filter((map) =>
       map.layers.some((layer) =>
-        layer.data.some((row) =>
-          row.some(
-            (cell) =>
-              cell &&
-              cell.tileIndex === tileIndex &&
-              cell.tilesetId === activeTileset.id,
+        Object.values(layer.chunks).some((chunk) =>
+          chunk.data.some((row) =>
+            row.some(
+              (cell) =>
+                cell &&
+                cell.tileIndex === tileIndex &&
+                cell.tilesetId === activeTileset.id,
+            ),
           ),
         ),
       ),

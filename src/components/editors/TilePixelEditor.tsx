@@ -279,6 +279,9 @@ export const TilePixelEditor: React.FC = () => {
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={() => {
+            if (isDrawing && (tool === "pencil" || tool === "eraser")) {
+              commit();
+            }
             setIsDrawing(false);
             setIsSelecting(false);
             setIsMovingSelection(false);

@@ -6,6 +6,8 @@ import {
   Redo2,
   Undo2,
   LayoutTemplate,
+  Volume2,
+  Settings,
 } from "lucide-react";
 import { useStore } from "../../store";
 import { ExportPanel } from "./ExportPanel";
@@ -89,6 +91,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </button>
 
         <button
+          className={`btn ${view === "sound" ? "" : "btn-secondary"}`}
+          onClick={() => setView("sound")}
+          title="Open the sound studio"
+          style={{
+            textAlign: "left",
+            display: "flex",
+            alignItems: "center",
+            gap: "0.8rem",
+          }}
+        >
+          <Volume2 size={20} />
+          Sound Studio
+        </button>
+
+        <button
           className="btn btn-secondary"
           onClick={onOpenTemplates}
           title="Browse and import templates"
@@ -101,6 +118,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
         >
           <LayoutTemplate size={20} />
           Templates
+        </button>
+
+        <button
+          className={`btn ${view === "settings" ? "" : "btn-secondary"}`}
+          onClick={() => setView("settings")}
+          title="Open application settings"
+          style={{
+            textAlign: "left",
+            display: "flex",
+            alignItems: "center",
+            gap: "0.8rem",
+          }}
+        >
+          <Settings size={20} />
+          Settings
         </button>
         <div style={{ display: "flex", gap: "0.5rem" }}>
           <button

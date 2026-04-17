@@ -1,27 +1,38 @@
 import type { StateCreator } from "zustand";
 import type {
+  MapClipboard,
   MapLayer,
   MapSelectionState,
   ProjectData,
   SelectionState,
+  SoundAsset,
   SpriteAsset,
   TileMap,
   Tileset,
+  View,
 } from "../../types";
 import type { Template } from "../../types/template";
 import { normalizeTilesetLayout } from "../../services/tileService";
+import { migrateFlatDataToChunks } from "../../services/mapService";
 
 const migrateMap = (raw: unknown): TileMap => {
   const m = raw as TileMap & { data?: ((import("../../types").TileCell | null)[] | null)[] };
-  if (m.layers && m.layers.length > 0) return m;
+  if (m.layers && m.layers.length > 0 && "chunks" in m.layers[0]) return m;
+
   const legacyData = m.data ?? [];
-  const layer: MapLayer = {
-    id: crypto.randomUUID(),
-    name: "Layer 1",
-    visible: true,
-    data: legacyData as TileMap["layers"][0]["data"],
-  };
-  return { id: m.id, name: m.name, width: m.width, height: m.height, tileSize: m.tileSize, layers: [layer] };
+  const layers = m.layers && m.layers.length > 0
+    ? m.layers.map((l: any) => ({
+        ...l,
+        chunks: l.chunks ?? migrateFlatDataToChunks(l.data ?? []),
+      }))
+    : [{
+        id: crypto.randomUUID(),
+        name: "Layer 1",
+        visible: true,
+        chunks: migrateFlatDataToChunks(legacyData as any),
+      }];
+
+  return { id: m.id, name: m.name, width: m.width, height: m.height, tileSize: m.tileSize, layers: layers as MapLayer[] };
 };
 
 export interface ProjectSlice {
@@ -37,22 +48,29 @@ type ProjectState = ProjectSlice & {
   activeLayerIndex: number;
   history: string[];
   historyIndex: number;
-  mapClipboard: unknown;
+  mapClipboard: MapClipboard | null;
   mapSelection: { hasSelection: boolean; x: number; y: number; width: number; height: number };
   clipboard: unknown;
   selection: { hasSelection: boolean; x: number; y: number; width: number; height: number };
   tilesets: Tileset[];
   maps: TileMap[];
   sprites: SpriteAsset[];
-  view: "tiles" | "gallery" | "map_editor" | "studio";
+  sounds: SoundAsset[];
+  view: View;
   commit: () => void;
 };
 
-const createHistorySnapshot = (tilesets: Tileset[], maps: TileMap[], sprites: SpriteAsset[]) =>
+const createHistorySnapshot = (
+  tilesets: Tileset[],
+  maps: TileMap[],
+  sprites: SpriteAsset[],
+  sounds: SoundAsset[],
+) =>
   JSON.stringify({
     tilesets,
     maps,
     sprites,
+    sounds,
     selection: {
       hasSelection: false,
       x: 0,
@@ -110,12 +128,23 @@ export const createProjectSlice: StateCreator<
       layers: map.layers.map((layer) => ({
         ...layer,
         id: crypto.randomUUID(),
-        data: layer.data.map((row) =>
-          row.map((cell) =>
-            cell
-              ? { tilesetId: tilesetIdMap.get(cell.tilesetId) ?? cell.tilesetId, tileIndex: cell.tileIndex }
-              : null
-          )
+        chunks: Object.fromEntries(
+          Object.entries(layer.chunks).map(([key, chunk]) => [
+            key,
+            {
+              ...chunk,
+              data: chunk.data.map((row) =>
+                row.map((cell) =>
+                  cell
+                    ? {
+                        tilesetId: tilesetIdMap.get(cell.tilesetId) ?? cell.tilesetId,
+                        tileIndex: cell.tileIndex,
+                      }
+                    : null
+                )
+              ),
+            },
+          ])
         ),
       })),
     }));
@@ -133,10 +162,16 @@ export const createProjectSlice: StateCreator<
       })),
     }));
 
+    const newSounds = (template.sounds ?? []).map((s) => ({
+      ...s,
+      id: crypto.randomUUID(),
+    }));
+
     set((state) => ({
       tilesets: [...state.tilesets, ...newTilesets],
       maps: [...state.maps, ...newMaps.map(migrateMap)],
       sprites: [...state.sprites, ...newSprites],
+      sounds: [...state.sounds, ...newSounds],
       view: "gallery" as const,
     }));
     get().commit();
@@ -145,12 +180,14 @@ export const createProjectSlice: StateCreator<
   loadProjectData: (data) => {
     const tilesets = data.tilesets.map(normalizeTilesetLayout);
     const maps = data.maps.map(migrateMap);
-    const history = [createHistorySnapshot(tilesets, maps, data.sprites)];
+    const sounds = data.sounds || [];
+    const history = [createHistorySnapshot(tilesets, maps, data.sprites, sounds)];
 
     set({
       tilesets,
       maps,
       sprites: data.sprites,
+      sounds,
       activeTilesetIndex: 0,
       activeTileIndex: 0,
       activeMapIndex: maps.length > 0 ? 0 : -1,

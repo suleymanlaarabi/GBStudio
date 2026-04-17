@@ -1,6 +1,6 @@
 import { BUILTIN_TEMPLATES } from "../data/templates";
 import type { Template, TemplateCategory, TemplateFile } from "../types/template";
-import type { TileMap, Tileset, SpriteAsset } from "../types";
+import type { TileMap, Tileset, SpriteAsset, SoundAsset } from "../types";
 
 const STORAGE_KEY = "cartridge.templates.v1";
 
@@ -48,6 +48,7 @@ export const exportTemplateAsFile = (template: Template): void => {
     tilesets: template.tilesets,
     maps: template.maps,
     sprites: template.sprites,
+    sounds: template.sounds,
   };
   const blob = new Blob([JSON.stringify(file, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
@@ -76,6 +77,7 @@ export const parseTemplateFile = (raw: string): Template => {
     tilesets: parsed.tilesets as Tileset[],
     maps: parsed.maps as TileMap[],
     sprites: parsed.sprites as SpriteAsset[],
+    sounds: (parsed.sounds ?? []) as SoundAsset[],
     isBuiltin: false,
   };
 };
@@ -89,16 +91,19 @@ export const buildTemplateFromSelection = (
   allMaps: TileMap[],
   allTilesets: Tileset[],
   allSprites: SpriteAsset[],
+  allSounds: SoundAsset[] = [],
 ): Template => {
   const maps = allMaps.filter((m) => selectedMapIds.includes(m.id));
 
   const usedTilesetIds = new Set<string>();
   maps.forEach((map) =>
     map.layers.forEach((layer) =>
-      layer.data.forEach((row) =>
-        row.forEach((cell) => {
-          if (cell) usedTilesetIds.add(cell.tilesetId);
-        })
+      Object.values(layer.chunks).forEach((chunk) =>
+        chunk.data.forEach((row) =>
+          row.forEach((cell) => {
+            if (cell) usedTilesetIds.add(cell.tilesetId);
+          })
+        )
       )
     )
   );
@@ -121,6 +126,7 @@ export const buildTemplateFromSelection = (
     tilesets,
     maps,
     sprites,
+    sounds: allSounds,
     isBuiltin: false,
   };
 };

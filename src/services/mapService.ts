@@ -1,4 +1,4 @@
-import type {
+import {
   MapClipboard,
   MapSelectionState,
   SelectionBounds,
@@ -6,9 +6,11 @@ import type {
   TileMap,
   TileSelection,
   MapLayer,
+  Chunk,
+  CHUNK_SIZE,
 } from "../types";
 
-export type LayerData = (TileCell | null)[][];
+export type LayerData = Record<string, Chunk>;
 
 const cloneCell = (cell: TileCell | null): TileCell | null =>
   cell ? { ...cell } : null;
@@ -18,116 +20,226 @@ const sameCell = (left: TileCell | null, right: TileCell | null) => {
   return left.tilesetId === right.tilesetId && left.tileIndex === right.tileIndex;
 };
 
-export const cloneLayerData = (data: LayerData): LayerData =>
-  data.map((row) => row.map(cloneCell));
+// --- Chunk-based storage helpers ---
 
-// --- Layer data operations (work on raw data arrays) ---
+export const getChunkKey = (x: number, y: number): string => `${x},${y}`;
 
-export const setLayerCell = (
-  data: LayerData,
+export const getCellFromChunks = (chunks: LayerData, x: number, y: number): TileCell | null => {
+  const chunkX = Math.floor(x / CHUNK_SIZE);
+  const chunkY = Math.floor(y / CHUNK_SIZE);
+  const key = getChunkKey(chunkX, chunkY);
+  const chunk = chunks[key];
+  if (!chunk) return null;
+
+  const localX = ((x % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
+  const localY = ((y % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
+  return chunk.data[localY][localX];
+};
+
+export const setCellInChunks = (
+  chunks: LayerData,
   x: number,
   y: number,
-  cell: TileCell | null,
-  width: number,
-  height: number,
+  cell: TileCell | null
 ): LayerData => {
-  if (x < 0 || x >= width || y < 0 || y >= height) return data;
-  const newData = cloneLayerData(data);
-  newData[y]![x] = cloneCell(cell);
-  return newData;
+  const chunkX = Math.floor(x / CHUNK_SIZE);
+  const chunkY = Math.floor(y / CHUNK_SIZE);
+  const key = getChunkKey(chunkX, chunkY);
+
+  const localX = ((x % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
+  const localY = ((y % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
+
+  const currentChunk = chunks[key];
+  if (!currentChunk && cell === null) return chunks;
+
+  const newChunks = { ...chunks };
+  const newChunkData = currentChunk
+    ? currentChunk.data.map((row) => [...row])
+    : Array(CHUNK_SIZE).fill(null).map(() => Array(CHUNK_SIZE).fill(null));
+
+  newChunkData[localY][localX] = cloneCell(cell);
+
+  newChunks[key] = {
+    x: chunkX,
+    y: chunkY,
+    data: newChunkData,
+  };
+
+  return newChunks;
+};
+
+export const migrateFlatDataToChunks = (data: (TileCell | null)[][]): LayerData => {
+  let chunks: LayerData = {};
+  data.forEach((row, y) => {
+    row.forEach((cell, x) => {
+      if (cell) {
+        chunks = setCellInChunks(chunks, x, y, cell);
+      }
+    });
+  });
+  return chunks;
+};
+
+export const cloneLayerData = (chunks: LayerData): LayerData => {
+  const newChunks: LayerData = {};
+  for (const key in chunks) {
+    const chunk = chunks[key];
+    newChunks[key] = {
+      ...chunk,
+      data: chunk.data.map((row) => row.map(cloneCell)),
+    };
+  }
+  return newChunks;
+};
+
+/**
+ * Helper for batching updates to chunks to avoid repeating the setCell logic and cloning.
+ */
+const withBatchUpdate = (
+  chunks: LayerData,
+  fn: (setCell: (x: number, y: number, cell: TileCell | null) => void) => void
+): LayerData => {
+  const newChunks = { ...chunks };
+  const modifiedChunks = new Set<string>();
+
+  const setCell = (x: number, y: number, cell: TileCell | null) => {
+    const chunkX = Math.floor(x / CHUNK_SIZE);
+    const chunkY = Math.floor(y / CHUNK_SIZE);
+    const key = getChunkKey(chunkX, chunkY);
+    const localX = ((x % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
+    const localY = ((y % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
+
+    if (!newChunks[key]) {
+      if (cell === null) return;
+      newChunks[key] = {
+        x: chunkX,
+        y: chunkY,
+        data: Array(CHUNK_SIZE).fill(null).map(() => Array(CHUNK_SIZE).fill(null)),
+      };
+      modifiedChunks.add(key);
+    } else if (!modifiedChunks.has(key)) {
+      newChunks[key] = {
+        ...newChunks[key],
+        data: newChunks[key].data.map((row) => [...row]),
+      };
+      modifiedChunks.add(key);
+    }
+    newChunks[key].data[localY][localX] = cloneCell(cell);
+  };
+
+  fn(setCell);
+  return newChunks;
+};
+
+// --- Layer data operations ---
+
+export const batchSetLayerCells = (
+  chunks: LayerData,
+  cells: Array<{ x: number; y: number; cell: TileCell | null }>
+): LayerData => {
+  if (cells.length === 0) return chunks;
+  return withBatchUpdate(chunks, (setCell) => {
+    for (const { x, y, cell } of cells) {
+      setCell(x, y, cell);
+    }
+  });
+};
+
+export const setLayerCell = (
+  chunks: LayerData,
+  x: number,
+  y: number,
+  cell: TileCell | null
+): LayerData => {
+  return setCellInChunks(chunks, x, y, cell);
 };
 
 export const floodFillLayer = (
-  data: LayerData,
+  chunks: LayerData,
   startX: number,
   startY: number,
-  replacement: TileCell | null,
-  width: number,
-  height: number,
+  replacement: TileCell | null
 ): LayerData => {
-  if (startX < 0 || startX >= width || startY < 0 || startY >= height) return data;
-  const target = cloneCell(data[startY]![startX] ?? null);
-  if (sameCell(target, replacement)) return data;
+  const target = getCellFromChunks(chunks, startX, startY);
+  if (sameCell(target, replacement)) return chunks;
 
-  const newData = cloneLayerData(data);
-  const stack: Array<[number, number]> = [[startX, startY]];
+  return withBatchUpdate(chunks, (setCell) => {
+    const stack: Array<[number, number]> = [[startX, startY]];
+    const visited = new Set<string>();
 
-  while (stack.length > 0) {
-    const [x, y] = stack.pop()!;
-    if (x < 0 || x >= width || y < 0 || y >= height) continue;
-    if (!sameCell(newData[y]![x] ?? null, target)) continue;
-    newData[y]![x] = cloneCell(replacement);
-    stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
-  }
+    while (stack.length > 0) {
+      const [x, y] = stack.pop()!;
+      const key = `${x},${y}`;
+      if (visited.has(key)) continue;
+      visited.add(key);
 
-  return newData;
+      if (!sameCell(getCellFromChunks(chunks, x, y), target)) continue;
+
+      setCell(x, y, replacement);
+      stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+      
+      if (visited.size > 50000) break; // Safety limit
+    }
+  });
 };
 
 export const drawLineOnLayer = (
-  data: LayerData,
+  chunks: LayerData,
   startX: number,
   startY: number,
   endX: number,
   endY: number,
-  cell: TileCell | null,
-  width: number,
-  height: number,
+  cell: TileCell | null
 ): LayerData => {
-  const newData = cloneLayerData(data);
-  let x = startX;
-  let y = startY;
-  const dx = Math.abs(endX - startX);
-  const sx = startX < endX ? 1 : -1;
-  const dy = -Math.abs(endY - startY);
-  const sy = startY < endY ? 1 : -1;
-  let error = dx + dy;
+  return withBatchUpdate(chunks, (setCell) => {
+    let x = startX;
+    let y = startY;
+    const dx = Math.abs(endX - startX);
+    const sx = startX < endX ? 1 : -1;
+    const dy = -Math.abs(endY - startY);
+    const sy = startY < endY ? 1 : -1;
+    let error = dx + dy;
 
-  while (true) {
-    if (x >= 0 && x < width && y >= 0 && y < height) {
-      newData[y]![x] = cloneCell(cell);
+    while (true) {
+      setCell(x, y, cell);
+      if (x === endX && y === endY) break;
+      const twiceError = 2 * error;
+      if (twiceError >= dy) { error += dy; x += sx; }
+      if (twiceError <= dx) { error += dx; y += sy; }
     }
-    if (x === endX && y === endY) break;
-    const twiceError = 2 * error;
-    if (twiceError >= dy) { error += dy; x += sx; }
-    if (twiceError <= dx) { error += dx; y += sy; }
-  }
-
-  return newData;
+  });
 };
 
 export const drawRectangleOnLayer = (
-  data: LayerData,
+  chunks: LayerData,
   selection: SelectionBounds,
   cell: TileCell | null,
-  filled: boolean,
-  width: number,
-  height: number,
+  filled: boolean
 ): LayerData => {
-  const newData = cloneLayerData(data);
-  const startX = Math.max(0, selection.x);
-  const startY = Math.max(0, selection.y);
-  const endX = Math.min(width, selection.x + selection.width);
-  const endY = Math.min(height, selection.y + selection.height);
+  return withBatchUpdate(chunks, (setCell) => {
+    const startX = selection.x;
+    const startY = selection.y;
+    const endX = selection.x + selection.width;
+    const endY = selection.y + selection.height;
 
-  for (let y = startY; y < endY; y++) {
-    for (let x = startX; x < endX; x++) {
-      const isBorder = y === startY || y === endY - 1 || x === startX || x === endX - 1;
-      if (filled || isBorder) newData[y]![x] = cloneCell(cell);
+    for (let y = startY; y < endY; y++) {
+      for (let x = startX; x < endX; x++) {
+        const isBorder = y === startY || y === endY - 1 || x === startX || x === endX - 1;
+        if (filled || isBorder) setCell(x, y, cell);
+      }
     }
-  }
-
-  return newData;
+  });
 };
 
 export const extractLayerSelection = (
-  data: LayerData,
-  selection: SelectionBounds,
+  chunks: LayerData,
+  selection: SelectionBounds
 ): MapClipboard => {
   const result: MapClipboard = [];
   for (let y = selection.y; y < selection.y + selection.height; y++) {
     const row: (TileCell | null)[] = [];
     for (let x = selection.x; x < selection.x + selection.width; x++) {
-      row.push(cloneCell(data[y]?.[x] ?? null));
+      row.push(cloneCell(getCellFromChunks(chunks, x, y)));
     }
     result.push(row);
   }
@@ -135,80 +247,63 @@ export const extractLayerSelection = (
 };
 
 export const pasteLayerSelection = (
-  data: LayerData,
+  chunks: LayerData,
   clipboard: MapClipboard,
   targetX: number,
-  targetY: number,
-  width: number,
-  height: number,
+  targetY: number
 ): LayerData => {
-  const newData = cloneLayerData(data);
-  clipboard.forEach((row, rowIndex) => {
-    row.forEach((cell, columnIndex) => {
-      const x = targetX + columnIndex;
-      const y = targetY + rowIndex;
-      if (x >= 0 && x < width && y >= 0 && y < height) {
-        newData[y]![x] = cloneCell(cell);
-      }
+  return withBatchUpdate(chunks, (setCell) => {
+    clipboard.forEach((row, rowIndex) => {
+      row.forEach((cell, columnIndex) => {
+        setCell(targetX + columnIndex, targetY + rowIndex, cell);
+      });
     });
   });
-  return newData;
 };
 
 export const clearLayerArea = (
-  data: LayerData,
-  selection: SelectionBounds,
-  width: number,
-  height: number,
+  chunks: LayerData,
+  selection: SelectionBounds
 ): LayerData => {
-  const newData = cloneLayerData(data);
-  for (let y = selection.y; y < selection.y + selection.height; y++) {
-    for (let x = selection.x; x < selection.x + selection.width; x++) {
-      if (x >= 0 && x < width && y >= 0 && y < height) {
-        newData[y]![x] = null;
+  return withBatchUpdate(chunks, (setCell) => {
+    for (let y = selection.y; y < selection.y + selection.height; y++) {
+      for (let x = selection.x; x < selection.x + selection.width; x++) {
+        setCell(x, y, null);
       }
     }
-  }
-  return newData;
+  });
 };
 
 export const paintBrushOnLayer = (
-  data: LayerData,
+  chunks: LayerData,
   startX: number,
   startY: number,
-  tileSelection: TileSelection,
-  width: number,
-  height: number,
+  tileSelection: TileSelection
 ): LayerData => {
-  if (!tileSelection.hasSelection || tileSelection.width === 0 || tileSelection.height === 0) return data;
+  if (!tileSelection.hasSelection || tileSelection.width === 0 || tileSelection.height === 0) return chunks;
 
-  const newData = cloneLayerData(data);
-  const patternWidth = tileSelection.width;
-  const patternHeight = tileSelection.height;
-  const endX = Math.min(width, startX + patternWidth);
-  const endY = Math.min(height, startY + patternHeight);
+  return withBatchUpdate(chunks, (setCell) => {
+    const patternWidth = tileSelection.width;
+    const patternHeight = tileSelection.height;
 
-  for (let y = startY; y < endY; y++) {
-    for (let x = startX; x < endX; x++) {
-      const patternX = (x - startX) % patternWidth;
-      const patternY = (y - startY) % patternHeight;
-      const selectedTile = tileSelection.tileData[patternY]?.[patternX];
-      if (selectedTile && x >= 0 && x < width && y >= 0 && y < height) {
-        newData[y]![x] = cloneCell(selectedTile);
+    for (let y = 0; y < patternHeight; y++) {
+      for (let x = 0; x < patternWidth; x++) {
+        const selectedTile = tileSelection.tileData[y]?.[x];
+        if (selectedTile) {
+          setCell(startX + x, startY + y, selectedTile);
+        }
       }
     }
-  }
-
-  return newData;
+  });
 };
 
 // --- Map-level helpers ---
 
-export const createEmptyLayer = (name: string, width: number, height: number): MapLayer => ({
+export const createEmptyLayer = (name: string): MapLayer => ({
   id: crypto.randomUUID(),
   name,
   visible: true,
-  data: Array(height).fill(null).map(() => Array(width).fill(null)),
+  chunks: {},
 });
 
 export const applyToActiveLayer = (
@@ -221,19 +316,17 @@ export const applyToActiveLayer = (
   return {
     ...map,
     layers: map.layers.map((layer, i) =>
-      i === idx ? { ...layer, data: fn(layer.data) } : layer
+      i === idx ? { ...layer, chunks: fn(layer.chunks) } : layer
     ),
   };
 };
 
-// --- Legacy compat (for pickMapCell, etc.) ---
-
 export const getActiveLayerData = (map: TileMap, layerIndex: number): LayerData => {
   const idx = Math.max(0, Math.min(layerIndex, map.layers.length - 1));
-  return map.layers[idx]?.data ?? [];
+  return map.layers[idx]?.chunks ?? {};
 };
 
-// --- Old TileMap-based signatures (kept for migration) ---
+// --- Legacy compat & other helpers ---
 
 export const normalizeMapSelection = (
   startX: number,

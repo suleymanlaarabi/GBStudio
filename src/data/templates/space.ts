@@ -1,5 +1,6 @@
 import type { GBColor } from "../../types";
 import type { Template } from "../../types/template";
+import { migrateFlatDataToChunks } from "../../services/mapService";
 
 const TS = "builtin-space-ts";
 const CTS = "builtin-space-chars";
@@ -116,7 +117,7 @@ export const SPACE_TEMPLATE: Template = {
   name: "Space Shooter",
   description:
     "Futuristic space setting with starfields, nebulae, and animated spaceships.",
-  category: "custom",
+  category: "shooter",
   isBuiltin: true,
   createdAt: "2024-01-01T00:00:00.000Z",
   tilesets: [
@@ -167,7 +168,7 @@ export const SPACE_TEMPLATE: Template = {
           id: "builtin-space-layer1",
           name: "Stars",
           visible: true,
-          data: [
+          chunks: migrateFlatDataToChunks([
             [S1, n, n, S2, n, n, n, n, S1, n, n, n, n, S2, n, n],
             [n, n, S1, n, n, n, S2, n, n, n, n, S1, n, n, n, n],
             [n, S2, n, n, n, n, n, n, n, S2, n, n, n, n, S1, n],
@@ -180,15 +181,17 @@ export const SPACE_TEMPLATE: Template = {
             [n, S1, n, n, S2, n, n, n, n, n, S1, n, n, n, n, n],
             [n, n, n, n, n, n, S1, n, n, n, n, n, n, S2, n, n],
             [S2, n, n, n, S1, n, n, n, S2, n, n, n, n, n, n, S1],
-          ],
+          ]),
         },
         {
           id: "builtin-space-layer2",
           name: "Nebulae",
           visible: true,
-          data: Array(12)
-            .fill(null)
-            .map(() => Array(16).fill(null)),
+          chunks: migrateFlatDataToChunks(
+            Array(12)
+              .fill(null)
+              .map(() => Array(16).fill(null))
+          ),
         },
       ],
     },

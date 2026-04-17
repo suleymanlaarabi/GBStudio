@@ -104,6 +104,7 @@ export const createSelectionSlice: StateCreator<
     if (!(selection.hasSelection && selection.width > 0 && selection.height > 0)) {
       set({ selection: emptySelection });
     }
+    get().commit();
   },
 
   clearSelection: () => set({ selection: emptySelection }),

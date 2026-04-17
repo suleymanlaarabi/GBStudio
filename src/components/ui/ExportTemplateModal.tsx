@@ -5,7 +5,7 @@ import {
   exportTemplateAsFile,
   saveUserTemplate,
 } from "../../services/templateService";
-import type { TileMap, Tileset, SpriteAsset } from "../../types";
+import type { TileMap, Tileset, SpriteAsset, SoundAsset } from "../../types";
 import type { TemplateCategory } from "../../types/template";
 
 interface ExportTemplateModalProps {
@@ -14,6 +14,7 @@ interface ExportTemplateModalProps {
   maps: TileMap[];
   tilesets: Tileset[];
   sprites: SpriteAsset[];
+  sounds?: SoundAsset[];
 }
 
 export const ExportTemplateModal: React.FC<ExportTemplateModalProps> = ({
@@ -22,6 +23,7 @@ export const ExportTemplateModal: React.FC<ExportTemplateModalProps> = ({
   maps,
   tilesets,
   sprites,
+  sounds = [],
 }) => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -55,8 +57,10 @@ export const ExportTemplateModal: React.FC<ExportTemplateModalProps> = ({
       .filter((m) => selectedMapIds.has(m.id))
       .forEach((map) =>
         map.layers.forEach((layer) =>
-          layer.data.forEach((row) =>
-            row.forEach((cell) => { if (cell) ids.add(cell.tilesetId); })
+          Object.values(layer.chunks).forEach((chunk) =>
+            chunk.data.forEach((row) =>
+              row.forEach((cell) => { if (cell) ids.add(cell.tilesetId); })
+            )
           )
         )
       );
@@ -83,7 +87,8 @@ export const ExportTemplateModal: React.FC<ExportTemplateModalProps> = ({
       [...selectedSpriteIds],
       maps,
       tilesets,
-      sprites
+      sprites,
+      sounds,
     );
     saveUserTemplate(template);
     exportTemplateAsFile(template);

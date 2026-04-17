@@ -1,5 +1,6 @@
 import type { GBColor } from "../../types";
 import type { Template } from "../../types/template";
+import { migrateFlatDataToChunks } from "../../services/mapService";
 
 const TS = "builtin-village-ts";
 const CTS = "builtin-village-chars";
@@ -221,51 +222,55 @@ export const VILLAGE_TEMPLATE: Template = {
           id: "bv-layer1",
           name: "Ground",
           visible: true,
-          data: Array(15)
-            .fill(null)
-            .map((_, y) =>
-              Array(20)
-                .fill(null)
-                .map((_, x) => {
-                  if (y > 6 && y < 10) return P;
-                  if (x > 8 && x < 12) return P;
-                  return G;
-                }),
-            ),
+          chunks: migrateFlatDataToChunks(
+            Array(15)
+              .fill(null)
+              .map((_, y) =>
+                Array(20)
+                  .fill(null)
+                  .map((_, x) => {
+                    if (y > 6 && y < 10) return P;
+                    if (x > 8 && x < 12) return P;
+                    return G;
+                  }),
+              ),
+          ),
         },
         {
           id: "bv-layer2",
           name: "Buildings & Props",
           visible: true,
-          data: Array(15)
-            .fill(null)
-            .map((_, y) =>
-              Array(20)
-                .fill(null)
-                .map((_, x) => {
-                  // House 1
-                  if (y === 2 && x >= 3 && x <= 5) return R;
-                  if (y === 3 && x === 3) return Wi;
-                  if (y === 3 && x === 4) return D;
-                  if (y === 3 && x === 5) return Wi;
+          chunks: migrateFlatDataToChunks(
+            Array(15)
+              .fill(null)
+              .map((_, y) =>
+                Array(20)
+                  .fill(null)
+                  .map((_, x) => {
+                    // House 1
+                    if (y === 2 && x >= 3 && x <= 5) return R;
+                    if (y === 3 && x === 3) return Wi;
+                    if (y === 3 && x === 4) return D;
+                    if (y === 3 && x === 5) return Wi;
 
-                  // House 2
-                  if (y === 2 && x >= 14 && x <= 16) return R;
-                  if (y === 3 && x === 14) return Wi;
-                  if (y === 3 && x === 15) return D;
-                  if (y === 3 && x === 16) return Wi;
+                    // House 2
+                    if (y === 2 && x >= 14 && x <= 16) return R;
+                    if (y === 3 && x === 14) return Wi;
+                    if (y === 3 && x === 15) return D;
+                    if (y === 3 && x === 16) return Wi;
 
-                  // Fences
-                  if (y === 12 && x >= 2 && x <= 17) return Fn;
+                    // Fences
+                    if (y === 12 && x >= 2 && x <= 17) return Fn;
 
-                  // Flowers
-                  if (y === 5 && x === 2) return Fl;
-                  if (y === 11 && x === 18) return Fl;
-                  if (y === 1 && x === 10) return Fl;
+                    // Flowers
+                    if (y === 5 && x === 2) return Fl;
+                    if (y === 11 && x === 18) return Fl;
+                    if (y === 1 && x === 10) return Fl;
 
-                  return n;
-                }),
-            ),
+                    return n;
+                  }),
+              ),
+          ),
         },
       ],
     },

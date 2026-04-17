@@ -4,6 +4,8 @@ import { open, save } from "@tauri-apps/plugin-dialog";
 import { TilePixelEditor } from "./components/editors/TilePixelEditor";
 import { MapEditor } from "./components/editors/MapEditor";
 import { SpriteStudio } from "./components/editors/SpriteStudio";
+import { SoundStudio } from "./components/editors/SoundStudio";
+import { Settings } from "./components/editors/Settings";
 import { AppLayout } from "./components/layout/AppLayout";
 import type { StatusTone } from "./components/layout/StatusBar";
 import { MapGallery } from "./components/panels/MapGallery";
@@ -26,7 +28,7 @@ const PROJECT_PATH_KEY = "cartridge.project-file-path";
 const PROJECT_FOLDER_KEY = "cartridge.project-folder-path";
 
 function App() {
-  const { tilesets, maps, sprites, redo, undo, view, loadProjectData } =
+  const { tilesets, maps, sprites, sounds, redo, undo, view, loadProjectData } =
     useStore();
   const [isSaving, setIsSaving] = useState(false);
   const [projectPath, setProjectPath] = useState<string | null>(null);
@@ -118,6 +120,7 @@ function App() {
           tilesets,
           maps,
           sprites,
+          sounds,
         });
         localStorage.setItem(AUTOSAVE_KEY, snapshot);
       } catch (error) {
@@ -127,7 +130,7 @@ function App() {
     }, 1500);
 
     return () => window.clearTimeout(timeout);
-  }, [maps, sprites, tilesets, updateStatus]);
+  }, [maps, sprites, sounds, tilesets, updateStatus]);
 
   useEffect(
     () => () => {
@@ -303,8 +306,8 @@ function App() {
       setIsSaving(true);
       try {
         updateStatus("Exporting C/H files...", "busy");
-        const cContent = generateCFile(name, tilesets, maps, sprites);
-        const hContent = generateHFile(name, tilesets, maps, sprites);
+        const cContent = generateCFile(name, tilesets, maps, sprites, sounds);
+        const hContent = generateHFile(name, tilesets, maps, sprites, sounds);
         await invoke("save_file", {
           path: projectPath,
           filename: `${name}.c`,
@@ -354,6 +357,10 @@ function App() {
         <MapEditor />
       ) : view === "studio" ? (
         <SpriteStudio />
+      ) : view === "sound" ? (
+        <SoundStudio />
+      ) : view === "settings" ? (
+        <Settings />
       ) : (
         <div
           style={{

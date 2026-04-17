@@ -1,5 +1,6 @@
 import type { GBColor } from "../../types";
 import type { Template } from "../../types/template";
+import { migrateFlatDataToChunks } from "../../services/mapService";
 
 const TS = "builtin-dungeon-ts";
 
@@ -170,7 +171,7 @@ export const DUNGEON_TEMPLATE: Template = {
         id: "builtin-dungeon-layer1",
         name: "Architecture",
         visible: true,
-        data: [
+        chunks: migrateFlatDataToChunks([
           [W, W, W, W, W, W, W, W, W, W, W, W],
           [W, F, F, F, F, F, F, F, F, F, F, W],
           [W, F, F, F, F, F, F, F, F, F, F, W],
@@ -181,13 +182,13 @@ export const DUNGEON_TEMPLATE: Template = {
           [W, F, F, F, F, S, F, F, F, F, F, W],
           [W, F, F, F, F, F, F, F, F, F, F, W],
           [W, W, W, W, W, D, W, W, W, W, W, W],
-        ],
+        ]),
       },
       {
         id: "builtin-dungeon-layer2",
         name: "Props",
         visible: true,
-        data: [
+        chunks: migrateFlatDataToChunks([
           [n, n, n, n, n, n, n, n, n, n, n, n],
           [n, n, n, n, n, n, n, n, n, n, n, n],
           [n, n, T, n, n, n, n, n, n, T, n, n],
@@ -198,7 +199,7 @@ export const DUNGEON_TEMPLATE: Template = {
           [n, n, n, n, n, n, n, n, n, n, n, n],
           [n, n, n, n, n, n, n, n, n, n, n, n],
           [n, n, n, n, n, n, n, n, n, n, n, n],
-        ],
+        ]),
       },
     ],
   }],

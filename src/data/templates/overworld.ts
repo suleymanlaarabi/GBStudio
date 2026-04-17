@@ -1,5 +1,6 @@
 import type { GBColor } from "../../types";
 import type { Template } from "../../types/template";
+import { migrateFlatDataToChunks } from "../../services/mapService";
 
 const TS = "builtin-overworld-ts";
 
@@ -148,7 +149,7 @@ export const OVERWORLD_TEMPLATE: Template = {
         id: "builtin-overworld-layer1",
         name: "Terrain",
         visible: true,
-        data: [
+        chunks: migrateFlatDataToChunks([
           [M, M, M, G, G, G, G, G, G, G, G, G, G, G],
           [M, M, G, G, G, G, G, G, G, G, W, W, G, G],
           [M, G, G, G, G, G, P, G, G, W, W, W, G, G],
@@ -159,13 +160,13 @@ export const OVERWORLD_TEMPLATE: Template = {
           [G, G, P, G, G, G, G, G, G, G, P, P, G, G],
           [G, G, G, G, G, G, G, G, G, G, G, P, P, G],
           [G, G, G, G, G, G, G, G, G, G, G, G, P, G],
-        ],
+        ]),
       },
       {
         id: "builtin-overworld-layer2",
         name: "Scenery",
         visible: true,
-        data: [
+        chunks: migrateFlatDataToChunks([
           [n, n, n, Tr, n, n, n, n, n, n, n, n, n, n],
           [n, n, Tr, n, n, n, n, n, n, n, n, n, n, n],
           [n, Tr, n, n, n, n, n, n, n, n, n, n, n, n],
@@ -176,7 +177,7 @@ export const OVERWORLD_TEMPLATE: Template = {
           [n, n, n, n, Tr, n, n, n, Tr, n, n, n, n, n],
           [n, n, n, n, n, n, n, n, n, n, n, n, n, n],
           [n, n, n, n, n, n, n, n, n, n, n, n, n, n],
-        ],
+        ]),
       },
     ],
   }],

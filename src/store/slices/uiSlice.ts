@@ -13,6 +13,8 @@ export interface UISlice {
   mapShapeFilled: boolean;
   view: View;
   zoom: number;
+  selectedSpriteInstanceId: string | null;
+  activeLayerIsWindow: boolean;
   setView: (view: View) => void;
   setZoom: (zoom: number) => void;
   setActiveTileset: (index: number) => void;
@@ -24,6 +26,8 @@ export interface UISlice {
   setTool: (tool: Tool) => void;
   setMapTool: (tool: MapTool) => void;
   setMapShapeFilled: (filled: boolean) => void;
+  setSelectedSpriteInstance: (id: string | null) => void;
+  setActiveLayerIsWindow: (v: boolean) => void;
 }
 
 type UIState = UISlice & {
@@ -43,6 +47,8 @@ export const createUISlice: StateCreator<UIState, [], [], UISlice> = (set) => ({
   mapShapeFilled: true,
   view: "tiles",
   zoom: 3,
+  selectedSpriteInstanceId: null,
+  activeLayerIsWindow: false,
 
   setView: (view) => set({ view }),
   setZoom: (zoom) => set({ zoom: Math.max(0.5, Math.min(15, zoom)) }),
@@ -68,4 +74,6 @@ export const createUISlice: StateCreator<UIState, [], [], UISlice> = (set) => ({
   setTool: (tool) => set({ tool }),
   setMapTool: (mapTool) => set({ mapTool }),
   setMapShapeFilled: (mapShapeFilled) => set({ mapShapeFilled }),
+  setSelectedSpriteInstance: (selectedSpriteInstanceId) => set({ selectedSpriteInstanceId }),
+  setActiveLayerIsWindow: (activeLayerIsWindow) => set({ activeLayerIsWindow }),
 });

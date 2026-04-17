@@ -1,7 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Download, Upload, X, Layers, Sparkles } from "lucide-react";
+import { Modal } from "./Modal";
 import { GB_COLORS } from "../../constants/colors";
 import { getAllTemplates, deleteUserTemplate, parseTemplateFile } from "../../services/templateService";
+import { CHUNK_SIZE } from "../../types/map";
 import { useStore } from "../../store";
 import type { Template, TemplateCategory } from "../../types/template";
 import type { Tileset } from "../../types";
@@ -11,14 +13,42 @@ const CATEGORY_LABELS: Record<TemplateCategory | "all", string> = {
   dungeon: "Dungeon",
   overworld: "Overworld",
   platformer: "Platformer",
-  custom: "Imported",
+  shooter: "Shooter",
+  assets: "Assets",
+  sounds: "Sounds",
+  custom: "Custom",
 };
 
 const CATEGORY_COLORS: Record<TemplateCategory, string> = {
   dungeon: "#8b5cf6",
   overworld: "#22c55e",
   platformer: "#f59e0b",
-  custom: "#06b6d4",
+  shooter: "#ef4444",
+  assets: "#ec4899",
+  sounds: "#06b6d4",
+  custom: "#64748b",
+};
+
+const drawTileToCanvas = (
+  ctx: CanvasRenderingContext2D,
+  tileData: (number | null)[][],
+  originX: number,
+  originY: number,
+  pixelWidth: number,
+  pixelHeight: number,
+) => {
+  tileData.forEach((row, y) =>
+    row.forEach((color, x) => {
+      if (color === null || color === undefined) return;
+      ctx.fillStyle = GB_COLORS[color];
+      ctx.fillRect(
+        originX + x * pixelWidth,
+        originY + y * pixelHeight,
+        Math.ceil(pixelWidth),
+        Math.ceil(pixelHeight),
+      );
+    }),
+  );
 };
 
 const TemplatePreview: React.FC<{ template: Template }> = ({ template }) => {
@@ -30,14 +60,78 @@ const TemplatePreview: React.FC<{ template: Template }> = ({ template }) => {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    ctx.fillStyle = GB_COLORS[0];
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
     const map = template.maps[0];
     if (!map) {
-      ctx.fillStyle = "#111";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      const spriteFrames = template.sprites
+        .flatMap((sprite) => sprite.animations.flatMap((animation) => animation.frames))
+        .slice(0, 6);
+
+      if (spriteFrames.length > 0) {
+        const columns = Math.min(3, spriteFrames.length);
+        const rows = Math.ceil(spriteFrames.length / columns);
+        const padding = 10;
+        const slotWidth = (canvas.width - padding * 2) / columns;
+        const slotHeight = (canvas.height - padding * 2) / rows;
+
+        spriteFrames.forEach((frame, index) => {
+          const tileset = template.tilesets.find((candidate) => candidate.id === frame.tilesetId);
+          const tile = tileset?.tiles[frame.tileIndex];
+          if (!tile) return;
+
+          const column = index % columns;
+          const row = Math.floor(index / columns);
+          const tileSize = tile.size || tileset?.tileSize || 8;
+          const scale = Math.max(
+            1,
+            Math.floor(Math.min(slotWidth / tileSize, slotHeight / tileSize)),
+          );
+          const drawWidth = tileSize * scale;
+          const drawHeight = tileSize * scale;
+          const originX = padding + column * slotWidth + (slotWidth - drawWidth) / 2;
+          const originY = padding + row * slotHeight + (slotHeight - drawHeight) / 2;
+
+          ctx.fillStyle = "#111";
+          ctx.fillRect(
+            padding + column * slotWidth + 2,
+            padding + row * slotHeight + 2,
+            slotWidth - 4,
+            slotHeight - 4,
+          );
+
+          drawTileToCanvas(
+            ctx,
+            tile.data,
+            originX,
+            originY,
+            scale,
+            scale,
+          );
+        });
+
+        return;
+      }
+
+      if ((template.sounds?.length ?? 0) > 0) {
+        // Sound-only template: draw waveform bars
+        ctx.fillStyle = "#1a1a1a";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        const bars = 16;
+        const barW = (canvas.width - 20) / bars;
+        const amplitudes = [4,7,10,13,15,12,9,6,8,11,14,15,12,8,5,3];
+        ctx.fillStyle = "#44cc88";
+        amplitudes.forEach((amp, i) => {
+          const h = (amp / 15) * (canvas.height - 20);
+          ctx.fillRect(10 + i * barW, (canvas.height - h) / 2, barW - 2, h);
+        });
+        return;
+      }
       ctx.fillStyle = "#333";
       ctx.font = "10px monospace";
       ctx.textAlign = "center";
-      ctx.fillText("No map", canvas.width / 2, canvas.height / 2);
+      ctx.fillText("No preview", canvas.width / 2, canvas.height / 2);
       return;
     }
 
@@ -48,31 +142,32 @@ const TemplatePreview: React.FC<{ template: Template }> = ({ template }) => {
     const pW = cellW / tileSize;
     const pH = cellH / tileSize;
 
-    ctx.fillStyle = GB_COLORS[0];
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
     for (const layer of map.layers) {
       if (!layer.visible) continue;
-      layer.data.forEach((row, my) =>
-        row.forEach((cell, mx) => {
-          if (!cell) return;
-          const ts = tilesets.find((t) => t.id === cell.tilesetId);
-          const tile = ts?.tiles[cell.tileIndex];
-          if (!tile) return;
-          tile.data.forEach((tRow, ty) =>
-            tRow.forEach((color, tx) => {
-              if (color === null || color === undefined) return;
-              ctx.fillStyle = GB_COLORS[color];
-              ctx.fillRect(
-                mx * cellW + tx * pW,
-                my * cellH + ty * pH,
-                Math.ceil(pW),
-                Math.ceil(pH)
-              );
-            })
-          );
-        })
-      );
+      Object.values(layer.chunks).forEach((chunk) => {
+        chunk.data.forEach((row, localY) => {
+          row.forEach((cell, localX) => {
+            if (!cell) return;
+            const globalX = chunk.x * CHUNK_SIZE + localX;
+            const globalY = chunk.y * CHUNK_SIZE + localY;
+
+            // Only render if within initial viewport bounds for preview
+            if (globalX >= map.width || globalY >= map.height || globalX < 0 || globalY < 0) return;
+
+            const ts = tilesets.find((t) => t.id === cell.tilesetId);
+            const tile = ts?.tiles[cell.tileIndex];
+            if (!tile) return;
+            drawTileToCanvas(
+              ctx,
+              tile.data,
+              globalX * cellW,
+              globalY * cellH,
+              pW,
+              pH,
+            );
+          });
+        });
+      });
     }
   }, [template]);
 
@@ -198,12 +293,21 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onUse, onDelete }
           >
             {CATEGORY_LABELS[template.category]}
           </span>
-          <span style={{ fontSize: "0.65rem", color: "#555" }}>
-            {template.tilesets.length} tileset{template.tilesets.length > 1 ? "s" : ""}
-          </span>
-          <span style={{ fontSize: "0.65rem", color: "#555" }}>
-            {template.maps.length} map{template.maps.length > 1 ? "s" : ""}
-          </span>
+          {template.tilesets.length > 0 && (
+            <span style={{ fontSize: "0.65rem", color: "#555" }}>
+              {template.tilesets.length} tileset{template.tilesets.length > 1 ? "s" : ""}
+            </span>
+          )}
+          {template.maps.length > 0 && (
+            <span style={{ fontSize: "0.65rem", color: "#555" }}>
+              {template.maps.length} map{template.maps.length > 1 ? "s" : ""}
+            </span>
+          )}
+          {(template.sounds?.length ?? 0) > 0 && (
+            <span style={{ fontSize: "0.65rem", color: "#555" }}>
+              {template.sounds!.length} sound{template.sounds!.length > 1 ? "s" : ""}
+            </span>
+          )}
         </div>
       </div>
     </div>
@@ -218,8 +322,11 @@ interface TemplateGalleryProps {
 export const TemplateGallery: React.FC<TemplateGalleryProps> = ({ isOpen, onClose }) => {
   const { importTemplate } = useStore();
   const [category, setCategory] = useState<TemplateCategory | "all">("all");
-  const [templates, setTemplates] = useState<Template[]>([]);
+  const [templates, setTemplates] = useState(getAllTemplates());
+  const [errorModalOpen, setErrorModalOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
 
   useEffect(() => {
     if (isOpen) setTemplates(getAllTemplates());
@@ -256,7 +363,8 @@ export const TemplateGallery: React.FC<TemplateGalleryProps> = ({ isOpen, onClos
         importTemplate(template);
         onClose();
       } catch (err) {
-        alert(`Import failed: ${String(err)}`);
+        setErrorMessage(`Import failed: ${String(err)}`);
+        setErrorModalOpen(true);
       }
     };
     reader.readAsText(file);
@@ -311,7 +419,7 @@ export const TemplateGallery: React.FC<TemplateGalleryProps> = ({ isOpen, onClos
             CATEGORIES
           </div>
 
-          {(["all", "dungeon", "overworld", "platformer", "custom"] as const).map((cat) => (
+          {(["all", "dungeon", "overworld", "platformer", "shooter", "assets", "sounds", "custom"] as const).map((cat) => (
             <button
               key={cat}
               onClick={() => setCategory(cat)}
@@ -448,6 +556,15 @@ export const TemplateGallery: React.FC<TemplateGalleryProps> = ({ isOpen, onClos
           </div>
         </div>
       </div>
+
+      <Modal
+        isOpen={errorModalOpen}
+        title="Import Error"
+        type="confirm"
+        message={errorMessage}
+        onConfirm={() => setErrorModalOpen(false)}
+        onClose={() => setErrorModalOpen(false)}
+      />
     </div>
   );
 };

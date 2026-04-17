@@ -1,5 +1,6 @@
 import type { GBColor } from "../../types";
 import type { Template } from "../../types/template";
+import { migrateFlatDataToChunks } from "../../services/mapService";
 
 const TS = "builtin-platformer-ts";
 
@@ -170,7 +171,7 @@ export const PLATFORMER_TEMPLATE: Template = {
         id: "builtin-platformer-layer1",
         name: "Terrain",
         visible: true,
-        data: [
+        chunks: migrateFlatDataToChunks([
           [n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n],
           [n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n],
           [n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n],
@@ -180,13 +181,13 @@ export const PLATFORMER_TEMPLATE: Template = {
           [n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n],
           [G, G, G, G, G, G, G, G, G, n, G, G, G, G, G, G],
           [G, G, G, G, G, G, G, G, G, n, G, G, G, G, G, G],
-        ],
+        ]),
       },
       {
         id: "builtin-platformer-layer2",
         name: "Props",
         visible: true,
-        data: [
+        chunks: migrateFlatDataToChunks([
           [n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, F],
           [n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n],
           [n, Cl, n, n, Cl, n, n, n, n, n, n, n, Cl, n, n, n],
@@ -196,7 +197,7 @@ export const PLATFORMER_TEMPLATE: Template = {
           [n, n, n, n, Sp, n, n, n, n, n, n, Sp, n, n, n, n],
           [n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n],
           [n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n],
-        ],
+        ]),
       },
     ],
   }],

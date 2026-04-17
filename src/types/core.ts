@@ -1,6 +1,6 @@
 export type GBColor = 0 | 1 | 2 | 3;
 export type TileSize = 8 | 16;
-export type View = "tiles" | "gallery" | "map_editor" | "studio";
+export type View = "tiles" | "gallery" | "map_editor" | "studio" | "sound" | "settings";
 export type Tool =
   | "pencil"
   | "eraser"
@@ -15,4 +15,7 @@ export type MapTool =
   | "fill"
   | "line"
   | "rectangle"
-  | "select";
+  | "select"
+  | "camera_spawn"
+  | "collision"
+  | "sprite_place";

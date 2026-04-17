@@ -3,6 +3,7 @@ import { Edit3, Map as MapIcon, Plus, Trash2, Package } from "lucide-react";
 import { GB_COLORS } from "../../constants/colors";
 import { useStore } from "../../store";
 import type { TileMap, Tileset, TileSize } from "../../types";
+import { CHUNK_SIZE } from "../../types/map";
 import { Modal } from "../ui/Modal";
 import { ExportTemplateModal } from "../ui/ExportTemplateModal";
 
@@ -36,26 +37,34 @@ const MapPreview: React.FC<{ map: TileMap; tilesets: Tileset[] }> = ({
 
     for (const layer of map.layers) {
       if (!layer.visible) continue;
-      layer.data.forEach((row, my) =>
-        row.forEach((cell, mx) => {
-          if (!cell) return;
-          const ts = tilesets.find((t) => t.id === cell.tilesetId);
-          const tile = ts?.tiles[cell.tileIndex];
-          if (!tile) return;
-          tile.data.forEach((tRow, ty) =>
-            tRow.forEach((color, tx) => {
-              if (color === null || color === undefined) return;
-              ctx.fillStyle = GB_COLORS[color];
-              ctx.fillRect(
-                mx * cellW + tx * pW,
-                my * cellH + ty * pH,
-                pW,
-                pH
-              );
-            })
-          );
-        })
-      );
+      Object.values(layer.chunks).forEach((chunk) => {
+        chunk.data.forEach((row, localY) => {
+          row.forEach((cell, localX) => {
+            if (!cell) return;
+            const globalX = chunk.x * CHUNK_SIZE + localX;
+            const globalY = chunk.y * CHUNK_SIZE + localY;
+
+            // Only render if within initial viewport bounds for preview
+            if (globalX >= map.width || globalY >= map.height || globalX < 0 || globalY < 0) return;
+
+            const ts = tilesets.find((t) => t.id === cell.tilesetId);
+            const tile = ts?.tiles[cell.tileIndex];
+            if (!tile) return;
+            tile.data.forEach((tRow, ty) =>
+              tRow.forEach((color, tx) => {
+                if (color === null || color === undefined) return;
+                ctx.fillStyle = GB_COLORS[color];
+                ctx.fillRect(
+                  globalX * cellW + tx * pW,
+                  globalY * cellH + ty * pH,
+                  pW,
+                  pH
+                );
+              })
+            );
+          });
+        });
+      });
     }
   }, [map, tilesets]);
 

@@ -18,6 +18,7 @@ export const AnimationPreview: React.FC<AnimationPreviewProps> = ({ anim, tilese
     if (!isPlaying || anim.frames.length === 0) return;
     const frame = anim.frames[currentFrame];
     if (!frame) return;
+    // Frame durations are stored in ticks. The editor preview assumes 60 ticks per second.
     const timer = setTimeout(() => setCurrentFrame((prev) => (prev + 1) % anim.frames.length), (frame.duration / 60) * 1000);
     return () => clearTimeout(timer);
   }, [currentFrame, isPlaying, anim]);
