@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "app",
-  "version": "0.1.0",
-  "identifier": "com.suleyman.app",
+  "productName": "GB-Studio",
+  "version": "0.1.1",
+  "identifier": "com.suleyman.gbstudio",
   "build": {
     "beforeDevCommand": "bun run dev",
     "devUrl": "http://localhost:1420",
@@ -13,7 +13,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "app",
+        "title": "GB-Studio",
         "width": 1920,
         "height": 1080,
         "decorations": false
