@@ -1,6 +1,6 @@
 [package]
 name = "gb-studio"
-version = "0.1.1"
+version = "0.1.3"
 description = "Gameboy game development environment"
 authors = ["Suleyman Laarabi <suleyman.laarabi.dev@gmail.com>"]
 edition = "2021"

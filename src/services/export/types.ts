@@ -6,24 +6,47 @@ export interface ExpandedTileset {
   tileBytes: number[][];
 }
 
+export interface ChunkBankData {
+  bankId: number;
+  varName: string;
+  bytes: number[];
+}
+
+export interface WorldRef {
+  bankId: number;
+  chunkVarName: string;
+  byteOffset: number;
+}
+
 export interface MapExport {
   map: import("../../types").TileMap;
   safeName: string;
   tilesSafeName: string;
-  mapSafeName: string;
+  worldSafeName: string;
   collisionSafeName: string;
+
   tileBytes: number[][];
   tileCount: number;
-  mapData: number[];
+  tilesBank: number;
+  tileRomSize: number;
+
+  allChunks: number[][];
+  chunkBanks: ChunkBankData[];
+  worldChunkIndices: number[];
+  worldRefs: WorldRef[];
+  worldW: number;
+  worldH: number;
+  worldBank: number;
+  worldRomSize: number;
+
   collisionData: number[];
-  width: number;
-  height: number;
-  minX: number;
-  minY: number;
+  collisionBank: number;
+  collisionRomSize: number;
+
   spawnX: number;
   spawnY: number;
-  romSize: number;
-  romBank: number;
+  minX: number;
+  minY: number;
   sourceTileCount: number;
 }
 

@@ -1,6 +1,6 @@
 # Maintainer: Suleyman Laarabi <suleyman.laarabi.dev@gmail.com>
 pkgname=gbstudio-bin
-pkgver=0.1.1
+pkgver=0.1.3
 pkgrel=1
 pkgdesc="Gameboy game development environment"
 arch=('x86_64')
@@ -19,7 +19,7 @@ depends=(
 )
 options=('!emptydirs')
 source_x86_64=("${pkgname}-${pkgver}.deb::${url}/releases/download/v${pkgver}/GB-Studio_${pkgver}_amd64.deb")
-sha256sums_x86_64=('1d093760ffe7319e2d7f00e5ae3e4ed6323e2ac49154c9e6b73a507785888ef2')
+sha256sums_x86_64=('00ca96b595b94b51c940433c762d5b0825de7c57170c2a6f0b534b21aa9a187c')
 
 package() {
   cd "${srcdir}"
@@ -30,5 +30,5 @@ package() {
   bsdtar -xf data.tar.zst -C "${pkgdir}/"
 
   chmod -R u=rwX,go=rX "${pkgdir}/"
-  chmod +x "${pkgdir}/usr/bin/GB-Studio"
+  chmod +x "${pkgdir}/usr/bin/gb-studio"
 }

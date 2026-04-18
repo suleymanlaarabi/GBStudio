@@ -1,12 +1,14 @@
 import type { SpriteAsset, SoundAsset } from "../../types";
-import { formatFlatByteArray, formatMapRows } from "../../utils";
+import { formatFlatByteArray } from "../../utils";
 import type { ExpandedTileset, MapExport, RomAllocationPlan } from "./types";
 import { ROM_BANK_DATA_BUDGET } from "./romAllocator";
 import { sanitizeName } from "./utils";
 
+// ── Sound ──────────────────────────────────────────────────────────────────
+
 const buildSoundImpl = (sound: SoundAsset): string => {
   const name = sanitizeName(sound.name);
-  let content = `void play_sfx_${name}(void) {\n`;
+  let c = `void play_sfx_${name}(void) {\n`;
 
   if (sound.type === "PULSE1" && sound.pulse1) {
     const p = sound.pulse1;
@@ -15,52 +17,52 @@ const buildSoundImpl = (sound: SoundAsset): string => {
     const nr12 = (p.initialVolume << 4) | (p.envelopeDirection === "UP" ? 8 : 0) | p.envelopeSweep;
     const nr13 = p.frequency & 0xFF;
     const nr14 = 0x80 | ((p.frequency >> 8) & 0x07);
-    content += `    NR10_REG = 0x${nr10.toString(16).padStart(2, "0")};\n`;
-    content += `    NR11_REG = 0x${nr11.toString(16).padStart(2, "0")};\n`;
-    content += `    NR12_REG = 0x${nr12.toString(16).padStart(2, "0")};\n`;
-    content += `    NR13_REG = 0x${nr13.toString(16).padStart(2, "0")};\n`;
-    content += `    NR14_REG = 0x${nr14.toString(16).padStart(2, "0")};\n`;
+    c += `    NR10_REG = 0x${nr10.toString(16).padStart(2, "0")};\n`;
+    c += `    NR11_REG = 0x${nr11.toString(16).padStart(2, "0")};\n`;
+    c += `    NR12_REG = 0x${nr12.toString(16).padStart(2, "0")};\n`;
+    c += `    NR13_REG = 0x${nr13.toString(16).padStart(2, "0")};\n`;
+    c += `    NR14_REG = 0x${nr14.toString(16).padStart(2, "0")};\n`;
   } else if (sound.type === "PULSE2" && sound.pulse2) {
     const p = sound.pulse2;
     const nr21 = (p.duty << 6) | (64 - p.length);
     const nr22 = (p.initialVolume << 4) | (p.envelopeDirection === "UP" ? 8 : 0) | p.envelopeSweep;
     const nr23 = p.frequency & 0xFF;
     const nr24 = 0x80 | ((p.frequency >> 8) & 0x07);
-    content += `    NR21_REG = 0x${nr21.toString(16).padStart(2, "0")};\n`;
-    content += `    NR22_REG = 0x${nr22.toString(16).padStart(2, "0")};\n`;
-    content += `    NR23_REG = 0x${nr23.toString(16).padStart(2, "0")};\n`;
-    content += `    NR24_REG = 0x${nr24.toString(16).padStart(2, "0")};\n`;
+    c += `    NR21_REG = 0x${nr21.toString(16).padStart(2, "0")};\n`;
+    c += `    NR22_REG = 0x${nr22.toString(16).padStart(2, "0")};\n`;
+    c += `    NR23_REG = 0x${nr23.toString(16).padStart(2, "0")};\n`;
+    c += `    NR24_REG = 0x${nr24.toString(16).padStart(2, "0")};\n`;
   } else if (sound.type === "NOISE" && sound.noise) {
     const n = sound.noise;
     const nr41 = 64 - n.length;
     const nr42 = (n.initialVolume << 4) | (n.envelopeDirection === "UP" ? 8 : 0) | n.envelopeSweep;
     const nr43 = (n.shiftClockFrequency << 4) | (n.counterStep << 3) | n.dividingRatio;
     const nr44 = 0x80;
-    content += `    NR41_REG = 0x${nr41.toString(16).padStart(2, "0")};\n`;
-    content += `    NR42_REG = 0x${nr42.toString(16).padStart(2, "0")};\n`;
-    content += `    NR43_REG = 0x${nr43.toString(16).padStart(2, "0")};\n`;
-    content += `    NR44_REG = 0x${nr44.toString(16).padStart(2, "0")};\n`;
+    c += `    NR41_REG = 0x${nr41.toString(16).padStart(2, "0")};\n`;
+    c += `    NR42_REG = 0x${nr42.toString(16).padStart(2, "0")};\n`;
+    c += `    NR43_REG = 0x${nr43.toString(16).padStart(2, "0")};\n`;
+    c += `    NR44_REG = 0x${nr44.toString(16).padStart(2, "0")};\n`;
   } else if (sound.type === "WAVE" && sound.wave) {
     const w = sound.wave;
-    content += `    NR30_REG = 0x00; // Disable DAC to load samples\n`;
+    c += `    NR30_REG = 0x00;\n`;
     for (let i = 0; i < 16; i++) {
       const byte = (w.waveData[i * 2] << 4) | (w.waveData[i * 2 + 1]);
-      content += `    *((uint8_t*)0xFF30 + ${i}) = 0x${byte.toString(16).padStart(2, "0")};\n`;
+      c += `    _AUD3WAVERAM[${i}] = 0x${byte.toString(16).padStart(2, "0")};\n`;
     }
     const nr30 = w.dacEnabled ? 0x80 : 0x00;
     const nr31 = 256 - w.length;
     const nr32 = w.volumeCode << 5;
     const nr33 = w.frequency & 0xFF;
     const nr34 = 0x80 | ((w.frequency >> 8) & 0x07);
-    content += `    NR30_REG = 0x${nr30.toString(16).padStart(2, "0")};\n`;
-    content += `    NR31_REG = 0x${nr31.toString(16).padStart(2, "0")};\n`;
-    content += `    NR32_REG = 0x${nr32.toString(16).padStart(2, "0")};\n`;
-    content += `    NR33_REG = 0x${nr33.toString(16).padStart(2, "0")};\n`;
-    content += `    NR34_REG = 0x${nr34.toString(16).padStart(2, "0")};\n`;
+    c += `    NR30_REG = 0x${nr30.toString(16).padStart(2, "0")};\n`;
+    c += `    NR31_REG = 0x${nr31.toString(16).padStart(2, "0")};\n`;
+    c += `    NR32_REG = 0x${nr32.toString(16).padStart(2, "0")};\n`;
+    c += `    NR33_REG = 0x${nr33.toString(16).padStart(2, "0")};\n`;
+    c += `    NR34_REG = 0x${nr34.toString(16).padStart(2, "0")};\n`;
   }
 
-  content += "}\n\n";
-  return content;
+  c += "}\n\n";
+  return c;
 };
 
 const buildSoundApiImpl = (): string => `\
@@ -85,12 +87,16 @@ uint8_t gbt_sound_active(uint8_t channel) {
 
 `;
 
+// ── Engine ─────────────────────────────────────────────────────────────────
+
 const buildEngineImpl = (): string => `\
-// Engine Implementation
+// Engine — chunk-based streaming, 256-byte WRAM chunk cache
 static const unsigned char *gbt_loaded_tiles = 0;
-static uint8_t gbt_loaded_bank = 0xffu;
-static unsigned char gbt_clear_tile_column[32];
-static unsigned char gbt_clear_tile_row[32];
+static uint8_t gbt_loaded_tiles_bank = 0xffu;
+static unsigned char gbt_tile_buf[32];
+static unsigned char gbt_chunk_cache[256];
+static uint8_t gbt_cached_chunk_bank = 0xffu;
+static const unsigned char *gbt_cached_chunk_ptr = 0;
 static const GBT_MAP *gbt_cam_map = 0;
 static uint16_t gbt_cam_x = 0;
 static uint16_t gbt_cam_y = 0;
@@ -102,16 +108,12 @@ static uint8_t gbt_vbl_registered = 0;
 
 static uint8_t gbt_enter_bank(uint8_t bank) {
     uint8_t previous = CURRENT_BANK;
-    if (bank != previous) {
-        SWITCH_ROM(bank);
-    }
+    if (bank != previous) SWITCH_ROM(bank);
     return previous;
 }
 
 static void gbt_leave_bank(uint8_t previous) {
-    if (previous != CURRENT_BANK) {
-        SWITCH_ROM(previous);
-    }
+    if (previous != CURRENT_BANK) SWITCH_ROM(previous);
 }
 
 static void gbt_vblank_isr(void) {
@@ -119,162 +121,169 @@ static void gbt_vblank_isr(void) {
     SCY_REG = gbt_pending_scy;
 }
 
-static uint8_t gbt_min_u8(uint8_t left, uint8_t right) {
-    return left < right ? left : right;
+static uint8_t gbt_min_u8(uint8_t a, uint8_t b) {
+    return a < b ? a : b;
+}
+
+// Load 256-byte chunk into WRAM cache if not already cached.
+// Must be called with map->world_bank active.
+static uint8_t gbt_get_tile_from(const GBT_MAP *map, uint16_t tx, uint16_t ty) {
+    const GBT_CHUNK_REF *ref;
+    uint8_t cx = (uint8_t)(tx >> 4);
+    uint8_t cy = (uint8_t)(ty >> 4);
+    if (cx >= map->world_w || cy >= map->world_h) return 0u;
+    ref = &map->world[(uint16_t)cy * map->world_w + cx];
+    if (ref->data != gbt_cached_chunk_ptr || ref->bank != gbt_cached_chunk_bank) {
+        const unsigned char *src;
+        uint8_t i;
+        uint8_t prev = gbt_enter_bank(ref->bank);
+        src = ref->data;
+        i = 0u;
+        do { gbt_chunk_cache[i] = src[i]; i++; } while (i != 0u);
+        gbt_leave_bank(prev);
+        gbt_cached_chunk_bank = ref->bank;
+        gbt_cached_chunk_ptr = ref->data;
+    }
+    return gbt_chunk_cache[((uint8_t)(ty & 15u) << 4) | (uint8_t)(tx & 15u)];
 }
 
 static void gbt_clear_bkg_map(void) {
-    uint8_t row;
-    for (row = 0; row != 32u; row++) {
-        set_bkg_tiles(0, row, 32u, 1u, gbt_clear_tile_row);
-    }
+    uint8_t i = 0u, row = 0u;
+    do { gbt_tile_buf[i] = 0u; i++; } while (i != 32u);
+    do { set_bkg_tiles(0, row, 32u, 1u, gbt_tile_buf); row++; } while (row != 32u);
 }
 
 static void gbt_stream_column_active(uint16_t map_col, uint16_t start_row) {
-    uint8_t i;
+    uint8_t i = 0u;
     uint8_t vram_x = (uint8_t)(map_col & 31u);
     uint8_t vram_y0 = (uint8_t)(start_row & 31u);
-
-    for (i = 0; i != 32u; i++) {
-        uint16_t map_row = start_row + i;
-        if ((map_col < gbt_cam_map->width) && (map_row < gbt_cam_map->height)) {
-            gbt_clear_tile_column[i] = gbt_cam_map->data[(uint32_t)map_row * gbt_cam_map->width + map_col];
-        } else {
-            gbt_clear_tile_column[i] = 0u;
-        }
-    }
-
-    {
-        uint8_t first = 32u - vram_y0;
-        set_bkg_tiles(vram_x, vram_y0, 1u, first, gbt_clear_tile_column);
-        if (vram_y0 > 0u) {
-            set_bkg_tiles(vram_x, 0u, 1u, vram_y0, gbt_clear_tile_column + first);
-        }
-    }
+    uint8_t first;
+    uint8_t prev = gbt_enter_bank(gbt_cam_map->world_bank);
+    do { gbt_tile_buf[i] = gbt_get_tile_from(gbt_cam_map, map_col, start_row + i); i++; } while (i != 32u);
+    gbt_leave_bank(prev);
+    first = 32u - vram_y0;
+    set_bkg_tiles(vram_x, vram_y0, 1u, first, gbt_tile_buf);
+    if (vram_y0 > 0u) set_bkg_tiles(vram_x, 0u, 1u, vram_y0, gbt_tile_buf + first);
 }
 
 static void gbt_stream_row_active(uint16_t map_row, uint16_t start_col) {
-    uint8_t i;
+    uint8_t i = 0u;
     uint8_t vram_y = (uint8_t)(map_row & 31u);
     uint8_t vram_x0 = (uint8_t)(start_col & 31u);
-
-    for (i = 0; i != 32u; i++) {
-        uint16_t map_col = start_col + i;
-        if ((map_row < gbt_cam_map->height) && (map_col < gbt_cam_map->width)) {
-            gbt_clear_tile_row[i] = gbt_cam_map->data[(uint32_t)map_row * gbt_cam_map->width + map_col];
-        } else {
-            gbt_clear_tile_row[i] = 0u;
-        }
-    }
-
-    {
-        uint8_t first = 32u - vram_x0;
-        set_bkg_tiles(vram_x0, vram_y, first, 1u, gbt_clear_tile_row);
-        if (vram_x0 > 0u) {
-            set_bkg_tiles(0u, vram_y, vram_x0, 1u, gbt_clear_tile_row + first);
-        }
-    }
+    uint8_t first;
+    uint8_t prev = gbt_enter_bank(gbt_cam_map->world_bank);
+    do { gbt_tile_buf[i] = gbt_get_tile_from(gbt_cam_map, start_col + i, map_row); i++; } while (i != 32u);
+    gbt_leave_bank(prev);
+    first = 32u - vram_x0;
+    set_bkg_tiles(vram_x0, vram_y, first, 1u, gbt_tile_buf);
+    if (vram_x0 > 0u) set_bkg_tiles(0u, vram_y, vram_x0, 1u, gbt_tile_buf + first);
 }
 
 static void gbt_load_map_active(const GBT_MAP *map) {
-    if ((gbt_loaded_tiles != map->tiles) || (gbt_loaded_bank != map->rom_bank)) {
+    if (gbt_loaded_tiles != map->tiles || gbt_loaded_tiles_bank != map->tiles_bank) {
+        uint8_t prev = gbt_enter_bank(map->tiles_bank);
         set_bkg_data(0, map->tile_count, map->tiles);
+        gbt_leave_bank(prev);
         gbt_loaded_tiles = map->tiles;
-        gbt_loaded_bank = map->rom_bank;
+        gbt_loaded_tiles_bank = map->tiles_bank;
     }
 }
 
 void gbt_load_map(const GBT_MAP *map) {
-    uint8_t previous = gbt_enter_bank(map->rom_bank);
     gbt_load_map_active(map);
-    gbt_leave_bank(previous);
 }
 
 void gbt_draw_map(const GBT_MAP *map) {
-    uint8_t previous = gbt_enter_bank(map->rom_bank);
-    set_bkg_tiles(0, 0, gbt_min_u8((uint8_t)map->width, 32u), gbt_min_u8((uint8_t)map->height, 32u), map->data);
-    gbt_leave_bank(previous);
+    uint8_t i, j;
+    uint16_t map_w_tiles = (uint16_t)map->world_w << 4;
+    uint16_t map_h_tiles = (uint16_t)map->world_h << 4;
+    uint8_t w = (map_w_tiles < 32u) ? (uint8_t)map_w_tiles : 32u;
+    uint8_t h = (map_h_tiles < 32u) ? (uint8_t)map_h_tiles : 32u;
+    uint8_t prev = gbt_enter_bank(map->world_bank);
+    for (i = 0u; i != h; i++) {
+        for (j = 0u; j != w; j++) gbt_tile_buf[j] = gbt_get_tile_from(map, j, i);
+        set_bkg_tiles(0, i, w, 1u, gbt_tile_buf);
+    }
+    gbt_leave_bank(prev);
 }
 
 void gbt_switch_map(const GBT_MAP *next_map, gbt_dir_t dir) {
     uint8_t i, j;
-    uint8_t visible_width, visible_height;
-    unsigned char buf[32];
-    uint8_t previous = gbt_enter_bank(next_map->rom_bank);
+    uint16_t mw = (uint16_t)next_map->world_w << 4;
+    uint16_t mh = (uint16_t)next_map->world_h << 4;
+    uint8_t visible_width  = gbt_min_u8((uint8_t)(mw < 20u ? mw : 20u), 20u);
+    uint8_t visible_height = gbt_min_u8((uint8_t)(mh < 18u ? mh : 18u), 18u);
+    uint8_t prev;
 
     gbt_load_map_active(next_map);
-    visible_width = gbt_min_u8((uint8_t)next_map->width, 20u);
-    visible_height = gbt_min_u8((uint8_t)next_map->height, 18u);
+    prev = gbt_enter_bank(next_map->world_bank);
 
     if (dir == GBT_DIR_RIGHT) {
-        for (i = 0; i < visible_width; i++) {
-            const unsigned char *src = next_map->data + i;
-            for (j = 0; j < visible_height; j++) { buf[j] = *src; src += next_map->width; }
+        for (i = 0u; i < visible_width; i++) {
+            for (j = 0u; j < visible_height; j++) gbt_tile_buf[j] = gbt_get_tile_from(next_map, i, j);
             wait_vbl_done();
             SCX_REG += 8u;
-            {
-                uint8_t tx_scroll = (uint8_t)(((SCX_REG >> 3) + 19u) & 31u);
-                set_bkg_tiles(tx_scroll, 0, 1, visible_height, buf);
-                set_bkg_tiles(i, 0, 1, visible_height, buf);
-            }
+            { uint8_t tx = (uint8_t)(((SCX_REG >> 3) + 19u) & 31u);
+              set_bkg_tiles(tx, 0, 1, visible_height, gbt_tile_buf);
+              set_bkg_tiles(i,  0, 1, visible_height, gbt_tile_buf); }
         }
-        wait_vbl_done();
-        SCX_REG = 0u;
-        set_bkg_submap(0, 0, 8, visible_height, next_map->data, next_map->width);
+        wait_vbl_done(); SCX_REG = 0u;
+        for (i = 0u; i < 8u; i++) {
+            for (j = 0u; j < visible_height; j++) gbt_tile_buf[j] = gbt_get_tile_from(next_map, i, j);
+            set_bkg_tiles(i, 0, 1, visible_height, gbt_tile_buf);
+        }
     } else if (dir == GBT_DIR_LEFT) {
-        for (i = 0; i < visible_width; i++) {
-            uint8_t col_idx = (uint8_t)(visible_width - 1u - i);
-            const unsigned char *src = next_map->data + col_idx;
-            for (j = 0; j < visible_height; j++) { buf[j] = *src; src += next_map->width; }
+        for (i = 0u; i < visible_width; i++) {
+            uint8_t col = (uint8_t)(visible_width - 1u - i);
+            for (j = 0u; j < visible_height; j++) gbt_tile_buf[j] = gbt_get_tile_from(next_map, col, j);
             wait_vbl_done();
             SCX_REG -= 8u;
-            {
-                uint8_t tx_scroll = (uint8_t)(SCX_REG >> 3);
-                set_bkg_tiles(tx_scroll, 0, 1, visible_height, buf);
-                set_bkg_tiles(col_idx, 0, 1, visible_height, buf);
-            }
+            { uint8_t tx = (uint8_t)(SCX_REG >> 3);
+              set_bkg_tiles(tx,  0, 1, visible_height, gbt_tile_buf);
+              set_bkg_tiles(col, 0, 1, visible_height, gbt_tile_buf); }
         }
-        wait_vbl_done();
-        SCX_REG = 0u;
-        set_bkg_submap(visible_width - 8u, 0u, 8u, visible_height, next_map->data + (visible_width - 8u), next_map->width);
+        wait_vbl_done(); SCX_REG = 0u;
+        for (i = 0u; i < 8u; i++) {
+            uint8_t col = (uint8_t)(visible_width - 8u + i);
+            for (j = 0u; j < visible_height; j++) gbt_tile_buf[j] = gbt_get_tile_from(next_map, col, j);
+            set_bkg_tiles(col, 0, 1, visible_height, gbt_tile_buf);
+        }
     } else if (dir == GBT_DIR_DOWN) {
-        for (i = 0; i < visible_height; i++) {
-            const unsigned char *src = next_map->data + ((uint16_t)i * next_map->width);
-            for (j = 0; j < visible_width; j++) { buf[j] = src[j]; }
+        for (i = 0u; i < visible_height; i++) {
+            for (j = 0u; j < visible_width; j++) gbt_tile_buf[j] = gbt_get_tile_from(next_map, j, i);
             wait_vbl_done();
             SCY_REG += 8u;
-            {
-                uint8_t ty_scroll = (uint8_t)(((SCY_REG >> 3) + 17u) & 31u);
-                set_bkg_tiles(0, ty_scroll, visible_width, 1, buf);
-                set_bkg_tiles(0, i, visible_width, 1, buf);
-            }
+            { uint8_t ty = (uint8_t)(((SCY_REG >> 3) + 17u) & 31u);
+              set_bkg_tiles(0, ty, visible_width, 1, gbt_tile_buf);
+              set_bkg_tiles(0, i,  visible_width, 1, gbt_tile_buf); }
         }
-        wait_vbl_done();
-        SCY_REG = 0u;
-        set_bkg_submap(0, 0, visible_width, 4, next_map->data, next_map->width);
+        wait_vbl_done(); SCY_REG = 0u;
+        for (i = 0u; i < 4u; i++) {
+            for (j = 0u; j < visible_width; j++) gbt_tile_buf[j] = gbt_get_tile_from(next_map, j, i);
+            set_bkg_tiles(0, i, visible_width, 1, gbt_tile_buf);
+        }
     } else if (dir == GBT_DIR_UP) {
-        for (i = 0; i < visible_height; i++) {
-            uint8_t row_idx = (uint8_t)(visible_height - 1u - i);
-            const unsigned char *src = next_map->data + ((uint16_t)row_idx * next_map->width);
-            for (j = 0; j < visible_width; j++) { buf[j] = src[j]; }
+        for (i = 0u; i < visible_height; i++) {
+            uint8_t row = (uint8_t)(visible_height - 1u - i);
+            for (j = 0u; j < visible_width; j++) gbt_tile_buf[j] = gbt_get_tile_from(next_map, j, row);
             wait_vbl_done();
             SCY_REG -= 8u;
-            {
-                uint8_t ty_scroll = (uint8_t)(SCY_REG >> 3);
-                set_bkg_tiles(0, ty_scroll, visible_width, 1, buf);
-                set_bkg_tiles(0, row_idx, visible_width, 1, buf);
-            }
+            { uint8_t ty = (uint8_t)(SCY_REG >> 3);
+              set_bkg_tiles(0, ty,  visible_width, 1, gbt_tile_buf);
+              set_bkg_tiles(0, row, visible_width, 1, gbt_tile_buf); }
         }
-        wait_vbl_done();
-        SCY_REG = 0u;
-        set_bkg_submap(0u, visible_height - 4u, visible_width, 4u, next_map->data + ((uint16_t)(visible_height - 4u) * next_map->width), next_map->width);
+        wait_vbl_done(); SCY_REG = 0u;
+        for (i = 0u; i < 4u; i++) {
+            uint8_t row = (uint8_t)(visible_height - 4u + i);
+            for (j = 0u; j < visible_width; j++) gbt_tile_buf[j] = gbt_get_tile_from(next_map, j, row);
+            set_bkg_tiles(0, row, visible_width, 1, gbt_tile_buf);
+        }
     }
 
-    gbt_leave_bank(previous);
+    gbt_leave_bank(prev);
 }
 
 void gbt_init_camera(const GBT_MAP *map) {
-    uint8_t previous = gbt_enter_bank(map->rom_bank);
     uint16_t x = map->spawn_x;
     uint16_t y = map->spawn_y;
 
@@ -283,15 +292,15 @@ void gbt_init_camera(const GBT_MAP *map) {
     gbt_cam_y = y;
     gbt_cam_tx = x >> 3;
     gbt_cam_ty = y >> 3;
+    gbt_cached_chunk_bank = 0xffu;
+    gbt_cached_chunk_ptr = 0;
 
     gbt_load_map_active(map);
     gbt_clear_bkg_map();
 
     {
-        uint16_t i;
-        for (i = 0; i != 32u; i++) {
-            gbt_stream_row_active(gbt_cam_ty + i, gbt_cam_tx);
-        }
+        uint8_t i;
+        for (i = 0u; i != 32u; i++) gbt_stream_row_active(gbt_cam_ty + i, gbt_cam_tx);
     }
 
     gbt_pending_scx = (uint8_t)x;
@@ -303,16 +312,16 @@ void gbt_init_camera(const GBT_MAP *map) {
         add_VBL(gbt_vblank_isr);
         gbt_vbl_registered = 1;
     }
-
-    gbt_leave_bank(previous);
 }
 
 static uint8_t gbt_is_solid_active(const GBT_MAP *map, uint16_t tx, uint16_t ty) {
-    uint16_t idx;
+    uint16_t map_w = (uint16_t)map->world_w << 4;
+    uint16_t map_h = (uint16_t)map->world_h << 4;
+    uint32_t bit_idx;
     if (!map->collision) return 0u;
-    if (tx >= map->width || ty >= map->height) return 1u;
-    idx = (uint16_t)((uint16_t)(ty * map->width) + tx);
-    return (map->collision[idx >> 3] >> (idx & 7u)) & 1u;
+    if (tx >= map_w || ty >= map_h) return 1u;
+    bit_idx = (uint32_t)ty * map_w + tx;
+    return (map->collision[bit_idx >> 3] >> ((uint8_t)(bit_idx & 7u))) & 1u;
 }
 
 void gbt_init_camera_controller(GBT_CAMERA_CTRL *ctrl, const GBT_MAP *map) {
@@ -326,24 +335,23 @@ void gbt_update_camera_controller(GBT_CAMERA_CTRL *ctrl, int8_t dx, int8_t dy) {
     int16_t nx = (int16_t)ctrl->x + (int16_t)dx;
     int16_t ny = (int16_t)ctrl->y + (int16_t)dy;
     const GBT_MAP *map = ctrl->map;
-    uint16_t map_px_w = (uint16_t)(map->width * 8u);
-    uint16_t map_px_h = (uint16_t)(map->height * 8u);
-    uint8_t previous = gbt_enter_bank(map->rom_bank);
-
-    if (nx >= 0) {
-        uint16_t tx = (uint16_t)nx >> 3;
-        if (!gbt_is_solid_active(map, tx, ctrl->y >> 3)) {
-            ctrl->x = (uint16_t)nx;
+    uint16_t map_px_w = (uint16_t)map->world_w << 7;
+    uint16_t map_px_h = (uint16_t)map->world_h << 7;
+    if (map->collision) {
+        uint8_t prev = gbt_enter_bank(map->collision_bank);
+        if (nx >= 0) {
+            uint16_t tx = (uint16_t)nx >> 3;
+            if (!gbt_is_solid_active(map, tx, ctrl->y >> 3)) ctrl->x = (uint16_t)nx;
         }
-    }
-    if (ny >= 0) {
-        uint16_t ty = (uint16_t)ny >> 3;
-        if (!gbt_is_solid_active(map, ctrl->x >> 3, ty)) {
-            ctrl->y = (uint16_t)ny;
+        if (ny >= 0) {
+            uint16_t ty = (uint16_t)ny >> 3;
+            if (!gbt_is_solid_active(map, ctrl->x >> 3, ty)) ctrl->y = (uint16_t)ny;
         }
+        gbt_leave_bank(prev);
+    } else {
+        if (nx >= 0) ctrl->x = (uint16_t)nx;
+        if (ny >= 0) ctrl->y = (uint16_t)ny;
     }
-
-    gbt_leave_bank(previous);
 
     if (ctrl->x >= map_px_w) ctrl->x = (uint16_t)(map_px_w - 1u);
     if (ctrl->y >= map_px_h) ctrl->y = (uint16_t)(map_px_h - 1u);
@@ -361,33 +369,26 @@ void gbt_update_camera_controller(GBT_CAMERA_CTRL *ctrl, int8_t dx, int8_t dy) {
 
 void gbt_update_free_camera(GBT_CAMERA_CTRL *ctrl, int8_t dx, int8_t dy) {
     const GBT_MAP *map = ctrl->map;
-    uint16_t max_x = (map->width >= 20u) ? (uint16_t)((map->width - 20u) * 8u) : 0u;
-    uint16_t max_y = (map->height >= 18u) ? (uint16_t)((map->height - 18u) * 8u) : 0u;
+    uint16_t map_w_tiles = (uint16_t)map->world_w << 4;
+    uint16_t map_h_tiles = (uint16_t)map->world_h << 4;
+    uint16_t max_x = (map_w_tiles >= 20u) ? (uint16_t)((map_w_tiles - 20u) << 3) : 0u;
+    uint16_t max_y = (map_h_tiles >= 18u) ? (uint16_t)((map_h_tiles - 18u) << 3) : 0u;
     int16_t nx = (int16_t)ctrl->x + (int16_t)dx;
     int16_t ny = (int16_t)ctrl->y + (int16_t)dy;
-
     if (nx >= 0 && (uint16_t)nx <= max_x) ctrl->x = (uint16_t)nx;
     if (ny >= 0 && (uint16_t)ny <= max_y) ctrl->y = (uint16_t)ny;
-
     gbt_update_camera(ctrl->x, ctrl->y);
 }
 
 void gbt_update_camera(uint16_t x, uint16_t y) {
     uint16_t tx = x >> 3;
     uint16_t ty = y >> 3;
-    uint8_t previous;
 
-    if (!gbt_cam_map) {
-        return;
-    }
-
-    previous = gbt_enter_bank(gbt_cam_map->rom_bank);
+    if (!gbt_cam_map) return;
 
     if (tx > gbt_cam_tx) {
         uint16_t c;
-        for (c = gbt_cam_tx + 1u; c <= tx; c++) {
-            gbt_stream_column_active((uint16_t)(c + 20u), gbt_cam_ty);
-        }
+        for (c = gbt_cam_tx + 1u; c <= tx; c++) gbt_stream_column_active(c + 20u, gbt_cam_ty);
     } else if (tx < gbt_cam_tx) {
         uint16_t c;
         for (c = gbt_cam_tx - 1u; c >= tx; c--) {
@@ -398,9 +399,7 @@ void gbt_update_camera(uint16_t x, uint16_t y) {
 
     if (ty > gbt_cam_ty) {
         uint16_t r;
-        for (r = gbt_cam_ty + 1u; r <= ty; r++) {
-            gbt_stream_row_active((uint16_t)(r + 18u), tx);
-        }
+        for (r = gbt_cam_ty + 1u; r <= ty; r++) gbt_stream_row_active(r + 18u, tx);
     } else if (ty < gbt_cam_ty) {
         uint16_t r;
         for (r = gbt_cam_ty - 1u; r >= ty; r--) {
@@ -408,8 +407,6 @@ void gbt_update_camera(uint16_t x, uint16_t y) {
             if (r == 0u) break;
         }
     }
-
-    gbt_leave_bank(previous);
 
     gbt_cam_x = x;
     gbt_cam_y = y;
@@ -420,10 +417,10 @@ void gbt_update_camera(uint16_t x, uint16_t y) {
 }
 
 void gbt_update_sprite(uint8_t id, GBT_SPRITE_STATE *state) {
-    if (state->tick_counter == 0) {
+    if (state->tick_counter == 0u) {
         state->current_frame++;
         if (state->current_frame >= state->current_anim->frame_count) {
-            state->current_frame = state->current_anim->loop ? 0 : state->current_anim->frame_count - 1;
+            state->current_frame = state->current_anim->loop ? 0u : state->current_anim->frame_count - 1u;
         }
         state->tick_counter = state->current_anim->frames[state->current_frame].duration;
         set_sprite_tile(id, state->current_anim->frames[state->current_frame].tile);
@@ -433,70 +430,95 @@ void gbt_update_sprite(uint8_t id, GBT_SPRITE_STATE *state) {
 }
 `;
 
+// ── Data emission ──────────────────────────────────────────────────────────
+
+const hex = (n: number) => `0x${n.toString(16).padStart(2, "0")}`;
+
+const formatChunkBytes = (bytes: number[]): string => {
+  const rows: string[] = [];
+  for (let i = 0; i < bytes.length; i += 16) {
+    rows.push("    " + bytes.slice(i, i + 16).map(hex).join(", "));
+  }
+  return rows.join(",\n") + "\n";
+};
+
 const buildMapDataSection = (mapExports: MapExport[], romPlan: RomAllocationPlan): string => {
   let content = "";
-  const sortedByBank = [...mapExports].sort((left, right) =>
-    left.romBank === right.romBank
-      ? left.safeName.localeCompare(right.safeName)
-      : left.romBank - right.romBank,
+
+  // 1. Tile pixel data
+  const byTilesBank = [...mapExports].sort((a, b) =>
+    a.tilesBank === b.tilesBank ? a.safeName.localeCompare(b.safeName) : a.tilesBank - b.tilesBank,
   );
-
-  let currentBank = -1;
-  sortedByBank.forEach((mapExport) => {
-    if (mapExport.romBank !== currentBank) {
-      currentBank = mapExport.romBank;
-      content += `#pragma bank ${currentBank}\n`;
-    }
-
-    content += `BANKREF(${mapExport.tilesSafeName})\n`;
-    content += `const unsigned char ${mapExport.tilesSafeName}[] = {\n${formatFlatByteArray(mapExport.tileBytes.flat())}};\n`;
-    content += `BANKREF(${mapExport.mapSafeName})\n`;
-    content += `const unsigned char ${mapExport.mapSafeName}[] = {\n${formatMapRows(mapExport.mapData, mapExport.width)}};\n`;
-    if (mapExport.collisionData.length > 0) {
-      content += `BANKREF(${mapExport.collisionSafeName})\n`;
-      content += `const unsigned char ${mapExport.collisionSafeName}[] = {\n${formatFlatByteArray(mapExport.collisionData)}};\n`;
-    }
-    content += "\n";
+  let curBank = -1;
+  byTilesBank.forEach((m) => {
+    if (m.tilesBank !== curBank) { curBank = m.tilesBank; content += `#pragma bank ${curBank}\n`; }
+    content += `const unsigned char ${m.tilesSafeName}[] = {\n${formatFlatByteArray(m.tileBytes.flat())}};\n\n`;
   });
 
-  content += "#pragma bank 0\n\n";
+  // 2. Chunk data (each map's chunk banks are already assigned unique IDs)
+  mapExports.forEach((m) => {
+    m.chunkBanks.forEach((cb) => {
+      content += `#pragma bank ${cb.bankId}\n`;
+      content += `const unsigned char ${cb.varName}[] = {\n${formatChunkBytes(cb.bytes)}};\n\n`;
+    });
+  });
 
-  mapExports.forEach((mapExport) => {
-    const collisionPtr = mapExport.collisionData.length > 0 ? mapExport.collisionSafeName : "0";
-    content += `const GBT_MAP ${mapExport.safeName} = {\n`;
-    content += `    "${mapExport.map.name}",\n`;
-    content += `    ${mapExport.romBank},\n`;
-    content += `    ${mapExport.tilesSafeName}, ${mapExport.tileCount},\n`;
-    content += `    ${mapExport.mapSafeName}, ${mapExport.width}, ${mapExport.height},\n`;
-    content += `    ${mapExport.minX}, ${mapExport.minY},\n`;
-    content += `    ${mapExport.spawnX}, ${mapExport.spawnY},\n`;
-    content += `    ${collisionPtr}\n`;
+  // 3. World lookup tables
+  const byWorldBank = [...mapExports].sort((a, b) =>
+    a.worldBank === b.worldBank ? a.safeName.localeCompare(b.safeName) : a.worldBank - b.worldBank,
+  );
+  curBank = -1;
+  byWorldBank.forEach((m) => {
+    if (m.worldBank !== curBank) { curBank = m.worldBank; content += `#pragma bank ${curBank}\n`; }
+    content += `const GBT_CHUNK_REF ${m.worldSafeName}[] = {\n`;
+    m.worldRefs.forEach((ref) => {
+      content += `    { ${ref.bankId}, ${ref.chunkVarName} + ${ref.byteOffset} },\n`;
+    });
     content += `};\n\n`;
   });
 
-  // ROM packing summary (comment only, no functional impact)
-  let summary = `// Tileset inventory kept for editor/debug visibility only.\n`;
-  summary += `// ROM packing summary: ${romPlan.banks.length} bank(s), ${romPlan.totalBytes} bytes of map data.\n`;
-  romPlan.banks.forEach((bank) => {
-    summary += `// Bank ${bank.id}: ${bank.usedBytes}/${ROM_BANK_DATA_BUDGET} bytes -> ${bank.assetNames.join(", ")}\n`;
+  // 4. Collision bitfields
+  const byCollBank = [...mapExports].filter((m) => m.collisionData.length > 0).sort((a, b) =>
+    a.collisionBank === b.collisionBank ? a.safeName.localeCompare(b.safeName) : a.collisionBank - b.collisionBank,
+  );
+  curBank = -1;
+  byCollBank.forEach((m) => {
+    if (m.collisionBank !== curBank) { curBank = m.collisionBank; content += `#pragma bank ${curBank}\n`; }
+    content += `const unsigned char ${m.collisionSafeName}[] = {\n${formatFlatByteArray(m.collisionData)}};\n\n`;
+  });
+
+  // 5. GBT_MAP structs (bank 0)
+  content += "#pragma bank 0\n\n";
+  mapExports.forEach((m) => {
+    const collPtr = m.collisionData.length > 0 ? m.collisionSafeName : "0";
+    const collBank = m.collisionData.length > 0 ? m.collisionBank : 0;
+    content += `const GBT_MAP ${m.safeName} = {\n`;
+    content += `    ${m.tilesBank}, ${m.tilesSafeName}, ${m.tileCount},\n`;
+    content += `    ${m.worldBank}, ${m.worldSafeName}, ${m.worldW}, ${m.worldH},\n`;
+    content += `    ${m.spawnX}, ${m.spawnY},\n`;
+    content += `    ${collBank}, ${collPtr}\n`;
+    content += `};\n\n`;
+  });
+
+  let summary = `// ROM layout: ${romPlan.banks.length} bank(s), ${romPlan.totalBytes} bytes total\n`;
+  romPlan.banks.forEach((b) => {
+    summary += `// Bank ${b.id}: ${b.usedBytes}/${ROM_BANK_DATA_BUDGET} bytes — ${b.assetNames.join(", ")}\n`;
   });
 
   return summary + "\n" + content;
 };
 
 const buildSpriteSection = (sprites: SpriteAsset[]): string => {
-  let content = "// Sprites & Animations Data\n";
+  let content = "";
   sprites.forEach((sprite) => {
-    const safeSpriteName = sanitizeName(sprite.name);
+    const sn = sanitizeName(sprite.name);
     sprite.animations.forEach((anim) => {
-      const safeAnimName = sanitizeName(anim.name);
-      const framesVar = `${safeSpriteName}_${safeAnimName}_frames`;
+      const an = sanitizeName(anim.name);
+      const framesVar = `${sn}_${an}_frames`;
       content += `const GBT_FRAME ${framesVar}[] = {\n`;
-      anim.frames.forEach((frame) => {
-        content += `    { ${frame.tileIndex}, ${frame.duration} },\n`;
-      });
-      content += "};\n";
-      content += `const GBT_ANIMATION ${safeSpriteName}_${safeAnimName} = { ${framesVar}, ${anim.frames.length}, ${anim.loop ? 1 : 0} };\n\n`;
+      anim.frames.forEach((f) => { content += `    { ${f.tileIndex}, ${f.duration} },\n`; });
+      content += `};\n`;
+      content += `const GBT_ANIMATION ${sn}_${an} = { ${framesVar}, ${anim.frames.length}, ${anim.loop ? 1 : 0} };\n\n`;
     });
   });
   return content;
@@ -511,25 +533,15 @@ export const buildSource = (
   sounds: SoundAsset[],
 ): string => {
   let content = `#include "${projectName}.h"\n\n`;
-
-  content += `#ifndef BANKREF\n#define BANKREF(name)\n#endif\n`;
-  content += `#ifndef BANKED\n#define BANKED\n#endif\n`;
-  content += `#ifndef NONBANKED\n#define NONBANKED\n#endif\n`;
   content += `#ifndef SWITCH_ROM\n#define SWITCH_ROM(bank) ((void)(bank))\n#endif\n`;
   content += `#ifndef CURRENT_BANK\n#define CURRENT_BANK 0\n#endif\n\n`;
 
-  content += "// Sound API Implementation\n";
   content += buildSoundApiImpl();
-  sounds.forEach((sound) => { content += buildSoundImpl(sound); });
-
+  sounds.forEach((s) => { content += buildSoundImpl(s); });
   content += buildEngineImpl();
   content += "\n";
 
-  // Tileset debug info
-  expandedTilesets.forEach((tileset) => {
-    content += `// ${tileset.name}: ${tileset.tileCount} hardware tiles\n`;
-  });
-
+  expandedTilesets.forEach((t) => { content += `// ${t.name}: ${t.tileCount} hardware tiles\n`; });
   content += buildMapDataSection(mapExports, romPlan);
   content += buildSpriteSection(sprites);
 

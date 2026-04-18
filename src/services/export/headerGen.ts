@@ -3,17 +3,12 @@ import type { MapExport, RomAllocationPlan } from "./types";
 import { sanitizeName } from "./utils";
 
 const CHANNEL_NUM: Record<SoundChannelType, number> = {
-  PULSE1: 1,
-  PULSE2: 2,
-  WAVE: 3,
-  NOISE: 4,
+  PULSE1: 1, PULSE2: 2, WAVE: 3, NOISE: 4,
 };
 
 const CHANNEL_LABEL: Record<SoundChannelType, string> = {
-  PULSE1: "GBT_CH_PULSE1",
-  PULSE2: "GBT_CH_PULSE2",
-  WAVE:   "GBT_CH_WAVE",
-  NOISE:  "GBT_CH_NOISE",
+  PULSE1: "GBT_CH_PULSE1", PULSE2: "GBT_CH_PULSE2",
+  WAVE:   "GBT_CH_WAVE",   NOISE:  "GBT_CH_NOISE",
 };
 
 export const buildHeader = (
@@ -31,21 +26,22 @@ export const buildHeader = (
   content += `#define ${safeProjectName}_ROM_BANK_COUNT ${romPlan.banks.length}\n`;
   content += `#define ${safeProjectName}_ROM_TOTAL_BYTES ${romPlan.totalBytes}\n\n`;
 
-  // ── Map types ───────────────────────────────────────────────────────────────
+  // ── Map types ──────────────────────────────────────────────────────────────
   content += "typedef enum { GBT_DIR_UP, GBT_DIR_DOWN, GBT_DIR_LEFT, GBT_DIR_RIGHT } gbt_dir_t;\n\n";
 
+  content += "typedef struct { uint8_t bank; const unsigned char *data; } GBT_CHUNK_REF;\n\n";
+
   content += "typedef struct GBT_MAP {\n";
-  content += "    const char *name;\n";
-  content += "    uint8_t rom_bank;\n";
+  content += "    uint8_t tiles_bank;\n";
   content += "    const unsigned char *tiles;\n";
   content += "    uint16_t tile_count;\n";
-  content += "    const unsigned char *data;\n";
-  content += "    uint16_t width;\n";
-  content += "    uint16_t height;\n";
-  content += "    uint16_t min_x;\n";
-  content += "    uint16_t min_y;\n";
+  content += "    uint8_t world_bank;\n";
+  content += "    const GBT_CHUNK_REF *world;\n";
+  content += "    uint8_t world_w;\n";
+  content += "    uint8_t world_h;\n";
   content += "    uint16_t spawn_x;\n";
   content += "    uint16_t spawn_y;\n";
+  content += "    uint8_t collision_bank;\n";
   content += "    const unsigned char *collision;\n";
   content += "} GBT_MAP;\n\n";
 
@@ -55,43 +51,35 @@ export const buildHeader = (
   content += "    const GBT_MAP *map;\n";
   content += "} GBT_CAMERA_CTRL;\n\n";
 
-  // ── Sprite types ─────────────────────────────────────────────────────────────
-  content += "typedef struct GBT_FRAME { uint8_t tile; uint16_t duration; } GBT_FRAME;\n";
+  // ── Sprite types ───────────────────────────────────────────────────────────
+  content += "typedef struct GBT_FRAME { uint8_t tile; uint8_t duration; } GBT_FRAME;\n";
   content += "typedef struct GBT_ANIMATION { const GBT_FRAME *frames; uint8_t frame_count; uint8_t loop; } GBT_ANIMATION;\n";
-  content += "typedef struct GBT_SPRITE_STATE { uint8_t x; uint8_t y; const GBT_ANIMATION *current_anim; uint8_t current_frame; uint16_t tick_counter; } GBT_SPRITE_STATE;\n\n";
+  content += "typedef struct GBT_SPRITE_STATE { uint8_t x; uint8_t y; const GBT_ANIMATION *current_anim; uint8_t current_frame; uint8_t tick_counter; } GBT_SPRITE_STATE;\n\n";
 
-  // ── Sound channel constants ───────────────────────────────────────────────────
-  content += "// Sound channels (pass to gbt_sound_stop / gbt_sound_active)\n";
+  // ── Sound channel constants ────────────────────────────────────────────────
   content += "#define GBT_CH_PULSE1  1u\n";
   content += "#define GBT_CH_PULSE2  2u\n";
   content += "#define GBT_CH_WAVE    3u\n";
   content += "#define GBT_CH_NOISE   4u\n\n";
 
-  // ── Engine API ───────────────────────────────────────────────────────────────
-  content += "// Map API\n";
+  // ── Engine API ─────────────────────────────────────────────────────────────
   content += "void gbt_load_map(const GBT_MAP *map);\n";
   content += "void gbt_draw_map(const GBT_MAP *map);\n";
   content += "void gbt_switch_map(const GBT_MAP *next_map, gbt_dir_t dir);\n\n";
 
-  content += "// Sprite API\n";
   content += "void gbt_update_sprite(uint8_t hardware_sprite_id, GBT_SPRITE_STATE *state);\n\n";
 
-  content += "// Camera API\n";
   content += "void gbt_init_camera(const GBT_MAP *map);\n";
   content += "void gbt_update_camera(uint16_t x, uint16_t y);\n";
   content += "void gbt_init_camera_controller(GBT_CAMERA_CTRL *ctrl, const GBT_MAP *map);\n";
   content += "void gbt_update_camera_controller(GBT_CAMERA_CTRL *ctrl, int8_t dx, int8_t dy);\n";
   content += "void gbt_update_free_camera(GBT_CAMERA_CTRL *ctrl, int8_t dx, int8_t dy);\n\n";
 
-  // ── Sound API ────────────────────────────────────────────────────────────────
-  content += "// Sound API\n";
-  content += "void     gbt_init_sound(void);                    // call once at startup\n";
-  content += "void     gbt_sound_stop(uint8_t channel);         // silence a channel (GBT_CH_*)\n";
-  content += "uint8_t  gbt_sound_active(uint8_t channel);       // 1 if channel is still playing\n";
-  content += "\n";
+  content += "void     gbt_init_sound(void);\n";
+  content += "void     gbt_sound_stop(uint8_t channel);\n";
+  content += "uint8_t  gbt_sound_active(uint8_t channel);\n\n";
 
   if (sounds.length > 0) {
-    content += "// SFX — each function triggers one GB channel\n";
     const maxLen = Math.max(...sounds.map((s) => sanitizeName(s.name).length));
     sounds.forEach((sound) => {
       const name = sanitizeName(sound.name).padEnd(maxLen);
@@ -102,23 +90,16 @@ export const buildHeader = (
     content += "\n";
   }
 
-  // ── Map externs ──────────────────────────────────────────────────────────────
   if (mapExports.length > 0) {
-    content += "// Maps\n";
-    mapExports.forEach((mapExport) => {
-      content += `extern const GBT_MAP ${mapExport.safeName};\n`;
-    });
+    mapExports.forEach((m) => { content += `extern const GBT_MAP ${m.safeName};\n`; });
     content += "\n";
   }
 
-  // ── Sprite animation externs ─────────────────────────────────────────────────
   if (sprites.length > 0) {
-    content += "// Sprite animations\n";
     sprites.forEach((sprite) => {
-      const safeSpriteName = sanitizeName(sprite.name);
+      const sn = sanitizeName(sprite.name);
       sprite.animations.forEach((anim) => {
-        const safeAnimName = sanitizeName(anim.name);
-        content += `extern const GBT_ANIMATION ${safeSpriteName}_${safeAnimName};\n`;
+        content += `extern const GBT_ANIMATION ${sn}_${sanitizeName(anim.name)};\n`;
       });
     });
     content += "\n";
