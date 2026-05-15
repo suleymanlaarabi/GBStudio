@@ -1,0 +1,275 @@
+import React, { useState } from "react";
+import { Eye, EyeOff, Plus, Trash2, ChevronUp, ChevronDown, Copy, Pencil, Monitor } from "lucide-react";
+import { useStore } from "../../../store";
+import type { MapLayer } from "../../../types";
+
+interface LayerRowProps {
+  layer: MapLayer;
+  layerIndex: number;
+  mapIndex: number;
+  isActive: boolean;
+  isFirst: boolean;
+  isLast: boolean;
+  canDelete: boolean;
+  onSelect: () => void;
+}
+
+const LayerRow: React.FC<LayerRowProps> = ({
+  layer,
+  layerIndex,
+  mapIndex,
+  isActive,
+  isFirst,
+  isLast,
+  canDelete,
+  onSelect,
+}) => {
+  const {
+    toggleLayerVisibility,
+    removeLayer,
+    moveLayerUp,
+    moveLayerDown,
+    duplicateLayer,
+    renameLayer,
+  } = useStore();
+
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(layer.name);
+
+  const commitRename = () => {
+    if (draft.trim()) renameLayer(mapIndex, layerIndex, draft.trim());
+    else setDraft(layer.name);
+    setEditing(false);
+  };
+
+  return (
+    <div
+      onClick={onSelect}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "0.4rem",
+        padding: "6px 8px",
+        background: isActive ? "#1a1a2e" : "transparent",
+        border: `1px solid ${isActive ? "var(--accent)" : "transparent"}`,
+        borderRadius: "7px",
+        cursor: "pointer",
+        transition: "all 0.1s",
+        userSelect: "none",
+      }}
+    >
+      {/* Visibility toggle */}
+      <button
+        onClick={(e) => { e.stopPropagation(); toggleLayerVisibility(mapIndex, layerIndex); }}
+        style={{ background: "none", border: "none", cursor: "pointer", color: layer.visible ? "var(--accent)" : "#444", padding: 0, display: "flex" }}
+        title={layer.visible ? "Hide layer" : "Show layer"}
+      >
+        {layer.visible ? <Eye size={14} /> : <EyeOff size={14} />}
+      </button>
+
+      {/* Name / edit */}
+      {editing ? (
+        <input
+          autoFocus
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commitRename}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") commitRename();
+            if (e.key === "Escape") { setDraft(layer.name); setEditing(false); }
+          }}
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            flex: 1,
+            background: "#0d0d0d",
+            border: "1px solid var(--accent)",
+            borderRadius: "4px",
+            color: "#fff",
+            padding: "2px 5px",
+            fontSize: "0.8rem",
+          }}
+        />
+      ) : (
+        <span
+          style={{ flex: 1, fontSize: "0.82rem", color: isActive ? "#fff" : "#aaa", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+          onDoubleClick={(e) => { e.stopPropagation(); setEditing(true); setDraft(layer.name); }}
+          title="Double-click to rename"
+        >
+          {layer.name}
+        </span>
+      )}
+
+      {/* Actions (visible on hover / active) */}
+      {isActive && !editing && (
+        <div style={{ display: "flex", gap: 2, flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
+          <button
+            onClick={() => { setEditing(true); setDraft(layer.name); }}
+            style={{ background: "none", border: "none", cursor: "pointer", color: "#666", padding: 2, display: "flex" }}
+            title="Rename"
+          >
+            <Pencil size={11} />
+          </button>
+          <button
+            onClick={() => duplicateLayer(mapIndex, layerIndex)}
+            style={{ background: "none", border: "none", cursor: "pointer", color: "#666", padding: 2, display: "flex" }}
+            title="Duplicate"
+          >
+            <Copy size={11} />
+          </button>
+          <button
+            onClick={() => moveLayerDown(mapIndex, layerIndex)}
+            disabled={isFirst}
+            style={{ background: "none", border: "none", cursor: isFirst ? "default" : "pointer", color: isFirst ? "#333" : "#666", padding: 2, display: "flex" }}
+            title="Move down"
+          >
+            <ChevronDown size={11} />
+          </button>
+          <button
+            onClick={() => moveLayerUp(mapIndex, layerIndex)}
+            disabled={isLast}
+            style={{ background: "none", border: "none", cursor: isLast ? "default" : "pointer", color: isLast ? "#333" : "#666", padding: 2, display: "flex" }}
+            title="Move up"
+          >
+            <ChevronUp size={11} />
+          </button>
+          {canDelete && (
+            <button
+              onClick={() => removeLayer(mapIndex, layerIndex)}
+              style={{ background: "none", border: "none", cursor: "pointer", color: "#ff4444", padding: 2, display: "flex" }}
+              title="Delete"
+            >
+              <Trash2 size={11} />
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+interface LayersPanelProps {
+  mapIndex: number;
+}
+
+export const LayersPanel: React.FC<LayersPanelProps> = ({ mapIndex }) => {
+  const {
+    maps,
+    activeLayerIndex,
+    setActiveLayer,
+    addLayer,
+    activeLayerIsWindow,
+    setActiveLayerIsWindow,
+    setWindowLayerEnabled,
+    setWindowLayerConfig,
+  } = useStore();
+  const map = maps[mapIndex];
+
+  if (!map) return null;
+
+  // Display layers in reverse order (top layer first visually)
+  const reversed = [...map.layers].reverse();
+
+  return (
+    <div
+      className="card"
+      style={{ padding: "0.75rem", display: "flex", flexDirection: "column", gap: "0.5rem", minWidth: 180 }}
+    >
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.25rem" }}>
+        <span style={{ fontSize: "0.78rem", color: "#888", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+          Layers
+        </span>
+        <button
+          className="btn btn-secondary"
+          style={{ padding: "3px 7px", fontSize: "0.72rem", display: "flex", alignItems: "center", gap: 3 }}
+          onClick={() => addLayer(mapIndex)}
+          title="Add layer"
+        >
+          <Plus size={11} /> Add
+        </button>
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+        {reversed.map((layer) => {
+          const realIndex = map.layers.indexOf(layer);
+          return (
+            <LayerRow
+              key={layer.id}
+              layer={layer}
+              layerIndex={realIndex}
+              mapIndex={mapIndex}
+              isActive={realIndex === activeLayerIndex}
+              isFirst={realIndex === 0}
+              isLast={realIndex === map.layers.length - 1}
+              canDelete={map.layers.length > 1}
+              onSelect={() => setActiveLayer(realIndex)}
+            />
+          );
+        })}
+      </div>
+
+      <div style={{ fontSize: "0.68rem", color: "#444", borderTop: "1px solid #1a1a1a", paddingTop: "0.5rem", marginTop: "0.25rem" }}>
+        {map.layers.length} layer{map.layers.length > 1 ? "s" : ""} · active: <span style={{ color: "#666" }}>{activeLayerIsWindow ? "Window" : (map.layers[activeLayerIndex]?.name ?? "—")}</span>
+      </div>
+
+      {/* Window Layer */}
+      <div style={{ borderTop: "1px solid #1a1a1a", paddingTop: "0.5rem", marginTop: "0.25rem", display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span style={{ fontSize: "0.72rem", color: "#888", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", display: "flex", alignItems: "center", gap: 4 }}>
+            <Monitor size={11} /> Window Layer
+          </span>
+          <label style={{ display: "flex", alignItems: "center", gap: 4, cursor: "pointer" }}>
+            <input
+              type="checkbox"
+              checked={!!map.windowLayer?.enabled}
+              onChange={(e) => setWindowLayerEnabled(mapIndex, e.target.checked)}
+              style={{ cursor: "pointer" }}
+            />
+            <span style={{ fontSize: "0.7rem", color: map.windowLayer?.enabled ? "var(--accent)" : "#555" }}>
+              {map.windowLayer?.enabled ? "ON" : "OFF"}
+            </span>
+          </label>
+        </div>
+
+        {map.windowLayer?.enabled && (
+          <>
+            <div
+              onClick={() => setActiveLayerIsWindow(!activeLayerIsWindow)}
+              style={{
+                padding: "5px 8px",
+                background: activeLayerIsWindow ? "#1a1a2e" : "transparent",
+                border: `1px solid ${activeLayerIsWindow ? "var(--accent)" : "#222"}`,
+                borderRadius: "6px",
+                cursor: "pointer",
+                fontSize: "0.78rem",
+                color: activeLayerIsWindow ? "#fff" : "#888",
+                userSelect: "none",
+              }}
+            >
+              HUD / Window
+            </div>
+            <div style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}>
+              <label style={{ fontSize: "0.7rem", color: "#666" }}>WX</label>
+              <input
+                type="number"
+                min={0}
+                max={20}
+                value={map.windowLayer.wx}
+                onChange={(e) => setWindowLayerConfig(mapIndex, Number(e.target.value), map.windowLayer!.wy)}
+                style={{ width: 44, background: "#111", border: "1px solid #333", color: "#ccc", borderRadius: 4, padding: "2px 4px", fontSize: "0.72rem" }}
+              />
+              <label style={{ fontSize: "0.7rem", color: "#666" }}>WY</label>
+              <input
+                type="number"
+                min={0}
+                max={18}
+                value={map.windowLayer.wy}
+                onChange={(e) => setWindowLayerConfig(mapIndex, map.windowLayer!.wx, Number(e.target.value))}
+                style={{ width: 44, background: "#111", border: "1px solid #333", color: "#ccc", borderRadius: 4, padding: "2px 4px", fontSize: "0.72rem" }}
+              />
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
